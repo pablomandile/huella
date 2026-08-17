@@ -8,7 +8,7 @@
         {{-- La app es privada, pero esta descripción es lo que se ve al compartir el enlace --}}
         <meta name="description" content="El historial de salud y la vida cotidiana de tus mascotas, en un solo diario: visitas, vacunas, tratamientos, peso y notas.">
         <meta property="og:title" content="Huella">
-        <meta property="og:description" content="La historia clínica que el veterinario no te da.">
+        <meta property="og:description" content="La historia completa de tu mascota siempre a mano.">
         <meta property="og:type" content="website">
         <meta property="og:image" content="{{ asset('img/huella-logo-horizontal.webp') }}">
 

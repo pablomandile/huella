@@ -80,7 +80,7 @@ const funcionalidades = [
                 <h1
                     class="text-4xl font-semibold tracking-tight text-balance sm:text-5xl"
                 >
-                    La historia clínica que el veterinario no te da.
+                    La historia completa de tu mascota siempre a mano.
                 </h1>
                 <p class="mt-5 text-lg text-pretty text-muted-foreground">
                     La libreta sanitaria se pierde, se moja y no tiene lugar

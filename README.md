@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <em>La historia clínica que el veterinario no te da.</em>
+  <em>La historia completa de tu mascota siempre a mano.</em>
 </p>
 
 <p align="center">
