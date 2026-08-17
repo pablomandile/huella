@@ -59,6 +59,26 @@ class Mascota extends Model
 
     protected $table = 'mascotas';
 
+    /**
+     * El propietario y los cuidadores vienen siempre cargados.
+     *
+     * No es comodidad, son las dos relaciones que **todo** el dominio necesita:
+     *
+     * - `propietario`: media docena de servicios usan su `zona_horaria` para
+     *   cualquier cálculo de fechas (`EstadoVacunacionService`,
+     *   `EstimadorCeloService`, `GeneradorRecordatoriosService`,
+     *   `HistoriaClinicaService`…), y todos llegan a ella navegando la relación.
+     * - `cuidadores`: es el pivote por el que pasa la autorización de toda
+     *   mascota, así que cada `Gate::authorize()` la toca.
+     *
+     * Con `preventLazyLoading` activo, olvidarse del eager loading en cualquier
+     * pantalla nueva es un 500 — ya pasó en el dashboard. Son un `belongsTo` a
+     * una fila de `users` y un pivote de una fila: dos queries por request.
+     *
+     * @var list<string>
+     */
+    protected $with = ['propietario', 'cuidadores'];
+
     protected $fillable = [
         'nombre',
         'especie',

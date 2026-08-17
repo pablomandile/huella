@@ -123,11 +123,18 @@ const estilo = computed(
                 </Badge>
             </div>
 
+            <!--
+                El título es el punto de entrada al evento y en el celular medía
+                24px de alto. `py-2.5 -my-2.5` lo lleva a 44 sin correr nada:
+                el padding agranda el área táctil y el margen negativo lo
+                devuelve a su lugar. Solo cuando es enlace, para no dejar áreas
+                tocables que no llevan a ninguna parte.
+            -->
             <component
                 :is="evento.url ? Link : 'div'"
                 v-bind="evento.url ? { href: evento.url } : {}"
                 class="mt-0.5 block"
-                :class="evento.url ? 'hover:underline' : ''"
+                :class="evento.url ? '-my-2.5 py-2.5 hover:underline' : ''"
             >
                 <p class="font-medium text-pretty">{{ evento.titulo }}</p>
             </component>

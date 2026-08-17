@@ -20,9 +20,21 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <AvisoSinConexion />
+
+    <!--
+        Con teclado, llegar al contenido significaba tabular por toda la sidebar
+        en cada pantalla. Se ve solo al enfocarlo, y por eso va primero en el DOM.
+    -->
+    <a
+        href="#contenido"
+        class="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:left-3 focus-visible:z-100 focus-visible:rounded-md focus-visible:bg-primary focus-visible:px-4 focus-visible:py-2 focus-visible:text-primary-foreground focus-visible:ring-ring focus-visible:ring-2"
+    >
+        Saltar al contenido
+    </a>
+
     <AppShell variant="sidebar">
         <AppSidebar />
-        <AppContent variant="sidebar" class="overflow-x-hidden">
+        <AppContent id="contenido" variant="sidebar" class="overflow-x-hidden">
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <!--
                 pb-20 deja lugar para la barra inferior del celular, que es fija.

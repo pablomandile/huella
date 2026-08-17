@@ -1,3 +1,10 @@
+# FilesMatch mira el nombre del archivo y no la ruta, así que para distinguir los
+# assets de /build/ del resto hace falta marcarlos por URL. Va antes que los
+# headers porque es de otro módulo.
+<IfModule mod_setenvif.c>
+    SetEnvIf Request_URI "^/build/" ES_BUILD=1
+</IfModule>
+
 # sw.js y el manifest son los dos archivos con los que el navegador se entera
 # de que hay una versión nueva: no pueden quedar cacheados. Sin esto, el CDN
 # del hosting sirve un service worker viejo durante días y congela todo lo demás.
@@ -5,6 +12,23 @@
     <FilesMatch "^(sw\.js|manifest\.webmanifest)$">
         Header set Cache-Control "no-cache, must-revalidate, max-age=0"
     </FilesMatch>
+
+    # Al revés que los de arriba: los assets de /build/ llevan hash de contenido
+    # en el nombre, así que un nombre nunca cambia de contenido. `immutable` le
+    # ahorra al navegador incluso la revalidación. El `env` es lo que evita que
+    # esta regla le pegue también a /sw.js, que es .js y no debe cachearse.
+    <FilesMatch "\.(js|css|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable" env=ES_BUILD
+    </FilesMatch>
+
+    # La app maneja historia clínica: que el navegador no adivine tipos, que no se
+    # deje embeber en un iframe ajeno y que no filtre la URL completa al salir.
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Sin permisos de hardware salvo la cámara, que la usa la carga de fotos.
+    Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
 </IfModule>
 
 # Muchos hostings sirven .webmanifest como text/plain, que incumple la spec.

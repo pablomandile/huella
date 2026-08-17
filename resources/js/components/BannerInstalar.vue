@@ -93,7 +93,10 @@ async function alInstalar() {
                 </p>
             </div>
 
-            <Button size="sm" @click="alInstalar">Instalar</Button>
+            <!-- size="sm" da 32px de alto: el banner es de celular y necesita 44. -->
+            <Button size="sm" class="touch-target" @click="alInstalar">
+                Instalar
+            </Button>
 
             <button
                 type="button"

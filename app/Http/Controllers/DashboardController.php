@@ -41,6 +41,11 @@ class DashboardController extends Controller
         $activa = $mascotas->firstWhere('id', (int) session('mascota_activa_id'))
             ?? $mascotas->first();
 
+        // Solo las de la activa, que es la única cuyo estado se muestra: cargarlas
+        // en el `get()` de arriba costaría una query por relación por cada mascota
+        // de la casa para tirar todas menos una.
+        $activa?->load(['ultimoPeso', 'dietaVigente.alimento']);
+
         return Inertia::render('Dashboard', [
             'mascotaActiva' => $activa ? MascotaResource::make($activa)->resolve() : null,
             'totalMascotas' => $mascotas->count(),
@@ -132,15 +137,12 @@ class DashboardController extends Controller
      */
     private function dietaVigente(?Mascota $mascota): ?array
     {
+        // La relación y su alimento ya vienen cargados desde index().
         $dieta = $mascota?->dietaVigente;
 
-        if ($dieta === null) {
-            return null;
-        }
-
-        $dieta->load('alimento');
-
-        return DietaResource::make($dieta)->resolve();
+        return $dieta !== null
+            ? DietaResource::make($dieta)->resolve()
+            : null;
     }
 
     /**

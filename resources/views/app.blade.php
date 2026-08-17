@@ -5,6 +5,13 @@
         {{-- viewport-fit=cover habilita env(safe-area-inset-*) en el notch de iOS --}}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
+        {{-- La app es privada, pero esta descripción es lo que se ve al compartir el enlace --}}
+        <meta name="description" content="El historial de salud y la vida cotidiana de tus mascotas, en un solo diario: visitas, vacunas, tratamientos, peso y notas.">
+        <meta property="og:title" content="Huella">
+        <meta property="og:description" content="La historia clínica que el veterinario no te da.">
+        <meta property="og:type" content="website">
+        <meta property="og:image" content="{{ asset('img/huella-logo-horizontal.webp') }}">
+
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
             (function() {

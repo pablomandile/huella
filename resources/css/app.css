@@ -105,10 +105,17 @@
     --muted-foreground: hsl(0 0% 41%);
     --accent: hsl(175 30% 94%);
     --accent-foreground: hsl(175 77% 20%);
-    --destructive: hsl(0 84.2% 60.2%);
+    /* 72%/45% y no el 84%/60% del kit: con ese rojo, el texto casi blanco del
+       botón daba 3.60:1 y no llegaba a AA. El botón de borrar es el más peligroso
+       de la app y era el menos legible. Ahora da 5.56:1. */
+    --destructive: hsl(0 72% 45%);
     --destructive-foreground: hsl(0 0% 98%);
     --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
+    /* El borde de los controles va más oscuro que el decorativo: es lo único que
+       identifica un input, y WCAG 1.4.11 le pide 3:1. Este es el mínimo que
+       cumple (3.04:1). --border se deja claro porque separa tarjetas, no
+       controles. */
+    --input: hsl(0 0% 58%);
     --ring: hsl(175 77% 26%);
     --chart-1: hsl(12 76% 61%);
     --chart-2: hsl(173 58% 39%);
@@ -143,10 +150,14 @@
     --muted-foreground: hsl(0 0% 66%);
     --accent: hsl(175 25% 18%);
     --accent-foreground: hsl(173 70% 80%);
+    /* Acá **no** va el rojo oscuro del modo claro: sobre el fondo negro este
+       color se usa como texto (la hora de una toma atrasada, los errores) y a
+       45% de luminosidad daba 3.39:1. El 60% del kit cumple los dos usos, porque
+       el botón en oscuro se pinta con `bg-destructive/60`, que lo oscurece. */
     --destructive: hsl(0 84% 60%);
     --destructive-foreground: hsl(0 0% 98%);
     --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
+    --input: hsl(0 0% 37%);
     --ring: hsl(173 70% 45%);
     --chart-1: hsl(220 70% 50%);
     --chart-2: hsl(160 60% 45%);
@@ -189,4 +200,25 @@
 @utility touch-target {
     min-height: 44px;
     min-width: 44px;
+}
+
+/*
+  Con el dedo, ningún control baja de 44px. Los tamaños `sm` (32px) e `icon`
+  (36px) del kit quedan por debajo, y ponerles `touch-target` a mano se olvida
+  —sobre todo en los que viven dentro de un sheet, que no se ven en una
+  recorrida—. Con `pointer: coarse` esto aplica en el celular y la tablet, y en
+  escritorio se dejan los tamaños originales: con mouse, 32px se acierta bien.
+
+  A propósito no incluye `a`: la mayoría son enlaces en línea con el texto, que
+  quedarían separados unos de otros sin ninguna ganancia. Los enlaces que se ven
+  como botón llevan `data-slot="button"` y sí entran.
+*/
+@media (pointer: coarse) {
+    button,
+    summary,
+    [role='button'],
+    [data-slot='button'] {
+        min-height: 44px;
+        min-width: 44px;
+    }
 }

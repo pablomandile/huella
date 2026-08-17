@@ -42,9 +42,16 @@ const funcionalidades = [
                     arruinaría los colores de marca, así que se le da su propia
                     base clara redondeada y queda como una placa intencional.
                 -->
+                <!--
+                    Con `w-auto` y sin dimensiones, el ancho es 0 hasta que la
+                    imagen carga y todo el header se corre al aparecer. Las
+                    medidas reales del archivo alcanzan para reservar el hueco.
+                -->
                 <img
                     src="/img/huella-logo-horizontal.webp"
                     alt="Huella — cuidá, registrá, acompañá. Siempre."
+                    width="681"
+                    height="222"
                     class="h-12 w-auto rounded-lg dark:bg-white dark:px-2.5 dark:py-1.5"
                 />
 
