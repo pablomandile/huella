@@ -104,3 +104,8 @@ php artisan db:seed --class=CatalogosSeeder --force
 
 Las convenciones completas están en [CLAUDE.md](CLAUDE.md), y los documentos de
 diseño —especificación, esquema de datos y plan de trabajo— en [docs/](docs/).
+
+## Deploy
+
+Corre en Hostinger compartido. Los pasos, las trampas del hosting y los cron del
+scheduler están en [docs/deploy.md](docs/deploy.md).

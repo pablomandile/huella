@@ -59,7 +59,6 @@ defineProps<{
                     name="email"
                     required
                     autofocus
-                    :tabindex="1"
                     autocomplete="email"
                     placeholder="email@example.com"
                 />
@@ -73,7 +72,6 @@ defineProps<{
                         v-if="canResetPassword"
                         :href="request()"
                         class="text-sm"
-                        :tabindex="5"
                     >
                         ¿Olvidaste tu contraseña?
                     </TextLink>
@@ -82,7 +80,6 @@ defineProps<{
                     id="password"
                     name="password"
                     required
-                    :tabindex="2"
                     autocomplete="current-password"
                     placeholder="Contraseña"
                 />
@@ -91,7 +88,7 @@ defineProps<{
 
             <div class="flex items-center justify-between">
                 <Label for="remember" class="flex items-center space-x-3">
-                    <Checkbox id="remember" name="remember" :tabindex="3" />
+                    <Checkbox id="remember" name="remember" />
                     <span>Mantener la sesión iniciada</span>
                 </Label>
             </div>
@@ -99,7 +96,6 @@ defineProps<{
             <Button
                 type="submit"
                 class="mt-4 w-full"
-                :tabindex="4"
                 :disabled="processing"
                 data-test="login-button"
             >
@@ -111,7 +107,7 @@ defineProps<{
         <!-- @chisel-registration -->
         <div class="text-center text-sm text-muted-foreground">
             ¿Todavía no tenés cuenta?
-            <TextLink :href="register()" :tabindex="5">Creá una</TextLink>
+            <TextLink :href="register()">Creá una</TextLink>
         </div>
         <!-- @end-chisel-registration -->
     </Form>

@@ -39,7 +39,6 @@ defineOptions({
                     type="text"
                     required
                     autofocus
-                    :tabindex="1"
                     autocomplete="name"
                     name="name"
                     placeholder="Nombre y apellido"
@@ -53,7 +52,6 @@ defineOptions({
                     id="email"
                     type="email"
                     required
-                    :tabindex="2"
                     autocomplete="email"
                     name="email"
                     placeholder="email@example.com"
@@ -66,7 +64,6 @@ defineOptions({
                 <PasswordInput
                     id="password"
                     required
-                    :tabindex="3"
                     autocomplete="new-password"
                     name="password"
                     placeholder="Contraseña"
@@ -80,7 +77,6 @@ defineOptions({
                 <PasswordInput
                     id="password_confirmation"
                     required
-                    :tabindex="4"
                     autocomplete="new-password"
                     name="password_confirmation"
                     placeholder="Repetir contraseña"
@@ -92,7 +88,6 @@ defineOptions({
             <Button
                 type="submit"
                 class="mt-2 w-full"
-                tabindex="5"
                 :disabled="processing"
                 data-test="register-user-button"
             >
@@ -103,10 +98,7 @@ defineOptions({
 
         <div class="text-center text-sm text-muted-foreground">
             ¿Ya tenés cuenta?
-            <TextLink
-                :href="login()"
-                class="underline underline-offset-4"
-                :tabindex="6"
+            <TextLink :href="login()" class="underline underline-offset-4"
                 >Iniciá sesión</TextLink
             >
         </div>

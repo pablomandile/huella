@@ -301,6 +301,20 @@ incluido (Pint y Prettier pasando no alcanzan).
 directorio, con comparación estricta de strings. Es lo único que detecta desde Windows un
 case equivocado que en Linux rompería el build.
 
+## Deploy
+
+Está en producción en `huella.pablomandile.com.ar` (Hostinger compartido). Los pasos,
+las trampas y los cron exactos están en [docs/deploy.md](docs/deploy.md). Lo que hay
+que tener presente antes de tocar producción:
+
+- **El server no tiene Node**: el bundle se compila en local y se copia `public/build/`.
+- El `php` del CLI es 8.1: `artisan` y `composer` van con `/opt/alt/php84/usr/bin/php`.
+- El docroot del subdominio es un **symlink** a `huella/public`, porque hPanel lo creó
+  adentro del public del sitio principal.
+- Los cron de hPanel **no aceptan `cd ... &&`**: ruta absoluta a `artisan`, sin `cd`.
+- Hacen falta **dos** cron: `schedule:run` y `queue:work`. `RecordatoriosDelDia` es
+  `ShouldQueue` con cola `database`: sin worker, los avisos quedan en la tabla `jobs`.
+
 ## Comandos
 
 ```bash
