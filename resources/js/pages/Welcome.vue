@@ -47,27 +47,44 @@ const funcionalidades = [
                     imagen carga y todo el header se corre al aparecer. Las
                     medidas reales del archivo alcanzan para reservar el hueco.
                 -->
+                <!--
+                    `h-9` en el celular: a `h-12` el logo mide 147px de ancho y
+                    junto a los dos botones se pasaba de los 342px útiles de una
+                    pantalla de 390, lo que le daba scroll horizontal a la
+                    portada entera.
+                -->
                 <img
                     src="/img/huella-logo-horizontal.webp"
                     alt="Huella — cuidá, registrá, acompañá. Siempre."
                     width="681"
                     height="222"
-                    class="h-12 w-auto rounded-lg dark:bg-white dark:px-2.5 dark:py-1.5"
+                    class="h-9 w-auto rounded-lg sm:h-12 dark:bg-white dark:px-2.5 dark:py-1.5"
                 />
 
-                <div class="flex items-center gap-2">
+                <div class="flex shrink-0 items-center gap-2">
                     <Button v-if="$page.props.auth.user" as-child>
                         <Link :href="dashboard()">Ir a la app</Link>
                     </Button>
                     <template v-else>
-                        <Button variant="ghost" as-child>
-                            <Link :href="login()">Iniciar sesión</Link>
+                        <!--
+                            En el celular entra un solo botón. El «Empezar» de más
+                            abajo ya es el camino para quien no tiene cuenta, así
+                            que acá arriba queda el de quien ya la tiene.
+                        -->
+                        <Button variant="outline" as-child class="sm:hidden">
+                            <Link :href="login()">Entrar</Link>
                         </Button>
-                        <!-- @chisel-registration -->
-                        <Button as-child>
-                            <Link :href="register()">Crear cuenta</Link>
-                        </Button>
-                        <!-- @end-chisel-registration -->
+
+                        <div class="hidden items-center gap-2 sm:flex">
+                            <Button variant="ghost" as-child>
+                                <Link :href="login()">Iniciar sesión</Link>
+                            </Button>
+                            <!-- @chisel-registration -->
+                            <Button as-child>
+                                <Link :href="register()">Crear cuenta</Link>
+                            </Button>
+                            <!-- @end-chisel-registration -->
+                        </div>
                     </template>
                 </div>
             </nav>
