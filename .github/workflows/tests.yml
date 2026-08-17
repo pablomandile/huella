@@ -1,0 +1,62 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    # `composer setup` corre `artisan migrate`, y el .env.example apunta a MySQL:
+    # sin este servicio el job muere en el setup con "Connection refused" y no
+    # llega a correr ni un test. Los tests usan sqlite en memoria (phpunit.xml),
+    # pero el migrate real acá vale: MySQL rechaza esquemas que sqlite tolera.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: huella
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          # 8.4 y no 8.3: todo Symfony 8 del composer.lock exige >=8.4.1, así que
+          # en 8.3 el `composer install` corta antes de empezar.
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      # Levanta el .env, migra y compila. El build es el que genera los archivos
+      # de Wayfinder (están gitignoreados), y sin ellos vue-tsc no resuelve los
+      # imports de rutas.
+      - name: Setup Application
+        run: composer setup
+
+      # Pint, PHPStan, ESLint, Prettier, vue-tsc y Pest.
+      - name: Run CI Checks
+        run: composer ci:check

@@ -1,0 +1,40 @@
+# sw.js y el manifest son los dos archivos con los que el navegador se entera
+# de que hay una versión nueva: no pueden quedar cacheados. Sin esto, el CDN
+# del hosting sirve un service worker viejo durante días y congela todo lo demás.
+<IfModule mod_headers.c>
+    <FilesMatch "^(sw\.js|manifest\.webmanifest)$">
+        Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+    </FilesMatch>
+</IfModule>
+
+# Muchos hostings sirven .webmanifest como text/plain, que incumple la spec.
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType text/javascript .js
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
