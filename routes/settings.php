@@ -3,7 +3,7 @@
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 /* @chisel-password-confirmation */
-use Illuminate\Auth\Middleware\RequirePassword;
+use App\Http\Middleware\ConfirmarClaveSiLaTiene;
 /* @end-chisel-password-confirmation */
 use Illuminate\Support\Facades\Route;
 
@@ -19,7 +19,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/security', [SecurityController::class, 'edit'])
         /* @chisel-password-confirmation */
-        ->middleware(RequirePassword::class)
+        // No es el RequirePassword de Laravel: quien entró con Google no tiene
+        // contraseña y no podría confirmar nunca, quedando afuera de esta
+        // pantalla —y por lo tanto de 2FA y de las llaves de acceso—.
+        ->middleware(ConfirmarClaveSiLaTiene::class)
         /* @end-chisel-password-confirmation */
         ->name('security.edit');
 

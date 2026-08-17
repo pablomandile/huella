@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\IngresoConGoogleService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +42,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Sin credenciales de Google el botón no se muestra: sus rutas dan
+            // 404, así que ofrecerlo sería mandar al usuario a una pared.
+            'googleHabilitado' => IngresoConGoogleService::configurado(),
             // Lista liviana para el selector de mascota activa del header.
             // Lazy: solo se evalúa cuando hay sesión.
             'mascotas' => fn () => $request->user()

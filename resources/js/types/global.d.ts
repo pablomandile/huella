@@ -19,6 +19,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            /** Falso mientras no haya credenciales de Google en el .env. */
+            googleHabilitado: boolean;
             [key: string]: unknown;
         };
     }

@@ -28,7 +28,8 @@ use Throwable;
  * @property string $zona_horaria
  * @property int $dias_anticipacion_celo
  * @property Carbon|null $email_verified_at
- * @property string $password
+ * @property string|null $password Nulo para quien entró con Google: nunca eligió una.
+ * @property string|null $google_id
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at

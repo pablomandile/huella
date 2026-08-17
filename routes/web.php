@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdjuntoController;
 use App\Http\Controllers\AlergiaController;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Catalogos\AlimentoController;
 use App\Http\Controllers\Catalogos\MedicamentoController;
 use App\Http\Controllers\Catalogos\PanelCatalogosController;
@@ -27,6 +28,21 @@ Route::inertia('/', 'Welcome')->name('home');
 // Respaldo que sirve el service worker cuando no hay conexión. Es una vista
 // suelta, no Inertia: tiene que poder mostrarse sin los assets compilados.
 Route::view('offline', 'offline')->name('offline');
+
+/*
+ * Ingreso con Google. Van en inglés y bajo /auth como el resto de las rutas de
+ * autenticación, que las publica Fortify; el español es para el dominio.
+ *
+ * `guest`: alguien con la sesión abierta que llega acá ya está adentro, y
+ * rehacer el flujo solo puede terminar cambiándole la cuenta sin querer.
+ */
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google/redirect', [GoogleController::class, 'redirigir'])
+        ->name('google.redirect');
+
+    Route::get('auth/google/callback', [GoogleController::class, 'volver'])
+        ->name('google.callback');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -18,6 +18,8 @@ import ManageTwoFactor from '@/components/ManageTwoFactor.vue';
 
 type Props = {
     passwordRules: string;
+    /** Falso para quien entró con Google: nunca eligió una contraseña. */
+    tieneContrasena: boolean;
 } /* @chisel-passkeys */ & ManagePasskeysProps /* @end-chisel-passkeys */ /* @chisel-2fa */ &
     ManageTwoFactorProps /* @end-chisel-2fa */;
 
@@ -41,10 +43,23 @@ defineOptions({
     <h1 class="sr-only">Configuración de seguridad</h1>
 
     <div class="space-y-6">
+        <!--
+            Quien entró con Google no tiene contraseña: se le ofrece definir una
+            para poder entrar también por email, y no se le pide la actual porque
+            no existe.
+        -->
         <Heading
             variant="small"
-            title="Cambiar la contraseña"
-            description="Usá una contraseña larga y difícil de adivinar"
+            :title="
+                tieneContrasena
+                    ? 'Cambiar la contraseña'
+                    : 'Definir una contraseña'
+            "
+            :description="
+                tieneContrasena
+                    ? 'Usá una contraseña larga y difícil de adivinar'
+                    : 'Entrás con Google. Si querés, definí una contraseña para poder entrar también con tu email.'
+            "
         />
 
         <Form
@@ -61,7 +76,7 @@ defineOptions({
             class="space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
+            <div v-if="tieneContrasena" class="grid gap-2">
                 <Label for="current_password">Contraseña actual</Label>
                 <PasswordInput
                     id="current_password"
@@ -74,13 +89,17 @@ defineOptions({
             </div>
 
             <div class="grid gap-2">
-                <Label for="password">Contraseña nueva</Label>
+                <Label for="password">{{
+                    tieneContrasena ? 'Contraseña nueva' : 'Contraseña'
+                }}</Label>
                 <PasswordInput
                     id="password"
                     name="password"
                     class="mt-1 block w-full"
                     autocomplete="new-password"
-                    placeholder="Contraseña nueva"
+                    :placeholder="
+                        tieneContrasena ? 'Contraseña nueva' : 'Contraseña'
+                    "
                     :passwordrules="props.passwordRules"
                 />
                 <InputError :message="errors.password" />

@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    /*
+     * Ingreso con Google.
+     *
+     * Sin estas credenciales la app funciona igual: el botón no se muestra y las
+     * rutas devuelven 404. Es lo que permite tener el código desplegado antes de
+     * dar de alta el proyecto en Google Cloud.
+     *
+     * El redirect se arma sobre APP_URL y tiene que coincidir **exactamente** con
+     * el que figura en la consola de Google, incluido el esquema.
+     */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+    ],
+
 ];

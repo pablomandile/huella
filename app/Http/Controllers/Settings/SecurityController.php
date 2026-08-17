@@ -42,6 +42,9 @@ class SecurityController extends Controller
                 : [],
             /* @end-chisel-passkeys */
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            // Quien entró con Google no tiene contraseña: el formulario le pide
+            // definir una en vez de cambiarla, y sin el campo de la actual.
+            'tieneContrasena' => filled($request->user()?->getAuthPassword()),
         ];
 
         /* @chisel-2fa */
