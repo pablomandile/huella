@@ -269,6 +269,30 @@ Service worker propio en `public/sw.js`. **No** usar `vite-plugin-pwa`.
 6. Los cálculos de próxima fecha son sugerencias precargadas, **siempre editables**.
 7. **El sistema registra, no aconseja.** Ninguna recomendación clínica.
 
+## Ingreso con Google
+
+Socialite. El alta de credenciales está en [docs/google-oauth.md](docs/google-oauth.md).
+
+- **Sin `GOOGLE_CLIENT_ID` la opción no existe:** el botón no se muestra y las rutas
+  dan 404. Es lo que permite tener el código en producción antes del alta en Google
+  Cloud, y lo que evita ofrecer un botón que lleva a un 500.
+- **Una cuenta por email.** Si Google devuelve un email que ya existe, se le vincula
+  el `google_id` en vez de crear otra cuenta: dos cuentas con el mismo email serían
+  dos historias clínicas de la misma mascota, cada una invisible desde la otra.
+- **El email tiene que venir verificado por Google**, o se rechaza. Sin eso,
+  cualquiera podría reclamar la cuenta de otro declarando su dirección.
+- Se reconoce por el `sub` de Google, no por el email: el email de una cuenta de
+  Google se puede cambiar, el id no.
+- **`users.password` es nullable** y estas cuentas quedan sin contraseña: nunca
+  eligieron una, y ponerles una al azar las haría figurar como que pueden entrar con
+  email y clave.
+- Por eso mismo, la pantalla de seguridad usa **`ConfirmarClaveSiLaTiene`** y no el
+  `RequirePassword` de Laravel: sin contraseña, esa confirmación no puede pasar
+  nunca y la cuenta quedaría afuera del 2FA, de las llaves de acceso y de poder
+  definirse una contraseña. Para quien tiene contraseña se le pide igual.
+- `CuentaDeGoogle` traduce lo que devuelve Socialite: el flag de email verificado no
+  está en su interfaz —vive en el payload crudo—, y esa rareza queda en un lugar.
+
 ## Seeders
 
 Están separados porque uno va a producción y el otro no:
