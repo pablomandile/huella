@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ActualizarFotoMascotaRequest;
 use App\Http\Requests\GuardarFotoMascotaRequest;
 use App\Models\FotoMascota;
 use App\Models\Mascota;
@@ -28,6 +29,21 @@ class FotoMascotaController extends Controller
         ]);
 
         return back()->with('success', 'Foto agregada a la galería.');
+    }
+
+    /**
+     * Cambia el epígrafe o la fecha. La imagen no se toca: ver el FormRequest.
+     */
+    public function update(
+        ActualizarFotoMascotaRequest $request,
+        Mascota $mascota,
+        FotoMascota $foto,
+    ): RedirectResponse {
+        abort_unless($foto->mascota_id === $mascota->id, 404);
+
+        $foto->update($request->validated());
+
+        return back()->with('success', 'Foto actualizada.');
     }
 
     public function destroy(Request $request, Mascota $mascota, FotoMascota $foto): RedirectResponse

@@ -59,6 +59,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('mascotas/{mascota}/fotos', [FotoMascotaController::class, 'store'])
         ->name('mascotas.fotos.store');
+    Route::patch('mascotas/{mascota}/fotos/{foto}', [FotoMascotaController::class, 'update'])
+        ->name('mascotas.fotos.update');
     Route::delete('mascotas/{mascota}/fotos/{foto}', [FotoMascotaController::class, 'destroy'])
         ->name('mascotas.fotos.destroy');
 

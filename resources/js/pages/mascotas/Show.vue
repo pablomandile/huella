@@ -12,11 +12,12 @@ import {
     Stethoscope,
     Trash2,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
 import CampoFoto from '@/components/CampoFoto.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
 import TarjetaDocumento from '@/components/TarjetaDocumento.vue';
+import VisorImagen from '@/components/VisorImagen.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import {
     destroy as destroyAlergia,
@@ -38,6 +46,7 @@ import {
 import {
     destroy as destroyFoto,
     store as storeFoto,
+    update as actualizarFoto,
 } from '@/routes/mascotas/fotos';
 // Con alias: la prop `vencimientoRabia` trae la fecha y la ruta se llama igual.
 import {
@@ -112,12 +121,29 @@ const dialogoFoto = ref(false);
 const dialogoAlergia = ref(false);
 const hoy = new Date().toISOString().slice(0, 10);
 
+const visorAbierto = ref(false);
+const editandoFoto = ref(false);
+const fotoAbierta = shallowRef<FotoGaleria | null>(null);
+
+function abrirFoto(foto: FotoGaleria) {
+    fotoAbierta.value = foto;
+    editandoFoto.value = false;
+    visorAbierto.value = true;
+}
+
 function eliminarFoto(foto: FotoGaleria) {
-    if (confirm('¿Eliminar esta foto de la galería?')) {
-        router.delete(destroyFoto([props.mascota.id, foto.id]).url, {
-            preserveScroll: true,
-        });
+    if (!confirm('¿Eliminar esta foto de la galería?')) {
+        return;
     }
+
+    // Se cierra el visor antes de borrar: si no, queda abierto mostrando una
+    // imagen que ya no existe y el `src` pasa a dar 404.
+    visorAbierto.value = false;
+    editandoFoto.value = false;
+
+    router.delete(destroyFoto([props.mascota.id, foto.id]).url, {
+        preserveScroll: true,
+    });
 }
 
 function eliminarAlergia(alergia: Alergia) {
@@ -719,36 +745,139 @@ const datosFicha = (mascota: Mascota): [string, string][] =>
                 <p v-if="!fotos.length" class="text-sm text-muted-foreground">
                     Todavía no hay fotos en la galería.
                 </p>
+                <!--
+                    Cada foto es un botón que abre el visor. El borrado vivía acá,
+                    en un ícono que aparecía con `group-hover`: en el celular no
+                    hay hover, así que era invisible justo donde se usa la app.
+                    Ahora las acciones están adentro del visor, que se abre con un
+                    toque y sirve igual con mouse, dedo y teclado.
+                -->
                 <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <figure
-                        v-for="foto in fotos"
-                        :key="foto.id"
-                        class="group relative"
-                    >
-                        <img
-                            :src="foto.miniatura_url"
-                            :alt="foto.epigrafe ?? `Foto de ${mascota.nombre}`"
-                            class="aspect-square w-full rounded-lg object-cover"
-                            loading="lazy"
-                        />
+                    <figure v-for="foto in fotos" :key="foto.id">
+                        <button
+                            type="button"
+                            class="w-full rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+                            @click="abrirFoto(foto)"
+                        >
+                            <img
+                                :src="foto.miniatura_url"
+                                :alt="`Ver la foto${foto.epigrafe ? ` «${foto.epigrafe}»` : ''} del ${foto.fecha}`"
+                                class="aspect-square w-full rounded-lg object-cover"
+                                loading="lazy"
+                            />
+                        </button>
                         <figcaption class="mt-1 text-xs text-muted-foreground">
                             {{ foto.fecha }}
                             <template v-if="foto.epigrafe">
                                 · {{ foto.epigrafe }}</template
                             >
                         </figcaption>
-                        <button
-                            v-if="puedeEditar"
-                            type="button"
-                            class="absolute top-1 right-1 flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground opacity-0 shadow transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
-                            aria-label="Eliminar esta foto"
-                            @click="eliminarFoto(foto)"
-                        >
-                            <Trash2 class="size-4" aria-hidden="true" />
-                        </button>
                     </figure>
                 </div>
             </CardContent>
         </Card>
+
+        <!--
+            Visor de la galería. Vive acá y no dentro del `v-for` para que haya
+            **uno solo** en el DOM: uno por foto multiplicaría los overlays y los
+            focus traps de reka-ui por la cantidad de fotos.
+        -->
+        <VisorImagen
+            v-if="fotoAbierta"
+            v-model:abierto="visorAbierto"
+            :src="fotoAbierta.url"
+            :alt="fotoAbierta.epigrafe ?? `Foto de ${mascota.nombre}`"
+            :titulo="`Foto del ${fotoAbierta.fecha}`"
+            :descripcion="
+                fotoAbierta.epigrafe
+                    ? `${fotoAbierta.fecha} · ${fotoAbierta.epigrafe}`
+                    : fotoAbierta.fecha
+            "
+        >
+            <template v-if="puedeRegistrar" #acciones>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    class="touch-target"
+                    @click="editandoFoto = !editandoFoto"
+                >
+                    <Pencil class="size-4" aria-hidden="true" />
+                    {{ editandoFoto ? 'Cancelar' : 'Editar' }}
+                </Button>
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    class="touch-target"
+                    @click="eliminarFoto(fotoAbierta)"
+                >
+                    <Trash2 class="size-4" aria-hidden="true" />
+                    Eliminar
+                </Button>
+            </template>
+        </VisorImagen>
+
+        <!--
+            El formulario de edición va fuera del visor: adentro de un dialog a
+            pantalla completa el teclado del celular tapa el campo, y el sheet ya
+            resuelve eso. Se abre con «Editar» y cierra el visor.
+        -->
+        <Sheet v-if="fotoAbierta" v-model:open="editandoFoto">
+            <SheetContent
+                side="bottom"
+                class="gap-0 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+                <SheetHeader>
+                    <SheetTitle>Editar la foto</SheetTitle>
+                    <SheetDescription>
+                        La imagen no se cambia: para eso subí una nueva y borrá
+                        esta.
+                    </SheetDescription>
+                </SheetHeader>
+
+                <Form
+                    :key="fotoAbierta.id"
+                    :action="actualizarFoto([mascota.id, fotoAbierta.id]).url"
+                    method="patch"
+                    class="flex flex-col gap-4 p-4"
+                    :options="{ preserveScroll: true }"
+                    @success="editandoFoto = false"
+                    v-slot="{ errors, processing }"
+                >
+                    <div class="grid gap-2">
+                        <Label for="foto_fecha">Fecha *</Label>
+                        <Input
+                            id="foto_fecha"
+                            type="date"
+                            name="fecha"
+                            required
+                            class="touch-target"
+                            :default-value="fotoAbierta.fecha"
+                        />
+                        <InputError :message="errors.fecha" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="foto_epigrafe">Epígrafe</Label>
+                        <Input
+                            id="foto_epigrafe"
+                            name="epigrafe"
+                            maxlength="255"
+                            placeholder="Primer día en casa"
+                            :default-value="fotoAbierta.epigrafe ?? ''"
+                        />
+                        <InputError :message="errors.epigrafe" />
+                    </div>
+
+                    <Button
+                        type="submit"
+                        class="touch-target w-full"
+                        :disabled="processing"
+                    >
+                        <Spinner v-if="processing" />
+                        Guardar
+                    </Button>
+                </Form>
+            </SheetContent>
+        </Sheet>
     </div>
 </template>

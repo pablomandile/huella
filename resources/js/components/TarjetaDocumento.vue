@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Form, router } from '@inertiajs/vue3';
 import { Download, FileText, Trash2, Upload } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
 import CampoArchivos from '@/components/CampoArchivos.vue';
 import InputError from '@/components/InputError.vue';
+import VisorImagen from '@/components/VisorImagen.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,11 +41,25 @@ const props = defineProps<{
 }>();
 
 const sheet = ref(false);
+const visorAbierto = ref(false);
+const enElVisor = shallowRef<Adjunto | null>(null);
+
+function abrir(adjunto: Adjunto) {
+    enElVisor.value = adjunto;
+    visorAbierto.value = true;
+}
 
 function eliminar(adjunto: Adjunto) {
-    if (confirm(`¿Eliminar ${adjunto.nombre_original ?? 'este archivo'}?`)) {
-        router.delete(destroyAdjunto(adjunto.id).url, { preserveScroll: true });
+    if (!confirm(`¿Eliminar ${adjunto.nombre_original ?? 'este archivo'}?`)) {
+        return;
     }
+
+    // Si se borra lo que está abierto, el visor se queda con un `src` que da 404.
+    if (enElVisor.value?.id === adjunto.id) {
+        visorAbierto.value = false;
+    }
+
+    router.delete(destroyAdjunto(adjunto.id).url, { preserveScroll: true });
 }
 </script>
 
@@ -140,11 +155,19 @@ function eliminar(adjunto: Adjunto) {
                     :key="adjunto.id"
                     class="flex items-center gap-3 rounded-lg border border-border p-2"
                 >
-                    <a
-                        :href="adjunto.url"
-                        target="_blank"
-                        rel="noopener"
-                        class="flex min-w-0 flex-1 items-center gap-3"
+                    <!--
+                        Una imagen abre el visor; un PDF no se puede mostrar en un
+                        `img`, así que sigue abriéndose aparte. `component :is`
+                        para no duplicar todo el contenido en dos ramas.
+                    -->
+                    <component
+                        :is="adjunto.es_imagen ? 'button' : 'a'"
+                        :type="adjunto.es_imagen ? 'button' : undefined"
+                        :href="adjunto.es_imagen ? undefined : adjunto.url"
+                        :target="adjunto.es_imagen ? undefined : '_blank'"
+                        :rel="adjunto.es_imagen ? undefined : 'noopener'"
+                        class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        @click="adjunto.es_imagen && abrir(adjunto)"
                     >
                         <img
                             v-if="adjunto.miniatura_url"
@@ -178,7 +201,7 @@ function eliminar(adjunto: Adjunto) {
                                 </template>
                             </span>
                         </span>
-                    </a>
+                    </component>
 
                     <Button
                         variant="ghost"
@@ -208,4 +231,23 @@ function eliminar(adjunto: Adjunto) {
             </ul>
         </CardContent>
     </Card>
+
+    <!-- Uno solo para toda la tarjeta, no uno por archivo. -->
+    <VisorImagen
+        v-if="enElVisor"
+        v-model:abierto="visorAbierto"
+        :src="enElVisor.url"
+        :alt="enElVisor.nombre_original ?? props.titulo"
+        :titulo="`${props.titulo}: ${enElVisor.nombre_original ?? 'imagen'}`"
+        :descripcion="enElVisor.descripcion ?? enElVisor.nombre_original"
+    >
+        <template #acciones>
+            <Button variant="secondary" size="sm" as-child class="touch-target">
+                <a :href="enElVisor.descarga_url">
+                    <Download class="size-4" aria-hidden="true" />
+                    Descargar
+                </a>
+            </Button>
+        </template>
+    </VisorImagen>
 </template>
