@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { PawPrint, Plus } from '@lucide/vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { create, index, show } from '@/routes/mascotas';
@@ -102,6 +103,14 @@ defineOptions({
                                     · {{ mascota.raza }}</template
                                 >
                             </p>
+                            <!-- Una ficha compartida se ve igual que una propia:
+                                 sin esto no hay forma de saber cuál es cuál. -->
+                            <Badge
+                                v-if="!mascota.es_propia"
+                                variant="secondary"
+                                class="mt-1"
+                                >{{ mascota.rol_etiqueta }}</Badge
+                            >
                             <p
                                 v-if="mascota.edad"
                                 class="text-sm text-muted-foreground"

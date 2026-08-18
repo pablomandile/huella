@@ -46,7 +46,10 @@ class DiarioController extends Controller
             'categorias' => CategoriaEntrada::opciones(),
             'animos' => Animo::opciones(),
             'puedeRegistrar' => $request->user()->can('registrarEventos', $mascota),
-            'hoy' => $request->user()->hoy()->toDateString(),
+            // La zona del **propietario**, no la de quien mira: si un lector en otro
+            // país abre la ficha, "hoy" tiene que seguir siendo el día de la casa
+            // donde vive la mascota. `Mascota::$with` ya trae al propietario.
+            'hoy' => $mascota->propietario->hoy()->toDateString(),
         ]);
     }
 

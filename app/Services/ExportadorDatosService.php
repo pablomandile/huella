@@ -23,7 +23,10 @@ class ExportadorDatosService
      */
     public function para(User $usuario): array
     {
-        $mascotas = $usuario->mascotas()
+        // Solo las propias: "mis datos" son los míos. La mascota que alguien me
+        // compartió no entra ni aunque me haya dado permiso para editarla —el
+        // JSON se lleva el historial completo y las URLs de todos sus adjuntos—.
+        $mascotas = $usuario->mascotasPropias()
             ->with([
                 'alergias',
                 'visitas.veterinaria',

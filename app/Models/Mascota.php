@@ -150,6 +150,19 @@ class Mascota extends Model
     }
 
     /**
+     * Los enlaces públicos vigentes y vencidos de esta mascota.
+     *
+     * **No entra en `$with`.** Solo la usa el sheet de compartir; cargarla en
+     * cada listado sería una consulta por mascota para nada.
+     *
+     * @return HasMany<EnlaceCompartido, $this>
+     */
+    public function enlaces(): HasMany
+    {
+        return $this->hasMany(EnlaceCompartido::class)->orderByDesc('id');
+    }
+
+    /**
      * @return HasMany<FotoMascota, $this>
      */
     public function fotos(): HasMany

@@ -68,7 +68,10 @@ class PreventivoController extends Controller
                 Veterinario::disponiblesPara($usuario)->with('veterinaria')->orderBy('nombre')->get(),
             )->resolve(),
             'tiposDesparasitacion' => TipoDesparasitacion::opciones(),
-            'hoy' => $usuario->hoy()->toDateString(),
+            // La zona del **propietario**, no la de quien mira: si un lector en otro
+            // país abre la ficha, "hoy" tiene que seguir siendo el día de la casa
+            // donde vive la mascota. `Mascota::$with` ya trae al propietario.
+            'hoy' => $mascota->propietario->hoy()->toDateString(),
         ]);
     }
 

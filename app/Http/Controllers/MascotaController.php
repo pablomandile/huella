@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\Especie;
 use App\Enums\EstadoTratamiento;
+use App\Enums\RolCuidador;
 use App\Enums\Sexo;
 use App\Enums\TipoAdjunto;
 use App\Enums\TipoAlergia;
 use App\Enums\TipoPelaje;
+use App\Enums\VigenciaEnlace;
 use App\Http\Requests\ActualizarMascotaRequest;
 use App\Http\Requests\GuardarMascotaRequest;
 use App\Http\Resources\AdjuntoResource;
@@ -71,6 +73,8 @@ class MascotaController extends Controller
 
         $mascota->load(['fotos', 'alergias', 'adjuntos']);
 
+        $puedeCompartir = $request->user()->can('compartir', $mascota);
+
         // Las últimas visitas y lo que está tomando ahora: es lo que se busca
         // al abrir la ficha, y el resto del historial vive en su propia pantalla.
         $visitas = $mascota->visitas()
@@ -132,6 +136,40 @@ class MascotaController extends Controller
             'estadoRabia' => $mascota->estado_rabia,
             'puedeEditar' => $request->user()->can('update', $mascota),
             'puedeRegistrar' => $request->user()->can('registrarEventos', $mascota),
+            'puedeCompartir' => $puedeCompartir,
+            /*
+             * Quiénes tienen acceso y qué enlaces hay, **solo para el
+             * propietario**: los correos de los otros cuidadores no tienen por
+             * qué viajar al front de un lector, y el token de un enlace menos.
+             */
+            'accesos' => $puedeCompartir
+                ? $mascota->cuidadores
+                    ->map(fn ($cuidador) => [
+                        'id' => $cuidador->id,
+                        'nombre' => $cuidador->name,
+                        'email' => $cuidador->email,
+                        'rol' => $cuidador->getRelationValue('pivot')?->getAttribute('rol'),
+                    ])
+                    ->values()
+                    ->all()
+                : [],
+            'enlaces' => $puedeCompartir
+                ? $mascota->enlaces()->vigentes()->get()
+                    ->map(fn ($enlace) => [
+                        'id' => $enlace->id,
+                        'nombre' => $enlace->nombre,
+                        'url' => route('compartido.ficha', $enlace->token),
+                        'incluye_adjuntos' => $enlace->incluye_adjuntos,
+                        'vence' => $mascota->propietario
+                            ->enSuZona($enlace->expira_en)
+                            ?->translatedFormat('j \d\e F'),
+                        'visitas' => $enlace->visitas,
+                    ])
+                    ->all()
+                : [],
+            'rolesInvitables' => RolCuidador::opcionesParaInvitar(),
+            'vigencias' => VigenciaEnlace::opciones(),
+            'vigenciaPorDefecto' => VigenciaEnlace::porDefecto()->value,
             'tiposAlergia' => TipoAlergia::opciones(),
         ]);
     }

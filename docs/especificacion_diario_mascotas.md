@@ -50,7 +50,9 @@ El eje del producto es el **diario**: una línea de tiempo única donde conviven
 
 - Aplicación móvil nativa (se resuelve con PWA responsive).
 - Portal para veterinarios o carga por parte del profesional.
-- Compartir mascotas entre varios usuarios (multi-cuidador).
+- ~~Compartir mascotas entre varios usuarios (multi-cuidador).~~ **Implementado**
+  después de la v1, con roles de lector y cuidador: ver «Compartir la ficha» en
+  `CLAUDE.md`.
 - Integración con tiendas, turnos online o pagos.
 - Diagnóstico automático o sugerencias clínicas. **El sistema registra, no aconseja.**
 - Geolocalización y búsqueda de veterinarias cercanas.
@@ -60,7 +62,7 @@ El eje del producto es el **diario**: una línea de tiempo única donde conviven
 
 | Funcionalidad | Motivo |
 |---|---|
-| Multi-cuidador con permisos | Requiere modelo de roles y compartición |
+| ~~Multi-cuidador con permisos~~ | Hecho: lector y cuidador, invitación por email y enlace público de solo lectura |
 | Sincronización offline | Complejidad alta; evaluar según uso real |
 | Notificaciones push | Empezar con email y recordatorios in-app |
 | Registro de gastos y reportes | Los campos de costo ya existen; el módulo de análisis viene después |
@@ -72,7 +74,7 @@ El eje del producto es el **diario**: una línea de tiempo única donde conviven
 
 | Actor | Descripción |
 |---|---|
-| **Dueño / usuario** | Único rol en v1. Da de alta mascotas y carga toda la información. |
+| **Dueño / usuario** | Da de alta mascotas y carga toda la información. Puede compartir la ficha como lector o cuidador. |
 | **Sistema (jobs programados)** | Genera recordatorios, calcula próximas fechas, envía notificaciones. |
 | **Veterinario** | Entidad de datos, no usuario del sistema en v1. |
 
@@ -258,7 +260,7 @@ Vista de entrada al sistema, con:
 |---|---|
 | **Responsive** | Mobile first. La carga en la veterinaria se hace desde el celular. |
 | **Rendimiento** | Carga de la línea de tiempo con paginación; imágenes en WebP con lazy loading. |
-| **Privacidad** | Datos de una cuenta jamás visibles para otra. Adjuntos servidos tras verificar propiedad, nunca por URL pública directa. |
+| **Privacidad** | Datos de una cuenta jamás visibles para otra, **salvo que el propietario los comparta explícitamente**: invitando a una cuenta, o con un enlace de solo lectura con vencimiento obligatorio y revocable. Adjuntos servidos tras verificar propiedad o el alcance del enlace, nunca por URL pública directa. |
 | **Backup** | Exportación completa de los datos del usuario en JSON. |
 | **Idioma** | Español rioplatense. Estructura preparada para i18n, sin implementarla en v1. |
 | **Zona horaria** | Configurable por usuario; los recordatorios respetan su huso. |

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\RolCuidador;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
@@ -74,6 +75,50 @@ class User extends Authenticatable implements PasskeyUser
         return $this->belongsToMany(Mascota::class, 'mascota_usuario', 'usuario_id', 'mascota_id')
             ->withPivot('rol')
             ->withTimestamps();
+    }
+
+    /*
+     * Hay **tres** relaciones y cada una contesta una pregunta distinta. Elegir
+     * la equivocada no da ningún error: da datos de más o avisos que no llegan.
+     *
+     *   mascotas()        ¿qué puedo mirar?   propietario + cuidador + lector
+     *   mascotasACargo()  ¿qué puedo hacer?   propietario + cuidador
+     *   mascotasPropias() ¿qué es mío?        propietario
+     */
+
+    /**
+     * Las mascotas en las que este usuario **puede hacer algo**: las suyas y las
+     * que le compartieron con rol de cuidador.
+     *
+     * Va en las pantallas de acción —Medicación de hoy, la agenda, el
+     * dashboard—: un lector no da la medicación, así que mostrarle tomas que al
+     * tocarlas dan 403 es peor que no mostrárselas.
+     *
+     * @return BelongsToMany<Mascota, $this>
+     */
+    public function mascotasACargo(): BelongsToMany
+    {
+        return $this->mascotas()->wherePivot('rol', '!=', RolCuidador::Lector->value);
+    }
+
+    /**
+     * Solo las propias. Es la más restrictiva y la usan dos cosas puntuales.
+     *
+     * **El aviso por mail.** Los recordatorios cuelgan de la mascota, no del
+     * usuario, y el comando los marca como notificados **por id**: si dos
+     * personas de la misma mascota entraran en esa consulta, la que corriera
+     * primero se llevaría el aviso y la otra no lo recibiría nunca. Con el mail
+     * yendo solo al dueño el problema no existe. El cuidador igual ve todo lo
+     * que hay que hacer en la app; lo que no recibe es el correo.
+     *
+     * **`mis-datos`.** Exportar es llevarse lo propio: el historial de la
+     * mascota de otro no entra, ni siquiera con permiso para editarla.
+     *
+     * @return BelongsToMany<Mascota, $this>
+     */
+    public function mascotasPropias(): BelongsToMany
+    {
+        return $this->mascotas()->wherePivot('rol', RolCuidador::Propietario->value);
     }
 
     /*

@@ -15,6 +15,9 @@ createInertiaApp({
             case name === 'Welcome':
                 return null;
             case name.startsWith('auth/'):
+            // La invitación se abre sin sesión: con AppLayout, NavUser recibiría
+            // un `auth.user` nulo y rompería la página antes de mostrarse.
+            case name.startsWith('invitaciones/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];

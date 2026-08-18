@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ProtegerFichaCompartida;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        $middleware->alias([
+            'ficha-compartida' => ProtegerFichaCompartida::class,
+        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,
@@ -40,6 +45,31 @@ return Application::configure(basePath: dirname(__DIR__))
          * mucho más que una pantalla linda.
          */
         $exceptions->respond(function (SymfonyResponse $respuesta, Throwable $e, Request $request) {
+            /*
+             * La ficha compartida no es la app: quien la abre no tiene cuenta, y
+             * la pantalla de error de Inertia le ofrecería iniciar sesión y le
+             * mostraría el chrome de una aplicación que no es suya. Va una vista
+             * suelta y neutra, antes que cualquier otra rama —incluso en local,
+             * porque estos dos estados son parte del diseño y no fallas.
+             */
+            if ($request->is('compartido/*')) {
+                $codigo = $respuesta->getStatusCode();
+
+                if ($codigo === 410) {
+                    return response()->view('publico.no-disponible', [
+                        'titulo' => 'Este enlace ya venció',
+                        'detalle' => 'Pedile uno nuevo a la persona que te lo compartió.',
+                    ], 410);
+                }
+
+                if ($codigo === 404) {
+                    return response()->view('publico.no-disponible', [
+                        'titulo' => 'Este enlace ya no está disponible',
+                        'detalle' => 'Puede que lo hayan dado de baja. Pedile uno nuevo a quien te lo mandó.',
+                    ], 404);
+                }
+            }
+
             $enPantalla = [403, 404, 419, 500, 503];
 
             if (app()->environment('local') || ! in_array($respuesta->getStatusCode(), $enPantalla, true)) {

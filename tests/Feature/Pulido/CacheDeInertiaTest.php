@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Models\EnlaceCompartido;
+use App\Models\Mascota;
 use App\Models\User;
 
 /*
@@ -54,6 +56,32 @@ it('declara X-Inertia en el Vary de las dos variantes', function () {
 
     expect($html->headers->get('Vary'))->toContain('X-Inertia');
     expect($json->headers->get('Vary'))->toContain('X-Inertia');
+});
+
+it('sí pone no-store en el HTML de la ficha compartida', function () {
+    /*
+     * La excepción a la regla de arriba, y va al revés a propósito.
+     *
+     * La ficha compartida no es la app: es una historia clínica ajena abierta en
+     * un dispositivo ajeno, quizá el de una veterinaria. Ahí perder el bfcache es
+     * exactamente lo que se busca —después de revocar el enlace, "atrás" no puede
+     * repintar la ficha desde la memoria del navegador—, y el costo lo paga un
+     * invitado en una sola página, no el usuario de la app.
+     *
+     * Sin este caso, alguien va a "arreglar" el middleware creyendo que contradice
+     * al test de acá arriba.
+     */
+    $mascota = Mascota::factory()->create();
+    $enlace = EnlaceCompartido::factory()->create([
+        'mascota_id' => $mascota->id,
+        'creado_por' => $mascota->usuario_id,
+    ]);
+
+    $respuesta = $this->get(route('compartido.ficha', $enlace->token));
+
+    $respuesta->assertOk();
+    expect($respuesta->headers->get('Content-Type'))->toContain('text/html');
+    expect($respuesta->headers->get('Cache-Control'))->toContain('no-store');
 });
 
 it('también protege las pantallas con sesión', function () {
