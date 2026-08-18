@@ -89,7 +89,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Navegación sin conexión: cartel propio en vez del dinosaurio.
+    // Navegaciones: cartel propio en vez del dinosaurio si no hay conexión, y
+    // rescate si la caché del navegador contestó con la variante JSON.
     if (esNavegacion(request)) {
         event.respondWith(
             fetch(request)
