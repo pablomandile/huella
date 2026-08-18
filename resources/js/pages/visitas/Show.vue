@@ -11,9 +11,10 @@ import {
     Thermometer,
     Trash2,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
 import { Form } from '@inertiajs/vue3';
 import CamposTratamiento from '@/components/CamposTratamiento.vue';
+import VisorImagen from '@/components/VisorImagen.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -54,10 +55,25 @@ defineOptions({
 
 const sheetTratamiento = ref(false);
 
+const visorAbierto = ref(false);
+const enElVisor = shallowRef<Adjunto | null>(null);
+
+function abrirAdjunto(adjunto: Adjunto) {
+    enElVisor.value = adjunto;
+    visorAbierto.value = true;
+}
+
 function eliminarAdjunto(adjunto: Adjunto) {
-    if (confirm(`¿Eliminar ${adjunto.nombre_original ?? 'este archivo'}?`)) {
-        router.delete(destroyAdjunto(adjunto.id).url, { preserveScroll: true });
+    if (!confirm(`¿Eliminar ${adjunto.nombre_original ?? 'este archivo'}?`)) {
+        return;
     }
+
+    // Si se borra lo abierto, el visor queda con un `src` que ya da 404.
+    if (enElVisor.value?.id === adjunto.id) {
+        visorAbierto.value = false;
+    }
+
+    router.delete(destroyAdjunto(adjunto.id).url, { preserveScroll: true });
 }
 
 /** "12 de 21 dadas" — la adherencia al tratamiento de un vistazo. */
@@ -256,16 +272,28 @@ function progreso(tratamiento: Tratamiento): string | null {
                     :key="adjunto.id"
                     class="flex items-center gap-3 rounded-xl border border-border p-3"
                 >
-                    <a
-                        :href="adjunto.url"
-                        target="_blank"
-                        rel="noopener"
-                        class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted"
+                    <!--
+                        Una radiografía o un análisis se miran en grande: abren el
+                        visor. Un PDF no se puede mostrar en un `img`, así que
+                        sigue abriéndose aparte.
+                    -->
+                    <component
+                        :is="adjunto.es_imagen ? 'button' : 'a'"
+                        :type="adjunto.es_imagen ? 'button' : undefined"
+                        :href="adjunto.es_imagen ? undefined : adjunto.url"
+                        :target="adjunto.es_imagen ? undefined : '_blank'"
+                        :rel="adjunto.es_imagen ? undefined : 'noopener'"
+                        class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+                        @click="adjunto.es_imagen && abrirAdjunto(adjunto)"
                     >
                         <img
                             v-if="adjunto.miniatura_url"
                             :src="adjunto.miniatura_url"
-                            :alt="adjunto.nombre_original ?? 'Adjunto'"
+                            :alt="
+                                adjunto.es_imagen
+                                    ? `Ver ${adjunto.nombre_original ?? 'el adjunto'} en grande`
+                                    : (adjunto.nombre_original ?? 'Adjunto')
+                            "
                             class="size-full object-cover"
                             loading="lazy"
                         />
@@ -274,7 +302,7 @@ function progreso(tratamiento: Tratamiento): string | null {
                             class="size-6 text-muted-foreground"
                             aria-hidden="true"
                         />
-                    </a>
+                    </component>
 
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-sm font-medium">
@@ -382,4 +410,27 @@ function progreso(tratamiento: Tratamiento): string | null {
             </SheetContent>
         </Sheet>
     </div>
+
+    <!-- Uno solo para la pantalla, fuera del v-for de los adjuntos. -->
+    <VisorImagen
+        v-if="enElVisor"
+        v-model:abierto="visorAbierto"
+        :src="enElVisor.url"
+        :alt="enElVisor.nombre_original ?? 'Adjunto de la visita'"
+        :titulo="`${enElVisor.tipo_etiqueta}: ${enElVisor.nombre_original ?? 'imagen'}`"
+        :descripcion="
+            [enElVisor.tipo_etiqueta, enElVisor.descripcion]
+                .filter(Boolean)
+                .join(' · ')
+        "
+    >
+        <template #acciones>
+            <Button variant="secondary" size="sm" as-child class="touch-target">
+                <a :href="enElVisor.descarga_url">
+                    <Download class="size-4" aria-hidden="true" />
+                    Descargar
+                </a>
+            </Button>
+        </template>
+    </VisorImagen>
 </template>

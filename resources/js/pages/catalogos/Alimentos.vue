@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { Package } from '@lucide/vue';
+import { ref, shallowRef } from 'vue';
 import CampoCheck from '@/components/CampoCheck.vue';
 import CampoFoto from '@/components/CampoFoto.vue';
 import InputError from '@/components/InputError.vue';
 import ListaCatalogo from '@/components/ListaCatalogo.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
 import TextareaNativo from '@/components/TextareaNativo.vue';
+import VisorImagen from '@/components/VisorImagen.vue';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +29,14 @@ defineProps<{
     especies: OpcionEnum[];
     etapas: OpcionEnum[];
 }>();
+
+const visorAbierto = ref(false);
+const enElVisor = shallowRef<Alimento | null>(null);
+
+function abrirFoto(alimento: Alimento) {
+    enElVisor.value = alimento;
+    visorAbierto.value = true;
+}
 
 defineOptions({
     layout: {
@@ -56,15 +66,21 @@ defineOptions({
                 bolsa de un vistazo, que es más rápido que leer marca y nombre.
             -->
             <div class="flex items-start gap-3">
-                <img
+                <button
                     v-if="registro.foto_miniatura_url"
-                    :src="registro.foto_miniatura_url"
-                    :alt="`Paquete de ${registro.etiqueta}`"
-                    width="48"
-                    height="48"
-                    loading="lazy"
-                    class="size-12 shrink-0 rounded-md border border-border object-cover"
-                />
+                    type="button"
+                    class="shrink-0 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+                    @click="abrirFoto(registro)"
+                >
+                    <img
+                        :src="registro.foto_miniatura_url"
+                        :alt="`Ver el paquete de ${registro.etiqueta} en grande`"
+                        width="48"
+                        height="48"
+                        loading="lazy"
+                        class="size-12 rounded-md border border-border object-cover"
+                    />
+                </button>
 
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ registro.etiqueta }}</p>
@@ -232,4 +248,18 @@ defineOptions({
             </div>
         </template>
     </ListaCatalogo>
+
+    <!-- Uno solo para la pantalla, no uno por fila. -->
+    <VisorImagen
+        v-if="enElVisor?.foto_url"
+        v-model:abierto="visorAbierto"
+        :src="enElVisor.foto_url"
+        :alt="`Paquete de ${enElVisor.etiqueta}`"
+        :titulo="`Paquete de ${enElVisor.etiqueta}`"
+        :descripcion="
+            [enElVisor.etiqueta, enElVisor.presentacion]
+                .filter(Boolean)
+                .join(' · ')
+        "
+    />
 </template>
