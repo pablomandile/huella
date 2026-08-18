@@ -5,6 +5,7 @@ import {
     PawPrint,
     PillBottle,
     Settings,
+    Stethoscope,
 } from '@lucide/vue';
 import { dashboard } from '@/routes';
 import { index as catalogosIndex } from '@/routes/catalogos';
@@ -12,6 +13,7 @@ import { index as mascotasIndex } from '@/routes/mascotas';
 import { index as medicacionIndex } from '@/routes/medicacion';
 import { edit as editProfile } from '@/routes/profile';
 import { index as recordatoriosIndex } from '@/routes/recordatorios';
+import { elegir as elegirMascotaVisitas } from '@/routes/visitas';
 import type { NavItem } from '@/types';
 
 /**
@@ -32,6 +34,16 @@ export const destinosPrincipales: NavItem[] = [
         title: 'Mascotas',
         href: mascotasIndex(),
         icon: PawPrint,
+    },
+    /*
+     * Las visitas también se llegan desde la ficha de cada mascota. Acá el
+     * destino es el paso previo que pregunta de quién es la visita: con una sola
+     * mascota redirige solo, así que no cuesta un click de más.
+     */
+    {
+        title: 'Visitas',
+        href: elegirMascotaVisitas(),
+        icon: Stethoscope,
     },
     {
         title: 'Agenda',
@@ -58,9 +70,15 @@ export const destinosPrincipales: NavItem[] = [
  * Catálogos queda afuera y no es un olvido: se cargan una vez al principio y
  * después casi nunca. En el celular se llega por el menú de usuario, que es
  * donde uno busca la configuración; en escritorio está en la sidebar.
+ *
+ * Visitas también queda afuera, por la misma cuenta de cinco: sumarla haría seis
+ * y habría que achicar el área táctil o cortar las etiquetas. Está en el menú, y
+ * el camino corto sigue siendo la ficha de la mascota que estás mirando.
  */
 export const destinosBarraInferior: NavItem[] = [
-    ...destinosPrincipales.filter((destino) => destino.title !== 'Catálogos'),
+    ...destinosPrincipales.filter(
+        (destino) => !['Catálogos', 'Visitas'].includes(destino.title),
+    ),
     {
         title: 'Perfil',
         href: editProfile(),

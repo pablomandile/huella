@@ -271,11 +271,46 @@ la dosis y que el veterinario emita el certificado.
 - Fuera de ese caso, todo lo que escribe va por Inertia. `resources/js/lib/http.ts`
   existe solo para el alta al vuelo.
 
+## Galería y visor de imágenes
+
+- `VisorImagen` es **uno solo** por pantalla, fuera de cualquier `v-for`: uno por foto
+  multiplicaría los overlays y los focus traps de reka-ui por la cantidad de imágenes.
+  Lo usan la galería, los documentos de la mascota, los adjuntos de una visita y el
+  paquete de un alimento.
+- **X propia y no la del `DialogContent`**, que va con `opacity-70` y sin área táctil: sobre
+  fondo oscuro no se ve y en el celular no se acierta.
+- **`object-contain`, nunca `cover`.** Recortar una imagen que el usuario abrió para leer
+  es perder justo lo que fue a ver.
+- El visor **se cierra antes de borrar** lo que está mostrando, o queda con un `src` que
+  ya da 404.
+- Los PDF no abren en el visor: no se pueden mostrar en un `img`, así que siguen yendo a
+  otra pestaña.
+- **Nada de acciones que dependan solo de `hover`.** El borrado de la galería vivía en un
+  ícono con `group-hover` y en el celular era invisible: justo donde se usa la app. Las
+  acciones de una foto están adentro del visor, que se abre con un toque.
+- El **pase de fotos** ordena por el campo `fecha` ascendente, no por orden de carga: la
+  grilla se ve al revés porque ahí interesa lo último, pero un pase cuenta la vida de la
+  mascota y tiene que ir de lo más viejo a lo más nuevo. `fecha` llega como `YYYY-MM-DD`,
+  así que alcanza el orden alfabético, con desempate por id para que dos fotos del mismo
+  día no se muevan entre renders.
+- El pase **tiene que poder pausarse**: WCAG 2.2.2 lo pide para todo lo que se mueve solo
+  por más de cinco segundos. Avanzar a mano reinicia la cuenta, y el reloj solo corre con
+  el pase abierto.
+- Las dos imágenes se cruzan por opacidad. Con `mode="out-in"` habría un instante en negro
+  entre una y otra, que es lo que hace que un pase se sienta brusco.
+
 ## Mobile first
 
 La carga real ocurre en la veterinaria, con el celular en la mano.
 
 - Bottom tab bar + FAB en `< md`; sidebar en `>= md`. **Mismo árbol de rutas**, no dos apps.
+- La barra inferior tiene **cinco destinos y no más**: con seis hay que achicar el área
+  táctil por debajo de 44px o cortar las etiquetas. Catálogos y Visitas quedan afuera a
+  propósito y están en el menú. `lib/navegacion.ts` es la definición única de las dos.
+- Las pantallas por mascota se llegan desde su ficha. Cuando además están en el menú
+  —que no tiene contexto de mascota— hace falta un paso previo que pregunte de quién es:
+  `visitas.elegir`. **Con una sola mascota redirige sin mostrarse**, porque preguntar cuál
+  cuando hay una es un click de más en cada uso.
 - Sheets en vez de modales en pantallas chicas.
 - Teclado correcto: `inputmode="decimal"` para peso, `type="date"`, `type="tel"`.
 - Áreas táctiles de 44 px mínimo. `env(safe-area-inset-bottom)` en la barra inferior.

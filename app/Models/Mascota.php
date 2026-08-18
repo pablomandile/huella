@@ -274,6 +274,19 @@ class Mascota extends Model
         return $this->hasOne(RegistroPeso::class)->latestOfMany('fecha');
     }
 
+    /**
+     * La última visita, para ubicarla sin entrar a la ficha.
+     *
+     * Relación y no `withMax`: un agregado de consulta no es una propiedad del
+     * modelo, y declararlo en el docblock sería decir que está siempre.
+     *
+     * @return HasOne<Visita, $this>
+     */
+    public function ultimaVisita(): HasOne
+    {
+        return $this->hasOne(Visita::class)->latestOfMany('fecha_hora');
+    }
+
     public function rolDe(User $usuario): ?RolCuidador
     {
         $fila = $this->cuidadores->firstWhere('id', $usuario->id);

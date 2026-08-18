@@ -86,6 +86,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Núcleo clínico. Las visitas cuelgan de la mascota; los tratamientos
      * también, porque uno de rutina puede no venir de ninguna consulta.
      */
+    /*
+     * Las visitas se llegan desde la ficha de la mascota, y también desde el
+     * menú. Por el menú no hay contexto de mascota, así que `visitas.elegir` es
+     * el paso previo que pregunta de quién es —y con una sola redirige solo—.
+     */
+    Route::get('visitas', [VisitaController::class, 'elegir'])->name('visitas.elegir');
+
     Route::resource('mascotas.visitas', VisitaController::class)
         ->parameters(['mascotas' => 'mascota', 'visitas' => 'visita']);
 

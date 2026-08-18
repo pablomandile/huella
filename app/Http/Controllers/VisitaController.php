@@ -29,6 +29,53 @@ class VisitaController extends Controller
 {
     public function __construct(private readonly RegistroVisitaService $visitas) {}
 
+    /**
+     * El paso previo cuando se entra por el menú: ¿de qué mascota es la visita?
+     *
+     * Desde la ficha esto no existe —ahí la mascota ya está elegida—, pero el
+     * menú no tiene contexto. Con una sola mascota redirige derecho: preguntar
+     * cuál cuando hay una es un click de más en cada uso.
+     */
+    public function elegir(Request $request): Response|RedirectResponse
+    {
+        $usuario = $request->user();
+
+        /*
+         * `withCount` y `max` en la consulta, no en PHP: con la lista de mascotas
+         * cargada y `preventLazyLoading` activo, recorrer `->visitas` acá sería
+         * una consulta por mascota y una excepción en desarrollo.
+         */
+        $mascotas = $usuario->mascotas()
+            ->withCount('visitas')
+            ->with('ultimaVisita')
+            ->orderBy('nombre')
+            ->get();
+
+        if ($mascotas->isEmpty()) {
+            return redirect()
+                ->route('mascotas.create')
+                ->with('warning', 'Primero cargá una mascota para poder anotarle visitas.');
+        }
+
+        if ($mascotas->count() === 1) {
+            return redirect()->route('mascotas.visitas.index', $mascotas->first());
+        }
+
+        return Inertia::render('visitas/Elegir', [
+            'mascotas' => $mascotas->map(fn (Mascota $mascota) => [
+                ...MascotaResource::make($mascota)->resolve(),
+                'visitas_count' => $mascota->visitas_count,
+                // La fecha de la última visita ubica sin tener que entrar.
+                'ultima_visita' => $usuario
+                    ->enSuZona($mascota->ultimaVisita?->fecha_hora)
+                    ?->format('d/m/Y'),
+                'url' => route('mascotas.visitas.index', $mascota),
+            ])->all(),
+            // Viene preseleccionada la que se estaba mirando, si hay alguna.
+            'mascotaActivaId' => session('mascota_activa_id'),
+        ]);
+    }
+
     public function index(Request $request, Mascota $mascota): Response
     {
         Gate::authorize('view', $mascota);

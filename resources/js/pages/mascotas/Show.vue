@@ -7,6 +7,7 @@ import {
     PawPrint,
     Pencil,
     Pill,
+    Play,
     Plus,
     ShieldCheck,
     Stethoscope,
@@ -16,6 +17,7 @@ import { ref, shallowRef } from 'vue';
 import CampoFoto from '@/components/CampoFoto.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
+import PaseDeFotos from '@/components/PaseDeFotos.vue';
 import TarjetaDocumento from '@/components/TarjetaDocumento.vue';
 import VisorImagen from '@/components/VisorImagen.vue';
 import { Badge } from '@/components/ui/badge';
@@ -122,6 +124,7 @@ const dialogoAlergia = ref(false);
 const hoy = new Date().toISOString().slice(0, 10);
 
 const visorAbierto = ref(false);
+const paseAbierto = ref(false);
 const editandoFoto = ref(false);
 const fotoAbierta = shallowRef<FotoGaleria | null>(null);
 
@@ -679,6 +682,21 @@ const datosFicha = (mascota: Mascota): [string, string][] =>
         <Card>
             <CardHeader class="flex flex-row items-center justify-between">
                 <CardTitle>Galería</CardTitle>
+                <!--
+                    El pase necesita al menos dos fotos: con una sola no hay nada
+                    que pasar y el botón sería una promesa vacía.
+                -->
+                <Button
+                    v-if="fotos.length > 1"
+                    variant="ghost"
+                    size="icon"
+                    class="mr-2 ml-auto touch-target"
+                    aria-label="Ver las fotos en pantalla completa, de la más vieja a la más nueva"
+                    data-test="pase-play"
+                    @click="paseAbierto = true"
+                >
+                    <Play class="size-4" aria-hidden="true" />
+                </Button>
                 <Dialog v-if="puedeRegistrar" v-model:open="dialogoFoto">
                     <DialogTrigger as-child>
                         <Button
@@ -776,6 +794,14 @@ const datosFicha = (mascota: Mascota): [string, string][] =>
                 </div>
             </CardContent>
         </Card>
+
+        <!-- Pase de fotos: uno solo, y solo si hay más de una. -->
+        <PaseDeFotos
+            v-if="fotos.length > 1"
+            v-model:abierto="paseAbierto"
+            :fotos="fotos"
+            :nombre-mascota="mascota.nombre"
+        />
 
         <!--
             Visor de la galería. Vive acá y no dentro del `v-for` para que haya
