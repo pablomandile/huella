@@ -46,6 +46,24 @@ carpeta con su `default.php` (el original quedó guardado en
 
 **Nunca se sobreescriben** en el server: `.env`, `storage/` ni la base de datos.
 
+**El CDN de Hostinger reescribe el `Vary`, y cuando comprime con brotli lo borra.** No es
+un detalle de trivia: `Vary` es lo único que distingue el HTML de una URL de su JSON de
+Inertia, y sin él el navegador confunde uno con otro (ver *Caché de las respuestas de
+Inertia* en `CLAUDE.md`). Se comprueba en tres líneas:
+
+```bash
+for AE in "gzip, deflate, br, zstd" "gzip" "identity"; do
+  printf "%-26s -> " "$AE"
+  curl -sI https://huella.pablomandile.com.ar/login -H "Accept-Encoding: $AE" \
+    | tr -d '\r' | grep -iE "^(vary|content-encoding):" | paste -sd' · '
+done
+# br    -> content-encoding: br    ·  (sin Vary)   <- lo que manda un navegador real
+# gzip  -> content-encoding: gzip  ·  vary: Accept-Encoding
+```
+
+Moraleja general: **no confíes en que un header que setea la app llegue al navegador.**
+Si algo depende de un header, verificalo con `curl` contra producción, no contra local.
+
 ## Deploy de un cambio
 
 Según lo que tocaste:

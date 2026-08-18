@@ -257,6 +257,31 @@ Service worker propio en `public/sw.js`. **No** usar `vite-plugin-pwa`.
 - En producción, `sw.js` y `manifest.webmanifest` necesitan `no-cache` en `.htaccess`,
   o el CDN sirve un service worker viejo durante días y congela todo lo demás.
 
+## Caché de las respuestas de Inertia
+
+Una misma URL contesta **dos cuerpos distintos** según el header `X-Inertia`: el HTML de
+arranque, o el JSON de la página. Lo único que las separa para una caché es
+`Vary: X-Inertia` — y el CDN de Hostinger lo **borra** cuando comprime con brotli, que es
+lo que pide cualquier navegador real. Sin ese header, y con el `Cache-Control: no-cache`
+que Symfony pone por defecto, el navegador guarda el JSON bajo la URL de la página. Cuando
+Chrome descarta una pestaña inactiva y después la restaura, esa navegación es de historial
+y reusa lo guardado **sin revalidar**: aparece el JSON crudo en pantalla y la app no
+arranca. Un F5 lo tapa, porque una recarga sí revalida.
+
+- El arreglo vive en `HandleInertiaRequests::handle()`: `Cache-Control: no-store` cuando la
+  petición trae `X-Inertia`, y `Vary: X-Inertia, Accept-Encoding` siempre.
+- **`no-cache` no alcanza:** permite guardar y solo obliga a revalidar, y la navegación de
+  historial es justamente la que saltea la revalidación. Hace falta `no-store`.
+- **Nunca poner `no-store` en el documento HTML.** Chrome desactiva el back/forward cache
+  de las páginas que lo traen y cada "atrás" pasa a ser una ida completa a la red. No da
+  ningún síntoma; lo cuida `CacheDeInertiaTest`.
+- El `sw.js` tiene además una red de seguridad: si una **navegación** contesta
+  `application/json`, la vuelve a pedir con `cache: 'reload'`. Es para las entradas que ya
+  quedaron guardadas en los navegadores de antes del arreglo. Cuando el bug ocurre la app
+  nunca arranca, así que el service worker es el único que puede repararlo.
+- Pasa igual en cualquier app Inertia de este hosting. La skill `inertia-json-crudo` tiene
+  el diagnóstico y el parche para portarlo.
+
 ## Reglas de negocio que se validan en la aplicación
 
 1. Solo una dieta por mascota con `fecha_fin` NULL. Al crear una nueva, cerrar la anterior

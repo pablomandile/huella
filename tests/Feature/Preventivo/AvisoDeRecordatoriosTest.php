@@ -177,10 +177,17 @@ it('el mail se arma en español y con el detalle de cada recordatorio', function
     $usuario = User::factory()->create(['name' => 'Pablo']);
     $mascota = Mascota::factory()->for($usuario, 'propietario')->create(['nombre' => 'Greta']);
 
+    /*
+     * `$usuario->hoyCalendario()` y no `now()`: el mail dice "es mañana"
+     * comparando contra el día **del usuario**, y con el servidor en UTC esos dos
+     * días no son el mismo. A las 22:00 de Buenos Aires, `now()->addDay()` cae
+     * dos días después de hoy para el usuario, y el mail —con razón— dice
+     * "faltan 2 días". El test fallaba solo entre las 21:00 y la medianoche.
+     */
     $recordatorio = Recordatorio::factory()->for($mascota)->create([
         'titulo' => 'Refuerzo de Quíntuple para Greta',
         'descripcion' => 'La última dosis fue el 17/08/2026.',
-        'fecha_objetivo' => now()->addDay()->toDateString(),
+        'fecha_objetivo' => $usuario->hoyCalendario()->addDay()->toDateString(),
     ]);
 
     $mail = new RecordatoriosDelDia($usuario, collect([$recordatorio->load('mascota')]));

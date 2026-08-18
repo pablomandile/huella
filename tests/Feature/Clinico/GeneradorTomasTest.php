@@ -123,6 +123,14 @@ it('genera las tomas pasadas de un tratamiento cargado con retraso', function ()
 });
 
 it('al regenerar no toca lo administrado ni lo omitido', function () {
+    /*
+     * El reloj se congela al mediodía porque el test necesita **tres** tomas ya
+     * pasadas, y cuántas hay depende de la hora: arrancando ayer a las 08:00 cada
+     * 8 horas, a las 00:30 de hoy solo pasaron dos. Al mediodía pasaron cuatro,
+     * y a esa hora UTC y Buenos Aires coinciden en el día de calendario.
+     */
+    $this->travelTo(now()->setTime(12, 0));
+
     $usuario = User::factory()->create();
     $tratamiento = tratamientoDe($usuario, [
         'frecuencia_horas' => 8,

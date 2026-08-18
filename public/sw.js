@@ -92,16 +92,66 @@ self.addEventListener('fetch', (event) => {
     // Navegación sin conexión: cartel propio en vez del dinosaurio.
     if (esNavegacion(request)) {
         event.respondWith(
-            fetch(request).catch(() =>
-                caches.match(OFFLINE_URL).then(
-                    (cacheada) =>
-                        cacheada ||
-                        new Response('Sin conexión', {
-                            status: 503,
-                            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-                        }),
+            fetch(request)
+                .then((respuesta) => {
+                    /*
+                     * Una navegación no puede recibir la variante JSON de una
+                     * página: la misma URL devuelve HTML o JSON según el header
+                     * `X-Inertia`, y el CDN de Hostinger borra el `Vary` que las
+                     * distingue, así que el navegador las confunde. El servidor
+                     * ya manda `no-store` para que no vuelva a pasar, pero las
+                     * entradas guardadas de antes siguen ahí, y con el JSON en
+                     * pantalla la app no arranca: ningún script de la página
+                     * puede repararlo, solo esto.
+                     *
+                     * Dos condiciones, y las dos hacen falta:
+                     *
+                     * `request.mode === 'navigate'` porque `esNavegacion()` de
+                     * acá arriba también da true para los XHR de Inertia —el
+                     * router manda `Accept: text/html`—, y "arreglarles" la
+                     * respuesta les devolvería el HTML de arranque en vez del
+                     * JSON de la página: la SPA dejaría de navegar.
+                     *
+                     * Y el header `X-Inertia` de la **respuesta** en vez del
+                     * content-type, porque `/mis-datos` es una navegación que
+                     * contesta JSON de verdad y la pediríamos dos veces. Ese
+                     * header solo lo trae una respuesta armada para un XHR.
+                     */
+                    if (
+                        request.mode !== 'navigate' ||
+                        !respuesta.headers.get('x-inertia')
+                    ) {
+                        return respuesta;
+                    }
+
+                    return fetch(request.url, {
+                        cache: 'reload',
+                        headers: { Accept: 'text/html' },
+                    }).then((recuperada) =>
+                        /*
+                         * Si la sesión venció, esa URL redirige al login. Una
+                         * respuesta ya redirigida no se le puede entregar a una
+                         * navegación —el Service Worker API lo prohíbe—, así que
+                         * se le pasa el redirect y lo sigue el navegador, que
+                         * además deja la barra de direcciones donde corresponde.
+                         */
+                        recuperada.redirected
+                            ? Response.redirect(recuperada.url, 302)
+                            : recuperada,
+                    );
+                })
+                .catch(() =>
+                    caches.match(OFFLINE_URL).then(
+                        (cacheada) =>
+                            cacheada ||
+                            new Response('Sin conexión', {
+                                status: 503,
+                                headers: {
+                                    'Content-Type': 'text/plain; charset=utf-8',
+                                },
+                            }),
+                    ),
                 ),
-            ),
         );
         return;
     }
