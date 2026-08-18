@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\Especie;
 use App\Enums\Sexo;
 use App\Enums\TipoPelaje;
+use App\Rules\ImagenLegible;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -45,7 +46,7 @@ class GuardarMascotaRequest extends FormRequest
             'seguro_vencimiento' => ['nullable', 'date'],
             'fecha_fallecimiento' => ['nullable', 'date', 'before_or_equal:today'],
             // La cámara del celular saca fotos pesadas: 10 MB de tope.
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240', new ImagenLegible],
         ];
     }
 

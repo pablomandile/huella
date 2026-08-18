@@ -33,6 +33,8 @@ class HistoriaClinicaService
         return [
             'mascota' => $mascota,
             'alergias' => $mascota->alergias,
+            // Para poder marcar "(VENCIDO)" en la ficha impresa.
+            'estadoRabia' => $mascota->estado_rabia,
             'rango' => $this->rangoLegible($desde, $hasta),
             'generado' => $mascota->propietario->ahora(),
 

@@ -15,6 +15,7 @@ enum TipoRecordatorio: string
     case Medicacion = 'medicacion';
     case Peso = 'peso';
     case Seguro = 'seguro';
+    case CertificadoRabia = 'certificado_rabia';
     case Personalizado = 'personalizado';
 
     public function etiqueta(): string
@@ -27,6 +28,7 @@ enum TipoRecordatorio: string
             self::Medicacion => 'Medicación',
             self::Peso => 'Peso',
             self::Seguro => 'Seguro',
+            self::CertificadoRabia => 'Certificado de rabia',
             self::Personalizado => 'Otro',
         };
     }
@@ -41,6 +43,14 @@ enum TipoRecordatorio: string
     public function diasDeAnticipacion(): int
     {
         return match ($this) {
+            /*
+             * El certificado de rabia avisa con más tiempo que una vacuna
+             * cualquiera: para tenerlo al día hay que conseguir turno, dar la
+             * dosis y que el veterinario emita el papel. Es el documento que se
+             * pide en un viaje o en una guardería, y llegar tarde ahí significa
+             * no poder viajar.
+             */
+            self::CertificadoRabia => 30,
             self::Vacuna, self::Seguro => 15,
             self::Celo => 14,
             self::Desparasitacion, self::Control, self::Peso => 7,

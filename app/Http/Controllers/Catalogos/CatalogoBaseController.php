@@ -67,6 +67,32 @@ abstract class CatalogoBaseController extends Controller
         return [];
     }
 
+    /**
+     * Lo que hay que hacer después de guardar y que no entra por `fill()`.
+     *
+     * Existe por la foto del paquete de alimento: es un archivo, no un valor del
+     * formulario, y tiene que estar guardada **antes** de responder, porque el
+     * alta al vuelo desde un combo devuelve el registro serializado y ahí ya
+     * tiene que venir la URL de la imagen.
+     */
+    protected function despuesDeGuardar(
+        GuardarCatalogoRequest $request,
+        Model&Catalogo $registro,
+    ): void {}
+
+    /**
+     * Columnas que una copia no hereda.
+     *
+     * Las rutas de archivos van acá: dos filas apuntando al mismo archivo se ven
+     * bien hasta que alguien reemplaza la imagen de una y borra la de la otra.
+     *
+     * @return list<string>
+     */
+    protected function columnasQueNoSeCopian(): array
+    {
+        return [];
+    }
+
     public function index(Request $request): Response
     {
         return Inertia::render($this->pagina(), [
@@ -97,6 +123,8 @@ abstract class CatalogoBaseController extends Controller
         $registro->asignarPropietario($request->user());
         $registro->save();
 
+        $this->despuesDeGuardar($request, $registro);
+
         return $this->responder($request, $registro, 'Se agregó al catálogo.');
     }
 
@@ -107,6 +135,8 @@ abstract class CatalogoBaseController extends Controller
         // La autorización ya la hizo el FormRequest: editar solo lo propio.
         $registro->fill($request->validated());
         $registro->save();
+
+        $this->despuesDeGuardar($request, $registro);
 
         return $this->responder($request, $registro, 'Cambios guardados.');
     }
@@ -131,7 +161,7 @@ abstract class CatalogoBaseController extends Controller
 
         $columna = $this->columnaNombre();
 
-        $copia = $original->replicate();
+        $copia = $original->replicate($this->columnasQueNoSeCopian());
         $copia->asignarPropietario($request->user());
         $copia->setAttribute($columna, mb_substr(
             $original->getAttribute($columna).' (copia)',

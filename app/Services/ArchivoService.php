@@ -7,11 +7,13 @@ use App\Models\Adjunto;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use RuntimeException;
+use Throwable;
 
 /**
  * Adjuntos clínicos: recetas, análisis, radiografías, facturas.
@@ -78,14 +80,34 @@ class ArchivoService
         Storage::delete([$adjunto->ruta, $this->rutaMiniatura($adjunto->ruta)]);
     }
 
+    /**
+     * La miniatura es un lujo, no el archivo.
+     *
+     * Una imagen con cabecera válida y píxeles corruptos —una foto que se cortó
+     * al subir con mala señal— pasa la validación `mimes:`, que solo mira la
+     * cabecera, y después hace fallar el decodificador. Si eso tumbara la subida,
+     * el usuario perdería el archivo entero por no poder hacerle la vista previa,
+     * y encima con una pantalla de error 500.
+     *
+     * Sin miniatura, `AdjuntoController::mostrar` cae al original y la lista se
+     * ve igual. Así que se registra y se sigue.
+     */
     private function generarMiniatura(UploadedFile $archivo, string $ruta): void
     {
-        Storage::put(
-            $this->rutaMiniatura($ruta),
-            $this->procesador->decodePath($archivo->getRealPath())
+        try {
+            $miniatura = $this->procesador->decodePath($archivo->getRealPath())
                 ->scaleDown(width: self::ANCHO_MINIATURA, height: self::ANCHO_MINIATURA)
                 ->encode(new WebpEncoder(quality: 80))
-                ->toString(),
-        );
+                ->toString();
+        } catch (Throwable $e) {
+            Log::warning('No se pudo generar la miniatura del adjunto.', [
+                'ruta' => $ruta,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        Storage::put($this->rutaMiniatura($ruta), $miniatura);
     }
 }

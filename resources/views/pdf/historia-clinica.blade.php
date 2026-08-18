@@ -109,6 +109,17 @@
         'Señas particulares' => $mascota->senias_particulares,
         'Microchip' => $mascota->microchip,
         'Libreta sanitaria' => $mascota->libreta_sanitaria,
+        {{--
+            El vencimiento del certificado de rabia va en la ficha impresa porque
+            es lo que se pide en una guardería o en un viaje, y ahí lo que hay es
+            este papel. El estado se arma con una expresión y no con un @if: una
+            directiva Blade pegada a una letra no se reconoce y deja el bloque
+            abierto, con un error de sintaxis que no señala la línea real.
+        --}}
+        'Certificado de rabia' => $mascota->rabia_vencimiento
+            ? 'vence el ' . $mascota->rabia_vencimiento->translatedFormat('j \d\e F \d\e Y')
+                . ($estadoRabia && $estadoRabia['estado'] === 'vencido' ? ' (VENCIDO)' : '')
+            : null,
         'Castración' => $mascota->castrado
             ? ($mascota->fecha_castracion?->translatedFormat('j \d\e F \d\e Y') ?? 'Sí')
             : 'No',

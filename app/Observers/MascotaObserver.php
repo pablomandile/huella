@@ -23,6 +23,7 @@ class MascotaObserver
         ]);
 
         $this->sincronizarSeguro($mascota);
+        $this->sincronizarRabia($mascota);
     }
 
     /**
@@ -49,6 +50,10 @@ class MascotaObserver
         if ($mascota->wasChanged('seguro_vencimiento')) {
             $this->sincronizarSeguro($mascota);
         }
+
+        if ($mascota->wasChanged('rabia_vencimiento')) {
+            $this->sincronizarRabia($mascota);
+        }
     }
 
     private function sincronizarSeguro(Mascota $mascota): void
@@ -60,6 +65,30 @@ class MascotaObserver
             fecha: $mascota->seguro_vencimiento,
             titulo: "Vence el seguro de {$mascota->nombre}",
             descripcion: $mascota->seguro_compania,
+        );
+    }
+
+    /**
+     * El vencimiento del certificado de rabia.
+     *
+     * Convive con el del seguro sobre el mismo origen —la mascota— porque la
+     * idempotencia es por `origen_type` + `origen_id` + **`tipo`**: son dos
+     * recordatorios distintos de la misma fila, y ninguno pisa al otro.
+     *
+     * Es un aviso aparte del de la antirrábica: esa la genera
+     * `aplicaciones_vacuna.proxima_dosis` y habla de la dosis. Este habla del
+     * papel, que es lo que piden en un viaje o en una guardería y puede vencer en
+     * otra fecha si el veterinario lo emitió más tarde.
+     */
+    private function sincronizarRabia(Mascota $mascota): void
+    {
+        $this->recordatorios->sincronizar(
+            origen: $mascota,
+            mascota: $mascota,
+            tipo: TipoRecordatorio::CertificadoRabia,
+            fecha: $mascota->rabia_vencimiento,
+            titulo: "Vence el certificado de rabia de {$mascota->nombre}",
+            descripcion: 'Hay que renovarlo para viajar o dejarla en una guardería.',
         );
     }
 }

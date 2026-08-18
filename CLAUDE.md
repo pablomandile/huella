@@ -86,6 +86,19 @@ mecánica y la comparten en un solo lugar:
 - **El `store` responde dos cosas:** redirección Inertia para el listado, y JSON con
   el registro serializado cuando `wantsJson()`. Eso último es lo que permite el alta
   al vuelo desde un combo sin que el usuario pierda el formulario a medio cargar.
+- Lo que no entra por `fill()` va en el hook **`despuesDeGuardar`**, y las rutas de
+  archivos en **`columnasQueNoSeCopian`**. Lo segundo no es cosmético: dos filas apuntando
+  al mismo archivo se ven bien hasta que alguien reemplaza la imagen de una y el borrado
+  de la vieja deja a la otra sin foto.
+- **El formulario del sheet va siempre por POST, con `_method` para editar.** PHP **no
+  parsea el cuerpo multipart de un PUT**: un formulario con archivo enviado por PUT llega
+  con `$request->file()` vacío y la imagen se pierde en silencio, sin error de validación
+  ni ningún síntoma. Con POST + `_method=put` Laravel enruta igual al PUT y el archivo
+  llega. Lo cubre `FotoAlimentoTest`.
+- Los alimentos llevan **foto del paquete**: dos balanceados de la misma marca se
+  distinguen por el color del envase mucho antes que por el nombre. Se recomprime a WebP
+  —no es una prueba, es para reconocer una bolsa— y se sirve por controlador como todo
+  lo demás.
 
 ## Núcleo clínico
 
@@ -111,8 +124,47 @@ mecánica y la comparten en un solo lugar:
 - **Adjuntos: el original se conserva tal cual.** Una radiografía recomprimida deja de
   servir para lo que se guardó. Solo se recomprime la miniatura, y solo para la vista
   previa de la lista.
+- **Si la miniatura no se puede generar, el adjunto se guarda igual.** Una imagen con
+  cabecera válida y píxeles corruptos —una foto cortada al subir con mala señal— pasa
+  `image` y `mimes:`, que solo miran los primeros bytes, y después hace fallar al
+  decodificador. Perder el archivo entero por no poder hacerle la vista previa sería el
+  peor intercambio posible: se registra el aviso y se sigue. `AdjuntoController::mostrar`
+  cae al original cuando no hay miniatura, así que la lista se ve igual.
+- Al revés, donde la imagen convertida **es** el producto —la foto de perfil, la galería,
+  el paquete de un alimento— una imagen ilegible se rechaza con la regla `ImagenLegible`:
+  es un error de validación que el usuario puede accionar, no un 500.
 - El cierre de tratamientos vencidos lo hace `huella:cerrar-tratamientos` desde el
   scheduler, y se decide por la **última toma programada**, no por la fecha de fin.
+
+## Documentación de la mascota
+
+La **libreta sanitaria** y el **certificado de rabia**: los dos papeles que el dueño carga
+una vez y muestra en un veterinario nuevo, en un viaje o en una guardería.
+
+- **No hay tabla nueva.** Son `adjuntos` colgados directo de la mascota: la tabla ya era
+  polimórfica y `Adjunto::mascotaAsociada()` ya contemplaba ese caso, así que la Policy
+  funciona sin tocar nada. Solo hicieron falta dos casos de `TipoAdjunto`.
+- **Al sumar un caso a un enum hay que ensanchar el ENUM de MySQL.** `adjuntos.tipo` y
+  `recordatorios.tipo` son columnas ENUM reales: los casos de PHP solos pasan los tests
+  —sqlite no valida ENUM— y revientan en producción con un 500 al primer guardado. Es la
+  misma familia de trampa que `Rule::unique` sobre una columna `date`.
+- Suben **varios archivos de una**: una libreta son todas sus hojas, y hacer que se carguen
+  de a una con el celular en la mano es lo que garantiza que no se carguen nunca.
+- No se piden con `capture="environment"`, al contrario que las fotos: `capture` fuerza la
+  cámara y anula el `multiple`. Sin él, el selector del celular ya ofrece cámara, galería
+  y archivos, que es lo que hace falta para un PDF que llegó por mail.
+- La autorización usa **`registrarEventos`** y no `update`, así la regla 3 —mascota
+  fallecida, modo lectura— vale sin escribirla otra vez.
+- `mascotas.libreta_sanitaria` es el **número** de la libreta y sigue en la ficha; esto son
+  sus hojas escaneadas. Son dos cosas distintas.
+
+El **vencimiento del certificado** vive en `mascotas.rabia_vencimiento`, calcando
+`seguro_vencimiento`: una fecha de la mascota que genera su recordatorio por observer.
+Conviven los dos sobre el mismo origen porque la idempotencia es por `origen_type` +
+`origen_id` + **`tipo`**. Es un aviso aparte del de la antirrábica —esa la genera
+`aplicaciones_vacuna.proxima_dosis` y habla de la dosis; este habla del papel, que puede
+vencer en otra fecha—. Avisa con 30 días, más que una vacuna: hay que conseguir turno, dar
+la dosis y que el veterinario emita el certificado.
 
 ## Recordatorios
 

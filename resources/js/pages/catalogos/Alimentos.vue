@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { Package } from '@lucide/vue';
 import CampoCheck from '@/components/CampoCheck.vue';
+import CampoFoto from '@/components/CampoFoto.vue';
 import InputError from '@/components/InputError.vue';
 import ListaCatalogo from '@/components/ListaCatalogo.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
@@ -49,28 +51,48 @@ defineOptions({
         :url-duplicar="(r) => duplicar(r.id).url"
     >
         <template #item="{ registro }">
-            <p class="truncate font-medium">{{ registro.etiqueta }}</p>
-            <p class="truncate text-sm text-muted-foreground">
-                {{ registro.tipo_etiqueta }}
-                <template v-if="registro.gama_etiqueta">
-                    · {{ registro.gama_etiqueta }}</template
-                >
-            </p>
+            <!--
+                La foto del paquete va primero y chica: sirve para reconocer la
+                bolsa de un vistazo, que es más rápido que leer marca y nombre.
+            -->
+            <div class="flex items-start gap-3">
+                <img
+                    v-if="registro.foto_miniatura_url"
+                    :src="registro.foto_miniatura_url"
+                    :alt="`Paquete de ${registro.etiqueta}`"
+                    width="48"
+                    height="48"
+                    loading="lazy"
+                    class="size-12 shrink-0 rounded-md border border-border object-cover"
+                />
 
-            <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <Badge variant="outline" class="font-normal">
-                    {{ registro.especie_etiqueta }}
-                </Badge>
-                <span class="text-xs text-muted-foreground">
-                    {{ registro.etapa_etiqueta }}
-                </span>
-                <Badge
-                    v-if="registro.medicado"
-                    variant="secondary"
-                    class="font-normal"
-                >
-                    Medicado
-                </Badge>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{{ registro.etiqueta }}</p>
+                    <p class="truncate text-sm text-muted-foreground">
+                        {{ registro.tipo_etiqueta }}
+                        <template v-if="registro.gama_etiqueta">
+                            · {{ registro.gama_etiqueta }}</template
+                        >
+                    </p>
+
+                    <div
+                        class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1"
+                    >
+                        <Badge variant="outline" class="font-normal">
+                            {{ registro.especie_etiqueta }}
+                        </Badge>
+                        <span class="text-xs text-muted-foreground">
+                            {{ registro.etapa_etiqueta }}
+                        </span>
+                        <Badge
+                            v-if="registro.medicado"
+                            variant="secondary"
+                            class="font-normal"
+                        >
+                            Medicado
+                        </Badge>
+                    </div>
+                </div>
             </div>
         </template>
 
@@ -159,6 +181,38 @@ defineOptions({
                     />
                     <InputError :message="errors.presentacion" />
                 </div>
+            </div>
+
+            <!--
+                Foto del paquete. `CampoFoto` muestra la vista previa de lo que se
+                acaba de elegir; en su hueco va la que ya estaba guardada, para
+                que se vea que hay una sin tener que abrir nada.
+            -->
+            <div class="grid gap-2">
+                <Label>Foto del paquete</Label>
+                <CampoFoto name="foto">
+                    <template #placeholder>
+                        <img
+                            v-if="registro?.foto_miniatura_url"
+                            :src="registro.foto_miniatura_url"
+                            alt="Paquete actual"
+                            class="size-full object-cover"
+                        />
+                        <Package
+                            v-else
+                            class="size-8 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                    </template>
+                </CampoFoto>
+                <InputError :message="errors.foto" />
+
+                <CampoCheck
+                    v-if="registro?.foto_url"
+                    name="quitar_foto"
+                    label="Quitar la foto actual"
+                    :default-value="false"
+                />
             </div>
 
             <CampoCheck

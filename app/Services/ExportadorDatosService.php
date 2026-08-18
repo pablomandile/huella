@@ -30,6 +30,7 @@ class ExportadorDatosService
                 'visitas.veterinario',
                 'visitas.tratamientos.medicamento',
                 'visitas.adjuntos',
+                'adjuntos',
                 'tratamientos.medicamento',
                 'vacunasAplicadas.vacuna',
                 'desparasitaciones.medicamento',
@@ -81,10 +82,27 @@ class ExportadorDatosService
             'senias_particulares' => $mascota->senias_particulares,
             'descripcion' => $mascota->descripcion,
             'microchip' => $mascota->microchip,
+            // El número de la libreta. Sus hojas escaneadas van en `documentos`.
             'libreta_sanitaria' => $mascota->libreta_sanitaria,
             'castrado' => $mascota->castrado,
             'fecha_castracion' => $mascota->fecha_castracion?->toDateString(),
             'fecha_fallecimiento' => $mascota->fecha_fallecimiento?->toDateString(),
+            'rabia_vencimiento' => $mascota->rabia_vencimiento?->toDateString(),
+
+            /*
+             * La documentación de la mascota. Como el resto de los adjuntos, los
+             * archivos **no** van adentro: van sus datos y de dónde bajarlos.
+             */
+            'documentos' => $mascota->adjuntos->map(fn ($adjunto) => [
+                'tipo' => $adjunto->tipo->etiqueta(),
+                'nombre' => $adjunto->nombre_original,
+                'tamanio' => $adjunto->tamanio_legible,
+                'nota' => $adjunto->descripcion,
+                'descargar_en' => route('adjuntos.mostrar', [
+                    'adjunto' => $adjunto->id,
+                    'descargar' => 1,
+                ]),
+            ])->all(),
 
             'alergias' => $mascota->alergias->map(fn ($alergia) => [
                 'agente' => $alergia->agente,

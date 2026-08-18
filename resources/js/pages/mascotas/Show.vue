@@ -16,6 +16,7 @@ import { ref } from 'vue';
 import CampoFoto from '@/components/CampoFoto.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
+import TarjetaDocumento from '@/components/TarjetaDocumento.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +39,12 @@ import {
     destroy as destroyFoto,
     store as storeFoto,
 } from '@/routes/mascotas/fotos';
-import { edit, index } from '@/routes/mascotas';
+// Con alias: la prop `vencimientoRabia` trae la fecha y la ruta se llama igual.
+import {
+    edit,
+    index,
+    vencimientoRabia as rutaVencimientoRabia,
+} from '@/routes/mascotas';
 import {
     create as createVisita,
     index as visitasIndex,
@@ -50,7 +56,9 @@ import { index as seguimiento } from '@/routes/mascotas/seguimiento';
 import { index as medicacionIndex } from '@/routes/medicacion';
 import type {
     Alergia,
+    DocumentosDeMascota,
     EstadoVacunacion,
+    EstadoVencimiento,
     FotoGaleria,
     Mascota,
     OpcionEnum,
@@ -68,6 +76,9 @@ const props = defineProps<{
     tratamientosEnCurso: Tratamiento[];
     recordatorios: Recordatorio[];
     estadoVacunacion: EstadoVacunacion;
+    documentos: DocumentosDeMascota;
+    vencimientoRabia: string | null;
+    estadoRabia: EstadoVencimiento | null;
     puedeEditar: boolean;
     puedeRegistrar: boolean;
     tiposAlergia: OpcionEnum[];
@@ -79,6 +90,16 @@ const colorSemaforo: Record<EstadoVacunacion['estado'], string> = {
     proxima: 'border-amber-500/40 bg-amber-500/5',
     vencida: 'border-destructive/40 bg-destructive/5',
     sin_datos: 'border-border',
+};
+
+/** Mismo criterio de color que el semáforo, en formato de badge. */
+const colorVencimiento: Record<
+    EstadoVencimiento['estado'],
+    'default' | 'secondary' | 'destructive'
+> = {
+    vigente: 'secondary',
+    por_vencer: 'default',
+    vencido: 'destructive',
 };
 
 defineOptions({
@@ -339,6 +360,83 @@ const datosFicha = (mascota: Mascota): [string, string][] =>
                 </ul>
             </CardContent>
         </Card>
+
+        <!--
+            Documentación: los dos papeles que se piden afuera de casa. Van acá
+            arriba, cerca de las alergias, porque el motivo para abrir la ficha en
+            un veterinario nuevo o en una guardería es justamente mostrarlos.
+        -->
+        <TarjetaDocumento
+            titulo="Libreta sanitaria"
+            descripcion="Las hojas de la libreta, para tenerla siempre encima."
+            tipo="libreta_sanitaria"
+            :mascota-id="mascota.id"
+            :archivos="documentos.libreta_sanitaria"
+            :puede-registrar="puedeRegistrar"
+        />
+
+        <TarjetaDocumento
+            titulo="Certificado de rabia"
+            descripcion="El que piden para viajar o para dejarla en una guardería."
+            tipo="certificado_rabia"
+            :mascota-id="mascota.id"
+            :archivos="documentos.certificado_rabia"
+            :puede-registrar="puedeRegistrar"
+        >
+            <!--
+                El vencimiento se carga acá, con el papel en la mano, y no en el
+                formulario de la mascota. Es una fecha de `mascotas`, así que el
+                recordatorio lo genera el observer al detectar el cambio.
+            -->
+            <div class="rounded-lg border border-border p-3">
+                <div
+                    v-if="estadoRabia"
+                    class="mb-3 flex items-center gap-2 text-sm"
+                >
+                    <Badge :variant="colorVencimiento[estadoRabia.estado]">
+                        {{ estadoRabia.texto }}
+                    </Badge>
+                </div>
+
+                <Form
+                    :action="rutaVencimientoRabia(mascota.id).url"
+                    method="patch"
+                    class="flex flex-wrap items-end gap-3"
+                    :options="{ preserveScroll: true }"
+                    v-slot="{ errors, processing }"
+                >
+                    <div class="grid flex-1 gap-2">
+                        <Label for="rabia_vencimiento">Vence el</Label>
+                        <Input
+                            id="rabia_vencimiento"
+                            type="date"
+                            name="rabia_vencimiento"
+                            class="touch-target"
+                            :default-value="vencimientoRabia ?? ''"
+                            :disabled="!puedeRegistrar"
+                        />
+                        <InputError :message="errors.rabia_vencimiento" />
+                    </div>
+
+                    <Button
+                        v-if="puedeRegistrar"
+                        type="submit"
+                        variant="outline"
+                        class="touch-target"
+                        :disabled="processing"
+                    >
+                        <Spinner v-if="processing" />
+                        Guardar
+                    </Button>
+                </Form>
+
+                <p class="mt-2 text-xs text-muted-foreground">
+                    Dejalo vacío para quitar el aviso. Este vencimiento es del
+                    papel; la próxima dosis de la antirrábica se carga en
+                    Preventivo.
+                </p>
+            </div>
+        </TarjetaDocumento>
 
         <!-- Semáforo de vacunación y lo que hay que agendar -->
         <Card :class="colorSemaforo[estadoVacunacion.estado]">

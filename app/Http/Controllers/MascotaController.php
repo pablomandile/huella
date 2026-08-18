@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\Especie;
 use App\Enums\EstadoTratamiento;
 use App\Enums\Sexo;
+use App\Enums\TipoAdjunto;
 use App\Enums\TipoAlergia;
 use App\Enums\TipoPelaje;
 use App\Http\Requests\ActualizarMascotaRequest;
 use App\Http\Requests\GuardarMascotaRequest;
+use App\Http\Resources\AdjuntoResource;
 use App\Http\Resources\MascotaResource;
 use App\Http\Resources\RecordatorioResource;
 use App\Http\Resources\TratamientoResource;
@@ -67,7 +69,7 @@ class MascotaController extends Controller
     {
         Gate::authorize('view', $mascota);
 
-        $mascota->load(['fotos', 'alergias']);
+        $mascota->load(['fotos', 'alergias', 'adjuntos']);
 
         // Las últimas visitas y lo que está tomando ahora: es lo que se busca
         // al abrir la ficha, y el resto del historial vive en su propia pantalla.
@@ -113,6 +115,21 @@ class MascotaController extends Controller
                 'sintomas' => $alergia->sintomas,
                 'notas' => $alergia->notas,
             ]),
+            /*
+             * Los documentos, agrupados por tipo y con la clave siempre presente
+             * aunque esté vacía: la tarjeta tiene que dibujarse igual para poder
+             * ofrecer el botón de subir, y un `?.` de más en el front por cada
+             * tipo es lo que se evita acá.
+             */
+            'documentos' => collect(TipoAdjunto::documentosDeMascota())
+                ->mapWithKeys(fn (TipoAdjunto $tipo) => [
+                    $tipo->value => AdjuntoResource::collection(
+                        $mascota->adjuntos->where('tipo', $tipo)->values(),
+                    )->resolve(),
+                ])
+                ->all(),
+            'vencimientoRabia' => $mascota->rabia_vencimiento?->toDateString(),
+            'estadoRabia' => $mascota->estado_rabia,
             'puedeEditar' => $request->user()->can('update', $mascota),
             'puedeRegistrar' => $request->user()->can('registrarEventos', $mascota),
             'tiposAlergia' => TipoAlergia::opciones(),

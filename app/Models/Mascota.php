@@ -6,6 +6,7 @@ use App\Enums\Especie;
 use App\Enums\RolCuidador;
 use App\Enums\Sexo;
 use App\Enums\TipoPelaje;
+use App\Enums\TipoRecordatorio;
 use App\Observers\MascotaObserver;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -45,6 +47,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $seguro_compania
  * @property string|null $seguro_poliza
  * @property CarbonImmutable|null $seguro_vencimiento
+ * @property CarbonImmutable|null $rabia_vencimiento
  * @property bool $activo
  * @property CarbonImmutable|null $fecha_fallecimiento
  * @property-read string|null $edad
@@ -100,6 +103,7 @@ class Mascota extends Model
         'seguro_compania',
         'seguro_poliza',
         'seguro_vencimiento',
+        'rabia_vencimiento',
         'fecha_fallecimiento',
     ];
 
@@ -116,6 +120,7 @@ class Mascota extends Model
             'castrado' => 'boolean',
             'fecha_castracion' => 'date',
             'seguro_vencimiento' => 'date',
+            'rabia_vencimiento' => 'date',
             'activo' => 'boolean',
             'fecha_fallecimiento' => 'date',
         ];
@@ -158,6 +163,21 @@ class Mascota extends Model
     public function alergias(): HasMany
     {
         return $this->hasMany(Alergia::class);
+    }
+
+    /**
+     * Documentación propia de la mascota: la libreta sanitaria y el certificado
+     * de rabia. Son adjuntos colgados directo de ella, no de una visita, porque
+     * no pertenecen a un episodio clínico: valen para toda su vida.
+     *
+     * `Adjunto::mascotaAsociada()` ya resolvía este caso, así que la Policy
+     * funciona sin tocar nada.
+     *
+     * @return MorphMany<Adjunto, $this>
+     */
+    public function adjuntos(): MorphMany
+    {
+        return $this->morphMany(Adjunto::class, 'adjuntable')->orderBy('id');
     }
 
     /**
@@ -282,6 +302,43 @@ class Mascota extends Model
         $texto = $this->formatearEdad($this->fecha_nacimiento, $hasta);
 
         return $this->fecha_nacimiento_estimada ? "~{$texto}" : $texto;
+    }
+
+    /**
+     * En qué estado está el certificado de rabia: vigente, por vencer o vencido.
+     *
+     * Se compara con **`hoyCalendario()` del propietario**, no con `today()` ni
+     * con `hoy()`. `rabia_vencimiento` es una columna `date`, que Carbon lee a
+     * medianoche UTC; medirla contra un instante con zona corre el resultado tres
+     * horas y "vence mañana" se lee como "vence hoy". Y la zona es la del
+     * propietario, no la de quien mira, para que en v2 un cuidador en otro país
+     * no vea otro vencimiento.
+     *
+     * @return array{estado: string, dias: int, texto: string}|null
+     */
+    public function getEstadoRabiaAttribute(): ?array
+    {
+        if (! $this->rabia_vencimiento) {
+            return null;
+        }
+
+        $hoy = $this->propietario->hoyCalendario();
+        $dias = (int) $hoy->diffInDays($this->rabia_vencimiento, false);
+
+        [$estado, $texto] = match (true) {
+            $dias < 0 => ['vencido', $dias === -1
+                ? 'Venció ayer'
+                : 'Venció hace '.abs($dias).' días'],
+            $dias === 0 => ['vencido', 'Vence hoy'],
+            $dias === 1 => ['por_vencer', 'Vence mañana'],
+            $dias <= TipoRecordatorio::CertificadoRabia->diasDeAnticipacion() => [
+                'por_vencer',
+                "Vence en {$dias} días",
+            ],
+            default => ['vigente', 'Vigente hasta el '.$this->rabia_vencimiento->format('d/m/Y')],
+        };
+
+        return ['estado' => $estado, 'dias' => $dias, 'texto' => $texto];
     }
 
     private function formatearEdad(CarbonInterface $desde, CarbonInterface $hasta): string

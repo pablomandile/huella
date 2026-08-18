@@ -11,6 +11,7 @@ use App\Http\Controllers\Catalogos\VeterinariaController;
 use App\Http\Controllers\Catalogos\VeterinarioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiarioController;
+use App\Http\Controllers\DocumentoMascotaController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\FotoMascotaController;
 use App\Http\Controllers\MascotaActivaController;
@@ -65,6 +66,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('mascotas.alergias.store');
     Route::delete('mascotas/{mascota}/alergias/{alergia}', [AlergiaController::class, 'destroy'])
         ->name('mascotas.alergias.destroy');
+
+    /*
+     * Documentación de la mascota: libreta sanitaria y certificado de rabia.
+     * Se borran por `adjuntos.destroy`, que resuelve la propiedad subiendo por
+     * la relación polimórfica.
+     */
+    Route::post('mascotas/{mascota}/documentos', [DocumentoMascotaController::class, 'store'])
+        ->name('mascotas.documentos.store');
+    Route::patch('mascotas/{mascota}/vencimiento-rabia', [DocumentoMascotaController::class, 'vencimientoRabia'])
+        ->name('mascotas.vencimiento-rabia');
 
     Route::patch('mascota-activa/{mascota}', [MascotaActivaController::class, 'update'])
         ->name('mascota-activa.update');
@@ -200,6 +211,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
      */
     Route::prefix('catalogos')->name('catalogos.')->group(function () {
         Route::get('/', PanelCatalogosController::class)->name('index');
+
+        // La foto del paquete, servida por controlador: el disco es privado.
+        // Va antes del resource para que `alimentos/{alimento}/foto` no la agarre
+        // ninguna ruta genérica.
+        Route::get('alimentos/{alimento}/foto', [AlimentoController::class, 'foto'])
+            ->name('alimentos.foto');
 
         $catalogos = [
             'veterinarias' => [VeterinariaController::class, 'veterinaria', false],

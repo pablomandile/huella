@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ImagenLegible;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GuardarFotoMascotaRequest extends FormRequest
@@ -18,7 +19,7 @@ class GuardarFotoMascotaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240', new ImagenLegible],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
             'epigrafe' => ['nullable', 'string', 'max:255'],
         ];

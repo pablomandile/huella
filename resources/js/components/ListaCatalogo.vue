@@ -274,14 +274,29 @@ function eliminar(registro: T) {
                     </SheetDescription>
                 </SheetHeader>
 
+                <!--
+                    Siempre POST, y la edición se marca con `_method`. No es
+                    decoración: **PHP no parsea el cuerpo multipart de un PUT**, así
+                    que un formulario con archivo enviado por PUT llega con
+                    `$request->file()` vacío y la imagen se pierde en silencio, sin
+                    error de validación ni nada que lo delate. Con POST +
+                    `_method=put` Laravel enruta igual al PUT y el archivo llega.
+                -->
                 <Form
                     :key="editando?.id ?? 'nuevo'"
                     :action="editando ? urlEdicion(editando) : urlAlta"
-                    :method="editando ? 'put' : 'post'"
+                    method="post"
                     class="flex flex-col gap-4 p-4"
                     v-slot="{ errors, processing }"
                     @success="abierto = false"
                 >
+                    <input
+                        v-if="editando"
+                        type="hidden"
+                        name="_method"
+                        value="put"
+                    />
+
                     <slot name="campos" :registro="editando" :errors="errors" />
 
                     <div class="flex gap-2 pt-2">

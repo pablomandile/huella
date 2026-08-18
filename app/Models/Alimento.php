@@ -25,8 +25,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property Especie $especie
  * @property EtapaVida $etapa
  * @property string|null $presentacion
+ * @property string|null $foto
  * @property bool $medicado
  * @property string|null $notas
+ * @property-read string|null $ruta_foto_miniatura
  */
 #[UsePolicy(CatalogoPolicy::class)]
 class Alimento extends Model implements Catalogo
@@ -36,6 +38,11 @@ class Alimento extends Model implements Catalogo
 
     protected $table = 'alimentos';
 
+    /**
+     * `foto` **no** es fillable: es una ruta del disco privado que escribe
+     * `ImagenService`, no un valor que llegue de un formulario. Igual que
+     * `mascotas.foto_perfil`.
+     */
     protected $fillable = [
         'marca',
         'nombre',
@@ -57,5 +64,17 @@ class Alimento extends Model implements Catalogo
             'etapa' => EtapaVida::class,
             'medicado' => 'boolean',
         ];
+    }
+
+    /**
+     * La miniatura se deriva del nombre, no se guarda en otra columna: siempre
+     * viven juntas y una segunda columna solo agregaría una forma de que queden
+     * desincronizadas.
+     */
+    public function getRutaFotoMiniaturaAttribute(): ?string
+    {
+        return $this->foto === null
+            ? null
+            : preg_replace('/\.webp$/', '-min.webp', $this->foto);
     }
 }

@@ -142,6 +142,9 @@ export type Alimento = ItemCatalogo & {
     presentacion: string | null;
     medicado: boolean;
     notas: string | null;
+    /** Foto del paquete, para reconocerlo en la góndola. Por controlador. */
+    foto_url: string | null;
+    foto_miniatura_url: string | null;
 };
 
 /* ---------------------------------------------------------- núcleo clínico */
@@ -276,6 +279,25 @@ export type EstadoVacunacion = {
     estado: 'al_dia' | 'proxima' | 'vencida' | 'sin_datos';
     etiqueta: string;
     detalle: string | null;
+};
+
+/**
+ * Cómo está una fecha de vencimiento. `dias` es negativo si ya pasó, y `texto`
+ * viene armado del backend para que la fecha nunca se lea sin su contexto.
+ */
+export type EstadoVencimiento = {
+    estado: 'vigente' | 'por_vencer' | 'vencido';
+    dias: number;
+    texto: string;
+};
+
+/**
+ * La documentación de la mascota, agrupada por tipo. Las claves son los valores
+ * de `TipoAdjunto::documentosDeMascota()` y siempre vienen, aunque estén vacías.
+ */
+export type DocumentosDeMascota = {
+    libreta_sanitaria: Adjunto[];
+    certificado_rabia: Adjunto[];
 };
 
 export type Recordatorio = {

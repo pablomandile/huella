@@ -36,6 +36,24 @@ class AlimentoResource extends JsonResource
             'presentacion' => $this->presentacion,
             'medicado' => $this->medicado,
             'notas' => $this->notas,
+            /*
+             * La foto del paquete, siempre por controlador. El `v` con el
+             * timestamp evita que al reemplazarla el navegador siga mostrando la
+             * vieja: la URL es fija y la respuesta va con `max-age` de un día.
+             */
+            'foto_url' => $this->foto === null
+                ? null
+                : route('catalogos.alimentos.foto', [
+                    'alimento' => $this->id,
+                    'v' => $this->updated_at?->timestamp,
+                ]),
+            'foto_miniatura_url' => $this->foto === null
+                ? null
+                : route('catalogos.alimentos.foto', [
+                    'alimento' => $this->id,
+                    'min' => 1,
+                    'v' => $this->updated_at?->timestamp,
+                ]),
         ];
     }
 }
