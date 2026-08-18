@@ -33,7 +33,9 @@ class MedicacionController extends Controller
         $finDeHoy = $inicioDeHoy->addDay()->subSecond();
         $desdeDeuda = $inicioDeHoy->subDays(self::DIAS_DE_DEUDA);
 
-        $mascotas = $usuario->mascotas()->pluck('mascotas.id');
+        // A cargo y no todas: un lector no da la medicación, y mostrarle tomas
+        // que al tocarlas dan 403 es peor que no mostrárselas.
+        $mascotas = $usuario->mascotasACargo()->pluck('mascotas.id');
 
         $tomas = TomaMedicamento::query()
             ->whereHas(

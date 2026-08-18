@@ -36,6 +36,9 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $usuario = $request->user();
+        // Acá sí van todas, compartidas incluidas: el selector de mascota activa
+        // es para mirar. Lo que hay que *hacer* —tomas y recordatorios, más
+        // abajo— sale de `mascotasACargo`.
         $mascotas = $usuario->mascotas()->orderBy('nombre')->get();
 
         $activa = $mascotas->firstWhere('id', (int) session('mascota_activa_id'))
@@ -86,7 +89,7 @@ class DashboardController extends Controller
                 'tratamiento',
                 fn ($consulta) => $consulta->whereIn(
                     'mascota_id',
-                    $usuario->mascotas()->select('mascotas.id'),
+                    $usuario->mascotasACargo()->select('mascotas.id'),
                 ),
             )
             ->where('estado', EstadoToma::Pendiente)
@@ -121,7 +124,7 @@ class DashboardController extends Controller
         $hasta = $usuario->hoyCalendario()->addDays(self::DIAS_DE_AGENDA);
 
         $recordatorios = Recordatorio::query()
-            ->whereIn('mascota_id', $usuario->mascotas()->select('mascotas.id'))
+            ->whereIn('mascota_id', $usuario->mascotasACargo()->select('mascotas.id'))
             ->abiertos()
             ->whereDate('fecha_objetivo', '<=', $hasta->toDateString())
             ->with('mascota')

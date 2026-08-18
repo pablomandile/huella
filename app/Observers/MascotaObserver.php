@@ -56,6 +56,21 @@ class MascotaObserver
         }
     }
 
+    /**
+     * Al dar de baja la mascota se revocan sus enlaces públicos.
+     *
+     * El 404 ya saldría igual —`$enlace->mascota()` no encuentra un soft delete—,
+     * pero sin borrarlos, restaurar la mascota los devolvería a la vida. Dar de
+     * baja una ficha tiene que cortar los accesos de verdad.
+     *
+     * Es `deleted` y no `deleting`: si la baja se revierte por una excepción, los
+     * enlaces siguen ahí.
+     */
+    public function deleted(Mascota $mascota): void
+    {
+        $mascota->enlaces()->delete();
+    }
+
     private function sincronizarSeguro(Mascota $mascota): void
     {
         $this->recordatorios->sincronizar(

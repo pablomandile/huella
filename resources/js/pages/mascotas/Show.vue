@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     CalendarClock,
     Flower2,
@@ -9,12 +9,14 @@ import {
     Pill,
     Play,
     Plus,
+    Share2,
     ShieldCheck,
     Stethoscope,
     Trash2,
 } from '@lucide/vue';
-import { ref, shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import CampoFoto from '@/components/CampoFoto.vue';
+import SheetCompartir from '@/components/SheetCompartir.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
 import PaseDeFotos from '@/components/PaseDeFotos.vue';
@@ -65,13 +67,17 @@ import { index as diario } from '@/routes/mascotas/diario';
 import { index as preventivo } from '@/routes/mascotas/preventivo';
 import { index as seguimiento } from '@/routes/mascotas/seguimiento';
 import { index as medicacionIndex } from '@/routes/medicacion';
+import { destroy as quitarseElAcceso } from '@/routes/mascotas/accesos';
 import type {
+    AccesoCompartido,
     Alergia,
     DocumentosDeMascota,
     EstadoVacunacion,
+    EnlaceCompartido as EnlaceCompartidoTipo,
     EstadoVencimiento,
     FotoGaleria,
     Mascota,
+    OpcionDeRol,
     OpcionEnum,
     Recordatorio,
     Tratamiento,
@@ -92,8 +98,30 @@ const props = defineProps<{
     estadoRabia: EstadoVencimiento | null;
     puedeEditar: boolean;
     puedeRegistrar: boolean;
+    puedeCompartir: boolean;
+    accesos: AccesoCompartido[];
+    enlaces: EnlaceCompartidoTipo[];
+    rolesInvitables: OpcionDeRol[];
+    vigencias: OpcionEnum[];
+    vigenciaPorDefecto: string;
     tiposAlergia: OpcionEnum[];
 }>();
+
+const sheetCompartir = ref(false);
+
+const page = usePage();
+const usuarioActual = computed(() => page.props.auth.user.id);
+
+/** Irse de una ficha que alguien compartió: sin esto se queda pegada al listado. */
+function dejarDeVer() {
+    if (!confirm(`¿Dejar de ver la ficha de ${props.mascota.nombre}?`)) {
+        return;
+    }
+
+    router.delete(
+        quitarseElAcceso([props.mascota.id, usuarioActual.value]).url,
+    );
+}
 
 /** El color del semáforo: verde al día, ámbar por vencer, rojo vencida. */
 const colorSemaforo: Record<EstadoVacunacion['estado'], string> = {
@@ -228,17 +256,57 @@ const datosFicha = (mascota: Mascota): [string, string][] =>
                 </p>
             </div>
 
+            <div class="flex shrink-0 gap-2">
+                <Button
+                    v-if="puedeCompartir"
+                    variant="outline"
+                    size="sm"
+                    class="touch-target"
+                    @click="sheetCompartir = true"
+                >
+                    <Share2 class="size-4" aria-hidden="true" />
+                    <span class="hidden sm:inline">Compartir</span>
+                </Button>
+
+                <Button
+                    v-if="puedeEditar"
+                    as-child
+                    variant="outline"
+                    size="sm"
+                    class="touch-target"
+                >
+                    <Link :href="edit(mascota.id)">
+                        <Pencil class="size-4" aria-hidden="true" />
+                        <span class="hidden sm:inline">Editar</span>
+                    </Link>
+                </Button>
+            </div>
+        </div>
+
+        <!-- Una ficha compartida se queda pegada al listado para siempre si no
+             hay forma de irse. -->
+        <div
+            v-if="!mascota.es_propia"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-sm"
+        >
+            <p class="text-muted-foreground">
+                <template v-if="puedeRegistrar">
+                    {{ mascota.rol_etiqueta }}: la ficha es de
+                    {{ mascota.propietario_nombre }}, y podés registrar lo que
+                    pase.
+                </template>
+                <template v-else>
+                    {{ mascota.rol_etiqueta }}: podés ver todo el historial,
+                    pero no cargar ni modificar nada.
+                </template>
+            </p>
             <Button
-                v-if="puedeEditar"
-                as-child
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 class="touch-target"
+                @click="dejarDeVer()"
             >
-                <Link :href="edit(mascota.id)">
-                    <Pencil class="size-4" aria-hidden="true" />
-                    <span class="hidden sm:inline">Editar</span>
-                </Link>
+                Dejar de ver esta ficha
             </Button>
         </div>
 
@@ -906,4 +974,16 @@ const datosFicha = (mascota: Mascota): [string, string][] =>
             </SheetContent>
         </Sheet>
     </div>
+
+    <SheetCompartir
+        v-if="puedeCompartir"
+        v-model:open="sheetCompartir"
+        :mascota-id="mascota.id"
+        :mascota-nombre="mascota.nombre"
+        :accesos="accesos"
+        :enlaces="enlaces"
+        :roles-invitables="rolesInvitables"
+        :vigencias="vigencias"
+        :vigencia-por-defecto="vigenciaPorDefecto"
+    />
 </template>

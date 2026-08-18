@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\RolCuidador;
 use App\Models\Mascota;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,6 +17,12 @@ class MascotaResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // El rol de quien está mirando, para que el front pueda distinguir una
+        // ficha propia de una compartida. `cuidadores` ya viene en `Mascota::$with`,
+        // así que no cuesta ninguna query.
+        $usuario = $request->user();
+        $rol = $usuario ? $this->rolDe($usuario) : null;
+
         return [
             'id' => $this->id,
             'nombre' => $this->nombre,
@@ -47,6 +54,12 @@ class MascotaResource extends JsonResource
             'celo_visible' => $this->celo_visible,
             'foto_url' => $this->urlFoto(),
             'foto_miniatura_url' => $this->urlFoto(miniatura: true),
+            // De quién es, para que un invitado sepa a quién le está mirando la
+            // ficha. Solo el nombre de pila: el contacto no hace falta.
+            'propietario_nombre' => $this->propietario->name,
+            'rol' => $rol?->value,
+            'rol_etiqueta' => $rol?->etiqueta(),
+            'es_propia' => $rol === RolCuidador::Propietario,
         ];
     }
 

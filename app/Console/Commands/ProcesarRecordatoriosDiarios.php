@@ -60,11 +60,21 @@ class ProcesarRecordatoriosDiarios extends Command
      */
     private function cadaUsuarioConPendientes(callable $accion): void
     {
+        // `mascotasPropias` y no `mascotas`: el aviso va **solo al dueño**.
+        //
+        // No es para ahorrarle correo a nadie. El recordatorio cuelga de la
+        // mascota y más abajo se marca como notificado **por id**: si el cuidador
+        // también entrara acá, el que corriera primero en el chunkById se
+        // llevaría el aviso y el otro no lo recibiría nunca. Sin síntoma.
+        //
+        // El cuidador igual ve todo lo que hay que hacer en la app —la agenda y
+        // Medicación de hoy salen de `mascotasACargo`—; lo que no recibe es el mail.
+        //
         // whereIn explícito y no el scope: sobre una relación anidada el scope
         // llega como un builder genérico y no se puede tipar.
         $consulta = User::query()
             ->whereHas(
-                'mascotas.recordatorios',
+                'mascotasPropias.recordatorios',
                 fn (Builder $c) => $c->whereIn('estado', EstadoRecordatorio::abiertos()),
             );
 
@@ -100,7 +110,7 @@ class ProcesarRecordatoriosDiarios extends Command
         $hoy = $usuario->hoyCalendario();
 
         return Recordatorio::query()
-            ->whereIn('mascota_id', $usuario->mascotas()->select('mascotas.id'))
+            ->whereIn('mascota_id', $usuario->mascotasPropias()->select('mascotas.id'))
             ->where('estado', EstadoRecordatorio::Pendiente)
             ->where('hora_notificacion', '<=', $ahora->format('H:i:s'))
             // Nada de hace más de un año: si nunca se avisó, ya no sirve.

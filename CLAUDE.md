@@ -369,6 +369,128 @@ arranca. Un F5 lo tapa, porque una recarga sí revalida.
 - Pasa igual en cualquier app Inertia de este hosting. La skill `inertia-json-crudo` tiene
   el diagnóstico y el parche para portarlo.
 
+## Compartir la ficha
+
+Dos puertas: invitar a una cuenta de Huella, y un enlace que se abre sin cuenta.
+
+- **La invitación concede uno de dos roles:** `Lector` (mira) o `Cuidador` (además
+  registra tomas, pesos, visitas y notas). Lo elige el dueño al invitar y lo puede
+  cambiar después sin sacar a la persona ni volver a invitarla.
+- **El enlace público es siempre de solo lectura.** No hay forma de que escriba: no
+  tiene cuenta a la que atribuirle nada.
+- **`Propietario` no se concede nunca.** `RolCuidador::invitables()` es una lista blanca
+  de dos casos y no `cases()` menos uno: un rol nuevo del enum nace prohibido y hay que
+  habilitarlo a mano.
+
+### Las tres relaciones de `User`, y por qué son tres
+
+Elegir la equivocada no da ningún error: da datos de más, o avisos que no llegan.
+
+| relación | pregunta | quiénes |
+|---|---|---|
+| `mascotas()` | ¿qué puedo mirar? | propietario + cuidador + lector |
+| `mascotasACargo()` | ¿qué puedo hacer? | propietario + cuidador |
+| `mascotasPropias()` | ¿qué es mío? | propietario |
+
+- `mascotasACargo()` va en Medicación de hoy, la agenda y el dashboard: son pantallas de
+  acción, y mostrarle a un lector tomas que al tocarlas dan 403 es peor que no
+  mostrárselas.
+- `mascotasPropias()` va en **el mail de recordatorios** y en **`mis-datos`**, y las dos
+  tienen su motivo:
+  - El aviso va **solo al dueño**. Los recordatorios cuelgan de la mascota y el comando
+    los marca notificados **por id**: si el cuidador también entrara en esa consulta, el
+    que corriera primero en el `chunkById` se llevaría el aviso y el otro no lo recibiría
+    nunca, sin error y sin síntoma. El cuidador ve igual lo que hay que hacer, en la
+    agenda de la app. Lo cuida `AccesoCuidadorTest`.
+  - Exportar es llevarse lo propio: poder editar una ficha ajena no es poder bajarse su
+    historial completo con las URLs de todos sus adjuntos.
+
+- **La mitad ya estaba hecha.** `puedeEditar` / `puedeRegistrar` ya viajaban como props
+  y el backend ya devolvía 403 en toda ruta de escritura. Una fila en el pivote produce
+  la ficha en el modo que corresponda sin tocar una línea de Vue.
+- **Lo que faltaba era separar "ver" de "estar a cargo".** `User::mascotas()` es la
+  relación del pivote e incluye las compartidas; `User::mascotasACargo()` las excluye.
+  Va en todo lo que habla de **hacer algo**: el comando de avisos, Medicación, la
+  agenda, el Dashboard y `mis-datos`. El caso grave era el comando: los recordatorios
+  cuelgan de la mascota y él los marca notificados por id, así que un lector que cayera
+  primero en el `chunkById` **se llevaba el aviso y el dueño no lo recibía nunca**. Sin
+  error y sin síntoma. Lo cuida `AccesoLectorTest`, con el lector creado **antes** que
+  el dueño: con el id más alto, el dueño gana la carrera y el test pasa sin probar nada.
+- `MascotaPolicy::compartir` va por `Propietario` y **no** por `registrarEventos`, al
+  revés que la documentación de la mascota: una mascota fallecida es justo una de las
+  que uno quiere poder mandar, y compartir no escribe en el historial.
+- **`attach` y nunca `syncWithoutDetaching`** al aceptar una invitación: ese actualiza
+  los atributos del pivote si la fila ya existe, y el propietario que abre su propia
+  invitación quedaría de lector de su propia mascota. El `unique` no lo frena porque no
+  inserta.
+
+### La invitación no tiene tabla
+
+Es una **URL firmada temporal** y el pivote es la única fuente de verdad: pendiente = no
+hay fila, aceptada = fila con rol lector, revocada = fila borrada. Una tabla sería una
+máquina de estados paralela que se puede desincronizar. La firma **lleva el email
+adentro**, así que reenviar el mail no sirve: al aceptar se compara contra la cuenta con
+sesión, que además tiene que estar verificada.
+
+Se paga: no hay listado de invitaciones pendientes ni forma de revocar antes de que la
+acepten. Son 7 días, sobre un enlace que solo le sirve al dueño de esa casilla.
+
+**El rol viaja dentro de la firma.** No es lo mismo que aceptarlo del cliente: lo eligió
+el dueño en un formulario que pasó por la Policy, y la firma lo vuelve inalterable —tocar
+`rol=cuidador` en la URL la invalida entera—. Igual se revalida al aceptar contra la lista
+blanca, porque una autorización que depende de un solo candado depende de que ese candado
+nunca falle, y acá el candado es una clave de aplicación. Sin el parámetro cae a `Lector`,
+así una invitación firmada antes de que el rol existiera sigue andando sin conceder de más.
+
+El formulario **contesta lo mismo tenga o no cuenta** el destinatario, y las dos ramas
+mandan el mismo mail: si no, sería un detector de usuarios registrados en Huella.
+
+### El enlace público sí tiene tabla
+
+Porque el requisito es **revocar**, y una firma de Laravel solo se invalida rotando
+`APP_KEY` —que acá además desencripta `two_factor_secret` y deja a todos sin 2FA—.
+
+- **Vencimiento obligatorio** (7 / 30 / 90 días, default 30). No hay "no vence": el modo
+  de falla dominante es el reenvío por WhatsApp, y el vencimiento es la única defensa
+  que funciona sin que el dueño haga nada. La fecha **la calcula el servidor** desde el
+  enum; si viniera del cliente, un POST a mano pondría el año 3000.
+- **El token se guarda en claro**, al revés que un password reset: el dueño tiene que
+  poder volver a copiar el enlace, y el secreto vive en la misma base que los datos que
+  protege. Si la tabla se filtra, la historia clínica ya se filtró.
+- **La vista es Blade suelta, no Inertia.** No es comodidad: `HandleInertiaRequests`
+  inyecta `auth.user`, todas las mascotas del usuario y la mascota activa en los props
+  de **toda** página Inertia. El dueño abriendo su propio enlace para chequearlo, en la
+  pantalla de una veterinaria, publicaría todo eso. Con Blade no hay props que defender.
+  Regla dura del camino público: **ningún Resource, ningún `auth()`, ningún
+  `$request->user()`** (`RecordatorioResource` llama a `$request->user()->hoyCalendario()`
+  y sería un 500).
+- **El token se resuelve a mano, sin route model binding.** `SubstituteBindings` es
+  middleware del grupo `web` y corre **antes** que el de la ruta: un token inexistente
+  abortaría sin headers de no-indexación y sin contar para el límite de intentos.
+- Qué se sirve: foto de perfil y **libreta y certificado de rabia siempre** —son el
+  motivo del enlace—; estudios y recetas solo si el dueño lo marca; **factura nunca**
+  (es financiero) y **galería nunca** (es vida familiar, no dato clínico). Lo decide
+  `EnlaceCompartido::alcanza()`, que reusa `Adjunto::mascotaAsociada()`: la misma cadena
+  que la Policy, para que un token de una mascota no abra los archivos de otra.
+- **404 para inexistente, 410 para vencido.** Distinguirlos no da ningún oráculo: hay
+  que tener el token para llegar, y le ahorra una llamada a quien está en el mostrador.
+- **`no-store` también en el documento HTML**, que es la excepción explícita a la regla
+  de más abajo: acá perder el bfcache es lo que se busca. Y **`no-store` y no el
+  `private, max-age=86400`** de las rutas autenticadas, o una radiografía queda un día
+  en el disco del navegador ajeno. Lo fija `CacheDeInertiaTest`.
+- **Nada de `Disallow: /compartido/` en `robots.txt`**: impide *rastrear*, no *indexar*,
+  y un buscador que tiene prohibido entrar nunca lee el `noindex`. Conseguiría lo
+  contrario. El `X-Robots-Tag` va en **header** para cubrir también imágenes y PDF.
+- **Sin tags `og:`**: convertirían cada reenvío por WhatsApp en una tarjetita con el
+  nombre y la foto de la mascota.
+- El service worker se sale de `/compartido/` entero: su rescate de JSON crudo repide la
+  navegación y duplicaría el contador de aperturas, que es el único dato con el que el
+  dueño se entera de que un enlace se le escapó.
+
+`PrivacidadMascotasTest` barre **todas** las rutas de escritura que cuelgan de una
+mascota y exige 403 para un lector, más un caso que verifica que el barrido las cubra a
+todas: una ruta nueva sin Policy rompe la suite. Mismo patrón que `CaseDeLasPaginasTest`.
+
 ## Reglas de negocio que se validan en la aplicación
 
 1. Solo una dieta por mascota con `fecha_fin` NULL. Al crear una nueva, cerrar la anterior
@@ -448,8 +570,9 @@ que tener presente antes de tocar producción:
 - El docroot del subdominio es un **symlink** a `huella/public`, porque hPanel lo creó
   adentro del public del sitio principal.
 - Los cron de hPanel **no aceptan `cd ... &&`**: ruta absoluta a `artisan`, sin `cd`.
-- Hacen falta **dos** cron: `schedule:run` y `queue:work`. `RecordatoriosDelDia` es
-  `ShouldQueue` con cola `database`: sin worker, los avisos quedan en la tabla `jobs`.
+- Alcanza con **un** cron: `schedule:run`. Nada se encola —`RecordatoriosDelDia`
+  **no** es `ShouldQueue`, a propósito— así que no hace falta un `queue:work`, que en
+  hosting compartido se cae en silencio. (Esta línea decía lo contrario y era falsa.)
 
 ## Comandos
 

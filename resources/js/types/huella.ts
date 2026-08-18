@@ -44,6 +44,34 @@ export type Mascota = {
     celo_visible: boolean;
     foto_url: string | null;
     foto_miniatura_url: string | null;
+    propietario_nombre: string;
+    /** El rol de quien está mirando: propietario, cuidador o lector. */
+    rol: string | null;
+    rol_etiqueta: string | null;
+    es_propia: boolean;
+};
+
+/** Un rol que el dueño puede conceder, con lo que implica dicho en criollo. */
+export type OpcionDeRol = OpcionEnum & {
+    descripcion: string;
+};
+
+/** Quién tiene acceso a una ficha. Solo lo recibe el propietario. */
+export type AccesoCompartido = {
+    id: number;
+    nombre: string;
+    email: string;
+    rol: string | null;
+};
+
+/** Un enlace que muestra la ficha sin cuenta. Solo lo recibe el propietario. */
+export type EnlaceCompartido = {
+    id: number;
+    nombre: string | null;
+    url: string;
+    incluye_adjuntos: boolean;
+    vence: string | null;
+    visitas: number;
 };
 
 export type FotoGaleria = {

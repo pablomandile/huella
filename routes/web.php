@@ -9,15 +9,18 @@ use App\Http\Controllers\Catalogos\PanelCatalogosController;
 use App\Http\Controllers\Catalogos\VacunaController;
 use App\Http\Controllers\Catalogos\VeterinariaController;
 use App\Http\Controllers\Catalogos\VeterinarioController;
+use App\Http\Controllers\CompartirController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiarioController;
 use App\Http\Controllers\DocumentoMascotaController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\FotoMascotaController;
+use App\Http\Controllers\InvitacionController;
 use App\Http\Controllers\MascotaActivaController;
 use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\MedicacionController;
 use App\Http\Controllers\PreventivoController;
+use App\Http\Controllers\Publico\FichaCompartidaController;
 use App\Http\Controllers\RecordatorioController;
 use App\Http\Controllers\SeguimientoController;
 use App\Http\Controllers\TratamientoController;
@@ -43,6 +46,46 @@ Route::middleware('guest')->group(function () {
 
     Route::get('auth/google/callback', [GoogleController::class, 'volver'])
         ->name('google.callback');
+});
+
+/*
+ * La ficha compartida: se abre **sin cuenta**, con el token del enlace.
+ *
+ * Fuera de `auth` y con su propio middleware, que pone los headers de
+ * no-indexación y de caché y corta al que prueba tokens al voleo. El token se
+ * resuelve dentro del controlador y no por route model binding: el binding corre
+ * antes que el middleware de la ruta, y un token inexistente se escaparía sin
+ * pasar por ninguna de esas dos cosas.
+ */
+Route::middleware(['ficha-compartida', 'throttle:60,1'])
+    ->prefix('compartido')
+    ->name('compartido.')
+    ->group(function () {
+        Route::get('{token}', [FichaCompartidaController::class, 'mostrar'])->name('ficha');
+
+        // Throttle propio: DomPDF sobre un historial largo es caro.
+        Route::get('{token}/pdf', [FichaCompartidaController::class, 'pdf'])
+            ->middleware('throttle:10,1')
+            ->name('pdf');
+
+        Route::get('{token}/foto', [FichaCompartidaController::class, 'foto'])->name('foto');
+        Route::get('{token}/adjuntos/{adjunto}', [FichaCompartidaController::class, 'adjunto'])
+            ->whereNumber('adjunto')
+            ->name('adjunto');
+    });
+
+/*
+ * Recibir una invitación a mirar la ficha de una mascota.
+ *
+ * Fuera de `auth` porque el invitado puede no tener cuenta todavía: lo que
+ * protege la ruta es la firma, que además lleva el email adentro. Y la misma URI
+ * para GET y POST, porque **la firma cubre la URL, no el verbo**.
+ */
+Route::middleware('signed')->group(function () {
+    Route::get('invitaciones/{mascota}', [InvitacionController::class, 'mostrar'])
+        ->name('invitaciones.mostrar');
+    Route::post('invitaciones/{mascota}', [InvitacionController::class, 'aceptar'])
+        ->name('invitaciones.aceptar');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -81,6 +124,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::patch('mascota-activa/{mascota}', [MascotaActivaController::class, 'update'])
         ->name('mascota-activa.update');
+
+    /*
+     * Compartir la ficha. Es del propietario (`MascotaPolicy::compartir`), con
+     * una excepción: un invitado se puede quitar a sí mismo el acceso.
+     *
+     * El throttle no es por seguridad de la mascota sino de la casilla ajena: el
+     * destinatario lo elige el usuario, y sin tope la cuenta es un cañón de spam.
+     */
+    Route::post('mascotas/{mascota}/invitaciones', [CompartirController::class, 'invitar'])
+        ->middleware('throttle:10,60')
+        ->name('mascotas.invitaciones.store');
+    Route::patch('mascotas/{mascota}/accesos/{usuario}', [CompartirController::class, 'cambiarAcceso'])
+        ->name('mascotas.accesos.update');
+    Route::delete('mascotas/{mascota}/accesos/{usuario}', [CompartirController::class, 'revocarAcceso'])
+        ->name('mascotas.accesos.destroy');
+
+    Route::post('mascotas/{mascota}/enlaces', [CompartirController::class, 'crearEnlace'])
+        ->name('mascotas.enlaces.store');
+    Route::delete('mascotas/{mascota}/enlaces/{enlace:id}', [CompartirController::class, 'revocarEnlace'])
+        ->name('mascotas.enlaces.destroy');
 
     /*
      * Núcleo clínico. Las visitas cuelgan de la mascota; los tratamientos

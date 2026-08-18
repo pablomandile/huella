@@ -29,7 +29,9 @@ class RecordatorioController extends Controller
     public function index(Request $request): Response
     {
         $usuario = $request->user();
-        $mascotas = $usuario->mascotas()->pluck('mascotas.id');
+        // A cargo y no todas: la bandeja es lo que hay que hacer, y un lector no
+        // resuelve ni pospone nada de la mascota que le compartieron.
+        $mascotas = $usuario->mascotasACargo()->pluck('mascotas.id');
 
         $abiertos = Recordatorio::query()
             ->whereIn('mascota_id', $mascotas)
@@ -53,7 +55,8 @@ class RecordatorioController extends Controller
         return Inertia::render('recordatorios/Index', [
             'abiertos' => RecordatorioResource::collection($abiertos)->resolve(),
             'resueltos' => RecordatorioResource::collection($resueltos)->resolve(),
-            'mascotas' => $usuario->mascotas()
+            // El combo del alta manual: ofrecer una ajena termina en un 403.
+            'mascotas' => $usuario->mascotasACargo()
                 ->orderBy('nombre')
                 ->get(['mascotas.id', 'mascotas.nombre'])
                 ->map(fn (Mascota $m) => ['id' => $m->id, 'nombre' => $m->nombre])

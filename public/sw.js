@@ -14,7 +14,7 @@
  *   2. el ?v= de los <link rel="icon"> del blade
  *   3. el ?v= de los "src" del manifest
  */
-const CACHE = 'huella-v2';
+const CACHE = 'huella-v3';
 const OFFLINE_URL = '/offline';
 
 self.addEventListener('install', (event) => {
@@ -65,6 +65,19 @@ self.addEventListener('fetch', (event) => {
 
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) return;
+
+    /*
+     * La ficha compartida sale del alcance del service worker, entera.
+     *
+     * Dos motivos concretos:
+     *
+     * 1. El rescate de JSON crudo de más abajo **vuelve a pedir** la navegación
+     *    con `cache: 'reload'`. En /compartido/ eso duplicaría el contador de
+     *    aperturas, que es justo el dato con el que el dueño decide si revocar.
+     * 2. Es una ficha ajena abierta en un dispositivo ajeno. Hoy el SW no cachea
+     *    datos, pero esa es una garantía de hoy; salirse de una es permanente.
+     */
+    if (url.pathname === '/compartido' || url.pathname.startsWith('/compartido/')) return;
 
     // Los assets de Vite llevan el hash en el nombre: si la URL existe, el
     // contenido no cambió nunca. Servirlos de caché es seguro y es lo único

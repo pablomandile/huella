@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\EnlaceCompartido;
 use App\Models\FotoMascota;
 use App\Models\Mascota;
 use App\Models\User;
@@ -97,6 +98,25 @@ it('exporta los datos del usuario', function () {
     $this->actingAs($this->usuario)
         ->get(route('exportacion.datos'))
         ->assertOk();
+});
+
+it('abre la ficha compartida con la historia completa', function () {
+    // Son trescientas líneas de Blade que tocan ocho relaciones, y sin sesión no
+    // hay Policy que las cargue de paso. Con `preventLazyLoading` activo, este
+    // caso es lo único que atrapa la que falte.
+    $enlace = EnlaceCompartido::factory()->create([
+        'mascota_id' => $this->mascota->id,
+        'creado_por' => $this->usuario->id,
+        'incluye_adjuntos' => true,
+    ]);
+
+    $this->get(route('compartido.ficha', $enlace->token))
+        ->assertOk()
+        ->assertSee($this->mascota->nombre);
+
+    $respuesta = $this->get(route('compartido.pdf', $enlace->token));
+    $respuesta->assertOk();
+    expect($respuesta->getContent())->toStartWith('%PDF');
 });
 
 it('sirve una foto de la galería', function () {
