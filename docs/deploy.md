@@ -127,30 +127,51 @@ síntoma es silencioso — el cron figura creado y los recordatorios simplemente
 salen. `artisan` no necesita cwd, resuelve desde su propia ubicación: **ruta
 absoluta y sin `cd`**.
 
-Los dos son necesarios:
+**Hace falta uno solo: el scheduler.**
 
-**1. Scheduler, cada minuto.** Es el que dispara
-`huella:procesar-recordatorios` (cada hora, evaluando la zona horaria de cada
-usuario) y `huella:cerrar-tratamientos` (todos los días a las 03:00 UTC).
+**Scheduler, cada minuto.** No hace el trabajo: chequea si algo vence en este
+momento. Dispara `huella:procesar-recordatorios` (cada hora, porque la hora de
+notificación es local de cada usuario) y `huella:cerrar-tratamientos` (todos los
+días a las 03:00 UTC, medianoche en Buenos Aires).
 
 ```
 /opt/alt/php84/usr/bin/php <HOME>/domains/pablomandile.com.ar/huella/artisan schedule:run
 ```
 
-**2. Worker de cola, cada minuto.** `RecordatoriosDelDia` implementa `ShouldQueue`
-y la cola es `database`: **sin este cron los mails quedan para siempre en la tabla
-`jobs`** y el aviso nunca llega. El `flock` evita workers solapados y el
-`--max-time=55` corta antes del tick siguiente.
+### No hace falta un worker de cola
+
+Esta guía pedía un segundo cron con `queue:work` diciendo que `RecordatoriosDelDia`
+implementaba `ShouldQueue`. **Era falso**, y verificarlo cuesta dos comandos:
+
+```bash
+grep -n "class RecordatoriosDelDia" app/Mail/RecordatoriosDelDia.php   # extends Mailable, sin implements
+grep -rn "dispatch(\|ShouldQueue\|->queue(" app/                       # solo el comentario del mailable
+```
+
+El mailable **no** se encola a propósito, y está escrito en su propio encabezado:
+lo dispara un comando del scheduler, que ya es asíncrono, y encolarlo obligaría a
+tener un worker corriendo — que en hosting compartido se cae en silencio y deja al
+usuario sin avisos sin que nadie se entere. El comando manda con
+`Mail::to()->send()`, sincrónico.
+
+En la app no hay `app/Jobs`, ni `dispatch()`, ni notificaciones encoladas, ni
+listeners. `QUEUE_CONNECTION=database` está puesto pero nada lo usa: la tabla
+`jobs` de producción nunca tuvo una fila.
+
+Si algún día se encola algo de verdad, el cron sería este —y recién entonces:
 
 ```
 /usr/bin/flock -n /tmp/huella-queue.lock /opt/alt/php84/usr/bin/php <HOME>/domains/pablomandile.com.ar/huella/artisan queue:work --stop-when-empty --max-time=55 --tries=3
 ```
 
-Para comprobar que el cron dispara de verdad, encolá algo y mirá que la tabla se
-vacíe en el minuto siguiente:
+### Comprobar que el scheduler dispara de verdad
+
+El cron es silencioso: si no funciona, no pasa nada y nadie se entera. La forma
+directa es mirar que el comando horario haya corrido:
 
 ```bash
-ssh <alias> "cd \$R && \$PHP artisan tinker --execute='echo DB::table(\"jobs\")->count();'"
+ssh <alias> "/opt/alt/php84/usr/bin/php \$R/artisan schedule:list"
+tail -50 storage/logs/laravel.log        # con MAIL_MAILER=log, los avisos salen acá
 ```
 
 ## Pendientes de configuración
