@@ -25,7 +25,16 @@
     # deje embeber en un iframe ajeno y que no filtre la URL completa al salir.
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # `expr` para dejar afuera la ficha compartida, y no es un detalle.
+    #
+    # Ahí el token va **en el path**, así que la política tiene que ser
+    # `no-referrer` y no esta: con `strict-origin-when-cross-origin`, cualquier
+    # navegación desde esa página al mismo origen se lleva la URL entera —token
+    # incluido— en el `Referer`. La app la manda desde `ProtegerFichaCompartida`,
+    # pero mod_headers corre **después** de PHP y un `Header set` la pisaba: el
+    # header que veía el navegador no era el que decía el código.
+    Header always set Referrer-Policy "strict-origin-when-cross-origin" "expr=%{REQUEST_URI} !~ m#^/compartido/#"
 
     # Sin permisos de hardware salvo la cámara, que la usa la carga de fotos.
     Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
