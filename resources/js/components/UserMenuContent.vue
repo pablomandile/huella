@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { BookMarked, LogOut, Settings } from '@lucide/vue';
+import { BookMarked, Info, LogOut, Settings } from '@lucide/vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import InstalarApp from '@/components/InstalarApp.vue';
 import UserInfo from '@/components/UserInfo.vue';
-import { logout } from '@/routes';
+import { acerca, logout } from '@/routes';
 import { index as catalogos } from '@/routes/catalogos';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
@@ -52,6 +52,16 @@ defineProps<Props>();
             >
                 <BookMarked class="mr-2 h-4 w-4" />
                 Catálogos
+            </Link>
+        </DropdownMenuItem>
+        <!--
+            Acerca de: qué es la app y cómo escribirle a quien la hizo. Va en el
+            menú y no en la navegación principal porque se visita una vez.
+        -->
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full cursor-pointer" :href="acerca()" prefetch>
+                <Info class="mr-2 h-4 w-4" />
+                Acerca de
             </Link>
         </DropdownMenuItem>
         <!--

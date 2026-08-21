@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarClock, HeartPulse, NotebookPen, Syringe } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
-import { dashboard, login } from '@/routes';
+import { acerca, dashboard, login } from '@/routes';
 /* @chisel-registration */
 import { register } from '@/routes';
 /* @end-chisel-registration */
@@ -134,10 +134,19 @@ const funcionalidades = [
         </main>
 
         <footer
-            class="mx-auto w-full max-w-5xl px-6 py-8 text-sm text-muted-foreground"
+            class="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
         >
-            Huella registra información, no da consejos clínicos. Ante cualquier
-            duda, consultá a tu veterinario.
+            <p>
+                Huella registra información, no da consejos clínicos. Ante
+                cualquier duda, consultá a tu veterinario.
+            </p>
+
+            <Link
+                :href="acerca()"
+                class="inline-flex min-h-11 shrink-0 items-center transition-colors hover:text-foreground sm:min-h-0"
+            >
+                Acerca de
+            </Link>
         </footer>
     </div>
 </template>

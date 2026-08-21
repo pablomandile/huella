@@ -29,6 +29,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
 
+/*
+ * Acerca de: qué es Huella y quién la hizo. Es pública a propósito —se llega
+ * desde la portada, antes de tener cuenta—, y por eso `app.ts` no le pone
+ * AppLayout cuando no hay sesión: NavUser recibiría un `auth.user` nulo y
+ * rompería la página antes de mostrarse. La página trae su propio encabezado
+ * para ese caso.
+ */
+Route::inertia('acerca-de', 'AcercaDe')->name('acerca');
+
 // Respaldo que sirve el service worker cuando no hay conexión. Es una vista
 // suelta, no Inertia: tiene que poder mostrarse sin los assets compilados.
 Route::view('offline', 'offline')->name('offline');
