@@ -527,6 +527,36 @@ Socialite. El alta de credenciales está en [docs/google-oauth.md](docs/google-o
 - `CuentaDeGoogle` traduce lo que devuelve Socialite: el flag de email verificado no
   está en su interfaz —vive en el payload crudo—, y esa rareza queda en un lugar.
 
+## Los mails
+
+Son dos —la invitación a una ficha y el resumen de recordatorios— y comparten el
+encabezado, que vive en `resources/views/vendor/mail/html/header.blade.php`. Está
+publicado **solo ese archivo**: `mail` es un namespace con dos rutas y Blade cae a la
+del framework para todos los componentes que no estén ahí.
+
+- **Las imágenes van en PNG o JPEG, nunca en el WebP que usa la app.** Outlook de
+  escritorio dibuja con el motor de Word y no entiende WebP: se ve el recuadro roto.
+  `public/img/huella-logo-email.png` se genera desde el logo horizontal, igual que los
+  íconos del set PWA se generan desde el ícono de marca.
+- **El `alt` del logo dice "Huella", no "logo de Huella".** Casi todos los clientes
+  bloquean las imágenes remotas hasta que el usuario las habilita, así que ese texto
+  **es** el encabezado para mucha gente.
+- **La foto de la mascota va incrustada (`cid:`), no por URL.** Las imágenes de la app
+  se sirven por controlador tras verificar propiedad, y quien recibe una invitación
+  todavía no tiene acceso a nada: un `<img>` apuntando a la ruta daría 403.
+- **Si la miniatura no se puede generar, el mail se manda igual.** Mismo criterio que
+  los adjuntos clínicos: perder la invitación entera por no poder achicar una foto
+  sería el peor intercambio posible. `ImagenService::miniaturaParaMail` devuelve null y
+  la vista lo contempla.
+- **`Mailable::render()` no sirve para testear esto.** Reemplaza a propósito los `cid:`
+  por data URIs para poder previsualizar en un navegador, así que mirándolo no se
+  distingue una foto bien incrustada de una que nunca se adjuntó. `MailInvitacionTest`
+  manda por el transporte `array` y mira el MIME real.
+- Intervention Image 4.2 no tiene `read()`: para bytes va **`decodeBinary()`**, para
+  una ruta `decodePath()`. Y el `catch (Throwable)` de la miniatura, que existe para no
+  perder el mail, esconde también los errores de programación —ese `read()` inexistente
+  no dio ningún síntoma hasta que un test miró el MIME—.
+
 ## Seeders
 
 Están separados porque uno va a producción y el otro no:

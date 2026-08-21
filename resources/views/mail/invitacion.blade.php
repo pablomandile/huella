@@ -8,6 +8,24 @@
 # {{ $invita }} te compartió una ficha
 
 Es la de **{{ $nombreMascota }}**{{ $especie ? ' ('.mb_strtolower($especie).')' : '' }}.
+
+{{--
+    La foto va incrustada en el mensaje (`cid:`), no por URL: las imágenes de la
+    app se sirven tras verificar propiedad, y quien recibe esto todavía no tiene
+    acceso a nada. Es opcional —la mascota puede no tener foto, o la miniatura
+    puede fallar— y el mail se manda igual sin ella.
+
+    El `border-radius` lo ignora Outlook de escritorio y la foto se ve cuadrada.
+    Es la degradación aceptable: se sigue viendo de quién te hablan.
+--}}
+@if ($fotoMascota)
+<img src="{{ $message->embedData($fotoMascota, 'mascota.jpg', 'image/jpeg') }}"
+     alt="{{ $nombreMascota }}"
+     width="120"
+     height="120"
+     style="width: 120px; height: 120px; border-radius: 60px; border: 0; display: block; margin: 20px auto;">
+@endif
+
 Vas a poder ver su historial completo: visitas, vacunas, tratamientos, peso y
 todo lo que tenga cargado.
 

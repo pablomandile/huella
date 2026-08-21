@@ -171,15 +171,51 @@ directa es mirar que el comando horario haya corrido:
 
 ```bash
 ssh <alias> "/opt/alt/php84/usr/bin/php \$R/artisan schedule:list"
-tail -50 storage/logs/laravel.log        # con MAIL_MAILER=log, los avisos salen acá
+tail -50 storage/logs/laravel.log        # los errores de envío salen acá
 ```
+
+## Mail
+
+Anda por SMTP con una casilla del propio dominio. En el `.env` del server:
+
+```
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.hostinger.com
+MAIL_PORT=465
+MAIL_SCHEME=smtps
+MAIL_USERNAME=huella@pablomandile.com.ar
+MAIL_PASSWORD="<la de la casilla, entre comillas>"
+MAIL_FROM_ADDRESS="huella@pablomandile.com.ar"
+MAIL_FROM_NAME="Huella"
+```
+
+Cuatro cosas que costaron encontrar:
+
+- **`MAIL_MAILER` estaba dos veces en el `.env`.** El bloque nuevo arriba y el viejo
+  del starter kit más abajo. **Gana la última definición**, así que quedaba
+  `MAIL_MAILER=log` con el host de Hostinger: el envío "funcionaba" y no llegaba nada.
+  Al agregar cualquier clave al `.env`, `grep -c "^LA_CLAVE=" .env` antes de dar por
+  hecho que quedó puesta.
+- **`config:cache` después de tocar el `.env`**, con el binario de 8.4. Sin eso se
+  sigue leyendo la config vieja y el síntoma es idéntico.
+- **`MAIL_FROM_ADDRESS` tiene que ser la misma casilla que `MAIL_USERNAME`**, o
+  Hostinger rechaza el envío. Y **465 va con `smtps`**, 587 con `tls`: cruzarlos cuelga
+  hasta el timeout.
+- **Con `MAIL_MAILER=log` los mails no dejan rastro si `LOG_LEVEL=error`**, que es lo
+  que tiene producción. El driver `log` escribe con `logger->debug()` y Monolog lo
+  descarta: no hay archivo, no hay nada que recuperar. Esa guía de "buscá los mails en
+  el log" es falsa acá.
+
+Verificar sin mandar nada:
+
+```bash
+cd $R && $PHP artisan config:show mail | head -6        # default .. smtp
+```
+
+Y probar la autenticación de verdad, sin enviar, con `EsmtpTransport::start()`.
 
 ## Pendientes de configuración
 
-- **El envío de mails no está configurado.** El `.env` de producción tiene
-  `MAIL_MAILER=log`: los recordatorios se escriben en `storage/logs/laravel.log` en
-  vez de enviarse. Para activarlos hay que crear una cuenta de correo en hPanel y
-  poner sus credenciales SMTP en el `.env` del server, y después `config:cache`.
 - **El registro está abierto.** Cualquiera con la URL puede crear una cuenta. Los
   datos de cada usuario están aislados por Policy, así que nadie ve las mascotas de
   otro, pero conviene cerrar el registro cuando estén creadas las cuentas que van a

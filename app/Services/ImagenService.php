@@ -5,8 +5,10 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
+use Throwable;
 
 /**
  * Procesa las imágenes que suben los usuarios: reduce, convierte a WebP y
@@ -54,6 +56,44 @@ class ImagenService
         );
 
         return ['ruta' => $ruta, 'ruta_miniatura' => $rutaMiniatura];
+    }
+
+    /**
+     * Miniatura cuadrada de una imagen del disco privado, lista para incrustar
+     * en un mail.
+     *
+     * **Va incrustada en el mensaje y no por URL.** Las imágenes de la app se
+     * sirven por controlador tras verificar propiedad, y quien recibe una
+     * invitación todavía no tiene acceso a nada: un `<img>` apuntando a la ruta
+     * de la foto daría 403 y se vería rota.
+     *
+     * **JPEG y no el WebP que guarda la app**, por lo mismo que el logo del
+     * encabezado: Outlook de escritorio no lo entiende.
+     *
+     * **Devuelve null si la imagen no se puede leer, y no lanza.** Un mail sin
+     * foto se manda igual; perder la invitación entera por no poder generar una
+     * miniatura sería el peor intercambio posible. Mismo criterio que los
+     * adjuntos clínicos.
+     */
+    public function miniaturaParaMail(?string $ruta, int $lado = 240): ?string
+    {
+        if ($ruta === null || ! Storage::exists($ruta)) {
+            return null;
+        }
+
+        try {
+            return $this->procesador
+                // `decodeBinary` y no `decodePath`: el archivo vive en el disco
+                // privado, que no siempre es una ruta del filesystem local.
+                ->decodeBinary((string) Storage::get($ruta))
+                ->cover($lado, $lado)
+                ->encode(new JpegEncoder(quality: self::CALIDAD))
+                ->toString();
+        } catch (Throwable $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     public function eliminar(?string ...$rutas): void
