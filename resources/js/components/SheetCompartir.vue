@@ -293,8 +293,19 @@ function revocar(enlace: EnlaceCompartido) {
                                     <p class="truncate text-sm font-medium">
                                         {{ enlace.nombre ?? 'Sin nombre' }}
                                     </p>
+                                    <!--
+                                        Sin `vence` el enlace no caduca, y hay que
+                                        decirlo: un renglón que dijera solo las
+                                        visitas se lee como que falta el dato, no
+                                        como que no hay fecha.
+                                    -->
                                     <p class="text-xs text-muted-foreground">
-                                        Vence el {{ enlace.vence }} ·
+                                        {{
+                                            enlace.vence
+                                                ? `Vence el ${enlace.vence}`
+                                                : 'No vence'
+                                        }}
+                                        ·
                                         {{
                                             enlace.visitas === 0
                                                 ? 'todavía no lo abrió nadie'
@@ -380,6 +391,17 @@ function revocar(enlace: EnlaceCompartido) {
                                 :opciones="vigencias"
                                 :default-value="vigenciaPorDefecto"
                             />
+                            <!--
+                                El que no vence se elige a conciencia: el default
+                                sigue siendo un mes y acá se dice qué implica,
+                                porque un enlace reenviado por WhatsApp queda vivo
+                                en el grupo hasta que alguien se acuerde de
+                                revocarlo.
+                            -->
+                            <p class="text-xs text-muted-foreground">
+                                Sin vencimiento queda abierto hasta que lo
+                                revoques.
+                            </p>
                             <InputError :message="errors.vigencia" />
                         </div>
 

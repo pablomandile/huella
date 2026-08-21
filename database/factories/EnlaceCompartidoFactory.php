@@ -34,6 +34,12 @@ class EnlaceCompartidoFactory extends Factory
         return $this->state(fn () => ['expira_en' => now()->subDay()]);
     }
 
+    /** NULL en `expira_en` es "no vence": solo lo apaga una revocación. */
+    public function sinVencimiento(): static
+    {
+        return $this->state(fn () => ['expira_en' => null]);
+    }
+
     public function conAdjuntos(): static
     {
         return $this->state(fn () => ['incluye_adjuntos' => true]);

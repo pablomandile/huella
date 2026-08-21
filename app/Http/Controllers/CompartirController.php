@@ -137,10 +137,12 @@ class CompartirController extends Controller
         $enlace->creado_por = $usuario->id;
         // La fecha la calcula el servidor a partir del enum, nunca el cliente, y
         // es el fin del día **del dueño**: que "vence el 17/09" signifique eso.
-        $enlace->expira_en = $usuario->hoy()
-            ->addDays($request->vigencia()->dias())
-            ->endOfDay()
-            ->utc();
+        // NULL cuando eligió que no venza; el enum es el único que decide eso.
+        $dias = $request->vigencia()->dias();
+
+        $enlace->expira_en = $dias === null
+            ? null
+            : $usuario->hoy()->addDays($dias)->endOfDay()->utc();
 
         $mascota->enlaces()->save($enlace);
 

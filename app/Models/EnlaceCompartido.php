@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
  * @property string $token
  * @property string|null $nombre
  * @property bool $incluye_adjuntos
- * @property CarbonImmutable $expira_en
+ * @property CarbonImmutable|null $expira_en
  * @property CarbonImmutable|null $ultimo_acceso_en
  * @property int $visitas
  * @property CarbonImmutable|null $created_at
@@ -93,11 +93,15 @@ class EnlaceCompartido extends Model
      * contra `hoyCalendario()`. Es el lado correcto de la regla del proyecto,
      * pero conviene tenerlo escrito para no aplicar el reflejo equivocado.
      *
+     * NULL es "no vence" y por lo tanto nunca está vencido. El `?? false` es la
+     * mitad que importa: sin él esto sería `null`, que en un `if` se lee como
+     * falso por casualidad y en un `abort_if` estricto no se lee para nada.
+     *
      * @return Attribute<bool, never>
      */
     protected function vencido(): Attribute
     {
-        return Attribute::get(fn (): bool => $this->expira_en->isPast());
+        return Attribute::get(fn (): bool => $this->expira_en?->isPast() ?? false);
     }
 
     /**
@@ -106,7 +110,18 @@ class EnlaceCompartido extends Model
      */
     public function scopeVigentes(Builder $consulta): Builder
     {
-        return $consulta->where('expira_en', '>', now());
+        /*
+         * El paréntesis no es cosmético: sin agrupar, el `orWhereNull` se suma
+         * al final de la consulta entera y se lleva puesto cualquier `where` que
+         * el llamador haya puesto antes —empezando por el `mascota_id` de la
+         * relación—, que es como un listado termina mostrando los enlaces sin
+         * vencimiento de todas las mascotas.
+         */
+        return $consulta->where(
+            fn (Builder $vigencia) => $vigencia
+                ->whereNull('expira_en')
+                ->orWhere('expira_en', '>', now()),
+        );
     }
 
     /**

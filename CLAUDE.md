@@ -450,10 +450,21 @@ mandan el mismo mail: si no, sería un detector de usuarios registrados en Huell
 Porque el requisito es **revocar**, y una firma de Laravel solo se invalida rotando
 `APP_KEY` —que acá además desencripta `two_factor_secret` y deja a todos sin 2FA—.
 
-- **Vencimiento obligatorio** (7 / 30 / 90 días, default 30). No hay "no vence": el modo
-  de falla dominante es el reenvío por WhatsApp, y el vencimiento es la única defensa
-  que funciona sin que el dueño haga nada. La fecha **la calcula el servidor** desde el
-  enum; si viniera del cliente, un POST a mano pondría el año 3000.
+- **Vencimiento elegible** (7 / 30 / 90 días o sin vencimiento, default 30). La fecha
+  **la calcula el servidor** desde el enum; si viniera del cliente, un POST a mano
+  pondría el año 3000. `VigenciaEnlace::Siempre` persiste NULL en `expira_en`, y su
+  valor es la palabra `'siempre'` y no `'0'`: con `'0'` el `(int)` lo tragaría sin
+  ruido y un enlace que vence hoy se leería como uno eterno.
+  Lo que se paga: el modo de falla dominante es el reenvío por WhatsApp, y el
+  vencimiento era la única defensa que funcionaba sin que el dueño hiciera nada. Sin
+  fecha, la defensa pasa a ser la revocación —que existe justamente porque esto tiene
+  tabla y no es una URL firmada— y el contador de aperturas. Por eso el default sigue
+  siendo un mes: el que no vence se elige, no se cae en él por descuido.
+- **`scopeVigentes` agrupa su `orWhereNull`.** Sin el paréntesis, el `or` se suma al
+  final de la consulta entera y anula el `mascota_id` de la relación: el listado de una
+  mascota mostraría los enlaces sin vencimiento de **todas**. No da error, solo muestra
+  de más, y es el tipo de fuga que ningún test encuentra si no se busca. La cuida
+  `EnlaceSinVencimientoTest`.
 - **El token se guarda en claro**, al revés que un password reset: el dueño tiene que
   poder volver a copiar el enlace, y el secreto vive en la misma base que los datos que
   protege. Si la tabla se filtra, la historia clínica ya se filtró.
