@@ -60,4 +60,18 @@ enum TipoAdjunto: string
     {
         return in_array($this, self::documentosDeMascota(), true);
     }
+
+    /**
+     * Las opciones para el selector de una visita: sin `LibretaSanitaria` ni
+     * `CertificadoRabia`, que cuelgan de la mascota y no tienen sentido acá.
+     *
+     * @return list<array{value: string, label: string}>
+     */
+    public static function opcionesDeVisita(): array
+    {
+        return array_values(array_filter(
+            self::opciones(),
+            fn (array $opcion) => ! self::from($opcion['value'])->esDocumentoDeMascota(),
+        ));
+    }
 }

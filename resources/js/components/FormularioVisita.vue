@@ -51,11 +51,13 @@ const props = withDefaults(
         medicamentos: Medicamento[];
         tiposVisita: OpcionEnum[];
         vias: OpcionEnum[];
+        /** Solo hace falta en el alta: en la edición esta sección no se ve. */
+        tiposAdjunto?: OpcionEnum[];
         textoEnviar: string;
         /** En la edición los tratamientos se manejan desde la ficha. */
         conTratamientos?: boolean;
     }>(),
-    { visita: undefined, conTratamientos: true },
+    { visita: undefined, tiposAdjunto: () => [], conTratamientos: true },
 );
 
 // Cuántos bloques de medicamento hay en pantalla. Solo se guarda la clave de
@@ -236,14 +238,7 @@ function erroresDelBloque(
                 <Label for="tipo_adjunto">Qué son</Label>
                 <SelectNativo
                     name="tipo_adjunto"
-                    :opciones="[
-                        { value: 'receta', label: 'Receta' },
-                        { value: 'analisis', label: 'Análisis' },
-                        { value: 'radiografia', label: 'Radiografía' },
-                        { value: 'ecografia', label: 'Ecografía' },
-                        { value: 'factura', label: 'Factura' },
-                        { value: 'otro', label: 'Otro' },
-                    ]"
+                    :opciones="tiposAdjunto"
                     default-value="receta"
                 />
             </div>

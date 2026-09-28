@@ -14,10 +14,14 @@ import {
 import { ref, shallowRef } from 'vue';
 import { Form } from '@inertiajs/vue3';
 import CamposTratamiento from '@/components/CamposTratamiento.vue';
+import InputError from '@/components/InputError.vue';
+import SelectNativo from '@/components/SelectNativo.vue';
 import VisorImagen from '@/components/VisorImagen.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Sheet,
     SheetContent,
@@ -30,6 +34,7 @@ import { destroy as destroyAdjunto } from '@/routes/adjuntos';
 import { index as mascotasIndex } from '@/routes/mascotas';
 import { store as storeTratamiento } from '@/routes/mascotas/tratamientos';
 import { edit, index as visitasIndex } from '@/routes/mascotas/visitas';
+import { store as storeAdjunto } from '@/routes/mascotas/visitas/adjuntos';
 import type {
     Adjunto,
     Mascota,
@@ -45,6 +50,7 @@ defineProps<{
     puedeEditar: boolean;
     medicamentos: Medicamento[];
     vias: OpcionEnum[];
+    tiposAdjunto: OpcionEnum[];
 }>();
 
 defineOptions({
@@ -54,6 +60,7 @@ defineOptions({
 });
 
 const sheetTratamiento = ref(false);
+const sheetAdjunto = ref(false);
 
 const visorAbierto = ref(false);
 const enElVisor = shallowRef<Adjunto | null>(null);
@@ -257,7 +264,19 @@ function progreso(tratamiento: Tratamiento): string | null {
 
         <!-- Adjuntos -->
         <section class="flex flex-col gap-3">
-            <h2 class="font-medium">Recetas y estudios</h2>
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="font-medium">Recetas y estudios</h2>
+                <Button
+                    v-if="puedeEditar"
+                    variant="outline"
+                    size="sm"
+                    class="touch-target shrink-0"
+                    @click="sheetAdjunto = true"
+                >
+                    <Plus class="size-4" aria-hidden="true" />
+                    Agregar
+                </Button>
+            </div>
 
             <p
                 v-if="!visita.adjuntos.length"
@@ -394,6 +413,84 @@ function progreso(tratamiento: Tratamiento): string | null {
                             variant="ghost"
                             class="touch-target"
                             @click="sheetTratamiento = false"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            class="touch-target flex-1"
+                            :disabled="processing"
+                        >
+                            <Spinner v-if="processing" class="size-4" />
+                            Guardar
+                        </Button>
+                    </div>
+                </Form>
+            </SheetContent>
+        </Sheet>
+
+        <!-- Agregar una receta o un estudio a una visita ya cargada -->
+        <Sheet v-model:open="sheetAdjunto">
+            <SheetContent
+                side="bottom"
+                class="max-h-[90dvh] gap-0 overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+                <SheetHeader>
+                    <SheetTitle>Agregar un archivo</SheetTitle>
+                    <SheetDescription>
+                        Una foto de la receta o el estudio, o un PDF. Hasta 10
+                        MB.
+                    </SheetDescription>
+                </SheetHeader>
+
+                <Form
+                    :action="storeAdjunto([mascota.id, visita.id]).url"
+                    method="post"
+                    class="flex flex-col gap-4 p-4"
+                    v-slot="{ errors, processing }"
+                    @success="sheetAdjunto = false"
+                >
+                    <div class="grid gap-2">
+                        <Label for="tipo">Qué es</Label>
+                        <SelectNativo
+                            name="tipo"
+                            :opciones="tiposAdjunto"
+                            default-value="receta"
+                        />
+                        <InputError :message="errors.tipo" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="archivo">Archivo</Label>
+                        <input
+                            id="archivo"
+                            type="file"
+                            name="archivo"
+                            required
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            class="touch-target text-sm"
+                        />
+                        <InputError :message="errors.archivo" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="descripcion">
+                            Descripción (opcional)
+                        </Label>
+                        <Input
+                            id="descripcion"
+                            name="descripcion"
+                            maxlength="255"
+                        />
+                        <InputError :message="errors.descripcion" />
+                    </div>
+
+                    <div class="flex gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            class="touch-target"
+                            @click="sheetAdjunto = false"
                         >
                             Cancelar
                         </Button>

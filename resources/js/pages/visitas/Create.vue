@@ -19,6 +19,7 @@ defineProps<{
     medicamentos: Medicamento[];
     tiposVisita: OpcionEnum[];
     vias: OpcionEnum[];
+    tiposAdjunto: OpcionEnum[];
 }>();
 
 defineOptions({
@@ -53,6 +54,7 @@ defineOptions({
             :medicamentos="medicamentos"
             :tipos-visita="tiposVisita"
             :vias="vias"
+            :tipos-adjunto="tiposAdjunto"
             texto-enviar="Guardar la visita"
         />
     </div>

@@ -139,7 +139,6 @@ class VisitaController extends Controller
             'mascota' => MascotaResource::make($mascota)->resolve(),
             'visita' => VisitaResource::make($visita)->resolve(),
             'puedeEditar' => $request->user()->can('update', $visita),
-            'tiposAdjunto' => TipoAdjunto::opciones(),
             ...$this->opciones($request->user()),
         ]);
     }
@@ -239,6 +238,7 @@ class VisitaController extends Controller
             )->resolve(),
             'tiposVisita' => TipoVisita::opciones(),
             'vias' => ViaAdministracion::opciones(),
+            'tiposAdjunto' => TipoAdjunto::opcionesDeVisita(),
         ];
     }
 }
