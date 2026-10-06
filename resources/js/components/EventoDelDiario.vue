@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
+    Bath,
     Bug,
     Droplets,
     FileText,
@@ -67,6 +68,11 @@ const presentacion: Record<
         icono: Droplets,
         color: 'bg-pink-500/15 text-pink-700 dark:text-pink-300',
         etiqueta: 'Celo',
+    },
+    bano: {
+        icono: Bath,
+        color: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300',
+        etiqueta: 'Baño',
     },
     entrada: {
         icono: NotebookPen,

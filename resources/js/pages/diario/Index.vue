@@ -76,6 +76,7 @@ const etiquetasDeTipo: Record<string, string> = {
     peso: 'Peso',
     dieta: 'Alimentación',
     celo: 'Celo',
+    bano: 'Baños',
     entrada: 'Notas',
 };
 

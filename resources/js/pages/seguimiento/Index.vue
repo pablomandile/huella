@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
 import {
+    Bath,
     Droplets,
     Info,
     Plus,
@@ -32,6 +33,10 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { index as mascotasIndex } from '@/routes/mascotas';
 import {
+    destroy as destroyBano,
+    store as storeBano,
+} from '@/routes/mascotas/banos';
+import {
     destroy as destroyCiclo,
     store as storeCiclo,
 } from '@/routes/mascotas/celos';
@@ -45,6 +50,7 @@ import {
 } from '@/routes/mascotas/pesos';
 import type {
     Alimento,
+    Bano,
     CicloCelo,
     Dieta,
     EstimacionCelo,
@@ -60,6 +66,7 @@ const props = defineProps<{
     pesos: RegistroPeso[];
     variacion: VariacionPeso | null;
     dietas: Dieta[];
+    banos: Bano[];
     celoVisible: boolean;
     ciclos: CicloCelo[];
     estimacionCelo: EstimacionCelo | null;
@@ -67,6 +74,7 @@ const props = defineProps<{
     alimentos: Alimento[];
     veterinarios: Veterinario[];
     origenesPeso: OpcionEnum[];
+    lugaresBano: OpcionEnum[];
     intensidades: OpcionEnum[];
     hoy: string;
 }>();
@@ -79,6 +87,7 @@ defineOptions({
 
 const sheetPeso = ref(false);
 const sheetDieta = ref(false);
+const sheetBano = ref(false);
 const sheetCelo = ref(false);
 
 const ultimoPeso = computed(() => props.pesos[props.pesos.length - 1] ?? null);
@@ -86,6 +95,29 @@ const dietaVigente = computed(
     () => props.dietas.find((d) => d.vigente) ?? null,
 );
 const dietasAnteriores = computed(() => props.dietas.filter((d) => !d.vigente));
+
+const ultimoBano = computed(() => props.banos[0] ?? null);
+const banosAnteriores = computed(() => props.banos.slice(1, 9));
+
+/** "Hace 12 días": es lo que se quiere saber, más que la fecha. */
+const haceCuantoDelBano = computed(() => {
+    if (!ultimoBano.value) {
+        return null;
+    }
+
+    // Las dos son fechas sin hora: parseadas como medianoche UTC, la resta da
+    // días enteros sin que la zona del navegador corra ninguna.
+    const dias = Math.round(
+        (Date.parse(props.hoy) - Date.parse(ultimoBano.value.fecha)) /
+            86_400_000,
+    );
+
+    if (dias <= 0) {
+        return 'hoy';
+    }
+
+    return dias === 1 ? 'ayer' : `hace ${dias} días`;
+});
 
 // La curva se lee de más viejo a más nuevo; la lista, al revés.
 const pesosRecientes = computed(() => [...props.pesos].reverse().slice(0, 8));
@@ -100,6 +132,14 @@ const colorConfianza: Record<EstimacionCelo['confianza'], string> = {
 function eliminarPeso(peso: RegistroPeso) {
     if (confirm(`¿Eliminar el peso del ${peso.fecha_legible}?`)) {
         router.delete(destroyPeso([props.mascota.id, peso.id]).url, {
+            preserveScroll: true,
+        });
+    }
+}
+
+function eliminarBano(bano: Bano) {
+    if (confirm(`¿Eliminar el baño del ${bano.fecha_legible}?`)) {
+        router.delete(destroyBano([props.mascota.id, bano.id]).url, {
             preserveScroll: true,
         });
     }
@@ -331,6 +371,98 @@ function eliminarCiclo(ciclo: CicloCelo) {
                             class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
                             aria-label="Eliminar del historial"
                             @click="eliminarDieta(dieta)"
+                        >
+                            <Trash2 class="size-4" aria-hidden="true" />
+                        </button>
+                    </li>
+                </ul>
+            </details>
+        </section>
+
+        <!-- Baño -->
+        <section class="flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="font-medium">Baño</h2>
+                <Button
+                    v-if="puedeRegistrar"
+                    variant="outline"
+                    size="sm"
+                    class="touch-target shrink-0"
+                    @click="sheetBano = true"
+                >
+                    <Plus class="size-4" aria-hidden="true" />
+                    Registrar
+                </Button>
+            </div>
+
+            <Card v-if="ultimoBano" class="py-0">
+                <CardContent class="flex items-start gap-3 p-4">
+                    <div
+                        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent"
+                    >
+                        <Bath
+                            class="size-4 text-accent-foreground"
+                            aria-hidden="true"
+                        />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium">
+                            Último baño: {{ haceCuantoDelBano }}
+                        </p>
+                        <p class="text-sm text-muted-foreground">
+                            {{ ultimoBano.fecha_legible }} ·
+                            {{ ultimoBano.lugar_etiqueta }}
+                        </p>
+                        <p
+                            v-if="ultimoBano.notas"
+                            class="mt-1 text-sm text-muted-foreground"
+                        >
+                            {{ ultimoBano.notas }}
+                        </p>
+                    </div>
+                    <button
+                        v-if="puedeRegistrar"
+                        type="button"
+                        class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                        :aria-label="`Eliminar el baño del ${ultimoBano.fecha_legible}`"
+                        @click="eliminarBano(ultimoBano)"
+                    >
+                        <Trash2 class="size-4" aria-hidden="true" />
+                    </button>
+                </CardContent>
+            </Card>
+
+            <p
+                v-else
+                class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
+            >
+                Todavía no cargaste ningún baño.
+            </p>
+
+            <details v-if="banosAnteriores.length" class="text-sm">
+                <summary
+                    class="flex touch-target cursor-pointer items-center text-muted-foreground"
+                >
+                    Los anteriores ({{ banosAnteriores.length }})
+                </summary>
+                <ul class="mt-2 flex flex-col divide-y divide-border">
+                    <li
+                        v-for="bano in banosAnteriores"
+                        :key="bano.id"
+                        class="flex items-center gap-3 py-2"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate">{{ bano.fecha_legible }}</p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ bano.lugar_etiqueta }}
+                            </p>
+                        </div>
+                        <button
+                            v-if="puedeRegistrar"
+                            type="button"
+                            class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                            :aria-label="`Eliminar el baño del ${bano.fecha_legible}`"
+                            @click="eliminarBano(bano)"
                         >
                             <Trash2 class="size-4" aria-hidden="true" />
                         </button>
@@ -679,6 +811,84 @@ function eliminarCiclo(ciclo: CicloCelo) {
                             variant="ghost"
                             class="touch-target"
                             @click="sheetDieta = false"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            class="touch-target flex-1"
+                            :disabled="processing"
+                        >
+                            <Spinner v-if="processing" class="size-4" />
+                            Guardar
+                        </Button>
+                    </div>
+                </Form>
+            </SheetContent>
+        </Sheet>
+
+        <!-- Alta de baño -->
+        <Sheet v-model:open="sheetBano">
+            <SheetContent
+                side="bottom"
+                class="max-h-[90dvh] gap-0 overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+                <SheetHeader>
+                    <SheetTitle>Registrar un baño</SheetTitle>
+                    <SheetDescription>
+                        Cuándo fue y dónde lo bañaron.
+                    </SheetDescription>
+                </SheetHeader>
+
+                <Form
+                    :action="storeBano(mascota.id).url"
+                    method="post"
+                    class="flex flex-col gap-4 p-4"
+                    v-slot="{ errors, processing }"
+                    @success="sheetBano = false"
+                >
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="fecha_bano">Cuándo *</Label>
+                            <Input
+                                id="fecha_bano"
+                                name="fecha"
+                                type="date"
+                                required
+                                class="touch-target"
+                                :default-value="hoy"
+                            />
+                            <InputError :message="errors.fecha" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="lugar">Dónde *</Label>
+                            <SelectNativo
+                                name="lugar"
+                                :opciones="lugaresBano"
+                                default-value="casa"
+                            />
+                            <InputError :message="errors.lugar" />
+                        </div>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="notas_bano">Notas</Label>
+                        <Input
+                            id="notas_bano"
+                            name="notas"
+                            maxlength="255"
+                            placeholder="Con corte de pelo y limpieza de oídos"
+                        />
+                        <InputError :message="errors.notas" />
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            class="touch-target"
+                            @click="sheetBano = false"
                         >
                             Cancelar
                         </Button>

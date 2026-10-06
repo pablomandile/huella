@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Enums\IntensidadCelo;
+use App\Enums\LugarBano;
 use App\Enums\OrigenPeso;
+use App\Http\Requests\GuardarBanoRequest;
 use App\Http\Requests\GuardarCicloCeloRequest;
 use App\Http\Requests\GuardarDietaRequest;
 use App\Http\Requests\GuardarPesoRequest;
 use App\Http\Resources\AlimentoResource;
+use App\Http\Resources\BanoResource;
 use App\Http\Resources\CicloCeloResource;
 use App\Http\Resources\DietaResource;
 use App\Http\Resources\MascotaResource;
 use App\Http\Resources\RegistroPesoResource;
 use App\Http\Resources\VeterinarioResource;
 use App\Models\Alimento;
+use App\Models\Bano;
 use App\Models\CicloCelo;
 use App\Models\Dieta;
 use App\Models\Mascota;
@@ -28,11 +32,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Peso, dieta y celo: lo que cambia con el tiempo.
+ * Peso, dieta, baños y celo: lo que cambia con el tiempo.
  *
- * Van juntos porque son las tres cosas que se leen en tendencia y no en un
- * momento: cuánto pesa comparado con antes, qué viene comiendo, cada cuánto le
- * viene el celo.
+ * Van juntos porque se leen en tendencia y no en un momento: cuánto pesa
+ * comparado con antes, qué viene comiendo, hace cuánto que no se baña, cada
+ * cuánto le viene el celo.
  */
 class SeguimientoController extends Controller
 {
@@ -54,6 +58,7 @@ class SeguimientoController extends Controller
             'dietas' => DietaResource::collection(
                 $mascota->dietas()->with(['alimento', 'veterinario'])->get(),
             )->resolve(),
+            'banos' => BanoResource::collection($mascota->banos)->resolve(),
             // El módulo de celo solo existe para hembras no castradas y vivas.
             'celoVisible' => $mascota->celo_visible,
             'ciclos' => $mascota->celo_visible
@@ -71,6 +76,7 @@ class SeguimientoController extends Controller
                 Veterinario::disponiblesPara($usuario)->with('veterinaria')->orderBy('nombre')->get(),
             )->resolve(),
             'origenesPeso' => OrigenPeso::opciones(),
+            'lugaresBano' => LugarBano::opciones(),
             'intensidades' => IntensidadCelo::opciones(),
             // La zona del **propietario**, no la de quien mira: si un lector en otro
             // país abre la ficha, "hoy" tiene que seguir siendo el día de la casa
@@ -110,6 +116,25 @@ class SeguimientoController extends Controller
         $peso->delete();
 
         return back()->with('success', 'Peso eliminado.');
+    }
+
+    /* ------------------------------------------------------------------ baño */
+
+    public function guardarBano(GuardarBanoRequest $request, Mascota $mascota): RedirectResponse
+    {
+        $mascota->banos()->create($request->validated());
+
+        return back()->with('success', 'Baño registrado.');
+    }
+
+    public function eliminarBano(Mascota $mascota, Bano $bano): RedirectResponse
+    {
+        Gate::authorize('delete', $bano);
+        abort_unless($bano->mascota_id === $mascota->id, 404);
+
+        $bano->delete();
+
+        return back()->with('success', 'Baño eliminado.');
     }
 
     /* ----------------------------------------------------------------- dieta */

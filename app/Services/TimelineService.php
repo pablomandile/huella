@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AplicacionVacuna;
+use App\Models\Bano;
 use App\Models\CicloCelo;
 use App\Models\Desparasitacion;
 use App\Models\Dieta;
@@ -20,10 +21,10 @@ use InvalidArgumentException;
 /**
  * La línea de tiempo unificada: la pantalla principal del diario.
  *
- * Mezcla ocho fuentes que no se parecen entre sí y las devuelve en una sola
+ * Mezcla nueve fuentes que no se parecen entre sí y las devuelve en una sola
  * lista, de lo más nuevo a lo más viejo.
  *
- * **Por qué no una VIEW SQL con UNION.** Las columnas de las ocho tablas no
+ * **Por qué no una VIEW SQL con UNION.** Las columnas de las nueve tablas no
  * coinciden ni en nombre ni en tipo, así que una VIEW obligaría a castear todo
  * a texto y perdería los índices; además habría que mantenerla en migraciones
  * cada vez que una fase suma un campo. Acá cada fuente se consulta con su
@@ -31,7 +32,7 @@ use InvalidArgumentException;
  * PHP sobre un puñado de filas.
  *
  * **Paginado por cursor y no por offset.** Con offset, cargar la página 5 exige
- * contar y descartar las 4 anteriores en las ocho tablas, y si entra un evento
+ * contar y descartar las 4 anteriores en las nueve tablas, y si entra un evento
  * nuevo mientras el usuario scrollea, las filas se corren y se saltea o repite
  * alguna. El cursor es `(fecha, clave)` del último evento devuelto.
  */
@@ -54,6 +55,7 @@ class TimelineService
         'peso',
         'dieta',
         'celo',
+        'bano',
         'entrada',
     ];
 
@@ -246,6 +248,7 @@ class TimelineService
                 ->where('mascota_id', $mascota->id)
                 ->with('alimento'),
             'celo' => $suyos(CicloCelo::class),
+            'bano' => $suyos(Bano::class),
             'entrada' => $suyos(EntradaDiario::class),
             default => throw new InvalidArgumentException("Fuente sin consulta: {$tipo}"),
         };
@@ -268,6 +271,7 @@ class TimelineService
             'peso' => ['notas'],
             'dieta' => ['motivo', 'notas'],
             'celo' => ['sintomas', 'notas'],
+            'bano' => ['notas'],
             'entrada' => ['titulo', 'contenido'],
             default => throw new InvalidArgumentException("Fuente sin búsqueda: {$tipo}"),
         };
@@ -366,6 +370,14 @@ class TimelineService
                 detalle: $registro->duracion_dias !== null
                     ? "Duró {$registro->duracion_dias} días"
                     : 'En curso',
+                url: route('mascotas.seguimiento.index', $mascota),
+            ),
+            'bano' => new EventoTimeline(
+                tipo: 'bano',
+                id: $registro->id,
+                fecha: $registro->fecha->toImmutable(),
+                titulo: 'Baño',
+                detalle: $registro->lugar->etiqueta(),
                 url: route('mascotas.seguimiento.index', $mascota),
             ),
             'entrada' => new EventoTimeline(

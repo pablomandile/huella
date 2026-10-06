@@ -244,6 +244,16 @@ class Mascota extends Model
     }
 
     /**
+     * Baños, del más reciente al más viejo: lo que se mira es el último.
+     *
+     * @return HasMany<Bano, $this>
+     */
+    public function banos(): HasMany
+    {
+        return $this->hasMany(Bano::class)->orderByDesc('fecha')->orderByDesc('id');
+    }
+
+    /**
      * @return HasMany<Dieta, $this>
      */
     public function dietas(): HasMany

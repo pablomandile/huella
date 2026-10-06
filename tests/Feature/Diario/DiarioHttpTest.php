@@ -27,7 +27,7 @@ it('muestra el diario con la primera página y los contadores', function () {
             ->where('totales.visita', 2)
             ->where('totales.entrada', 3)
             ->where('hay_mas', false)
-            ->has('tipos', 8),
+            ->has('tipos', 9),
         );
 });
 

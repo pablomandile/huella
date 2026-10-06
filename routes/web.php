@@ -217,8 +217,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('mascotas.desparasitaciones.destroy');
 
     /*
-     * Seguimiento: peso, dieta y celo. Van juntos porque son las tres cosas que
-     * se leen en tendencia y no en un momento.
+     * Seguimiento: peso, dieta, baños y celo. Van juntos porque se leen en
+     * tendencia y no en un momento.
      */
     Route::get('mascotas/{mascota}/seguimiento', [SeguimientoController::class, 'index'])
         ->name('mascotas.seguimiento.index');
@@ -229,6 +229,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('mascotas.pesos.update');
     Route::delete('mascotas/{mascota}/pesos/{peso}', [SeguimientoController::class, 'eliminarPeso'])
         ->name('mascotas.pesos.destroy');
+
+    Route::post('mascotas/{mascota}/banos', [SeguimientoController::class, 'guardarBano'])
+        ->name('mascotas.banos.store');
+    Route::delete('mascotas/{mascota}/banos/{bano}', [SeguimientoController::class, 'eliminarBano'])
+        ->name('mascotas.banos.destroy');
 
     Route::post('mascotas/{mascota}/dietas', [SeguimientoController::class, 'guardarDieta'])
         ->name('mascotas.dietas.store');

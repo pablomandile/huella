@@ -370,6 +370,15 @@ export type RegistroPeso = {
     notas: string | null;
 };
 
+export type Bano = {
+    id: number;
+    fecha: string;
+    fecha_legible: string;
+    lugar: string;
+    lugar_etiqueta: string;
+    notas: string | null;
+};
+
 export type VariacionPeso = {
     kilos: number;
     texto: string;

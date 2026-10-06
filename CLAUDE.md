@@ -218,11 +218,11 @@ la dosis y que el veterinario emita el certificado.
 
 ## Diario y exportación
 
-- `TimelineService` unifica **ocho fuentes** en una sola lista. No es una VIEW con UNION:
+- `TimelineService` unifica **nueve fuentes** en una sola lista. No es una VIEW con UNION:
   las columnas no coinciden ni en nombre ni en tipo, una VIEW obligaría a castear todo a
   texto y habría que mantenerla en migraciones cada vez que una fase suma un campo.
 - **Paginado por cursor, no por offset.** Con offset, cargar la página 5 exige descartar
-  las 4 anteriores en las ocho tablas, y si entra un evento mientras el usuario scrollea
+  las 4 anteriores en las nueve tablas, y si entra un evento mientras el usuario scrollea
   las filas se corren y se saltea o repite alguno.
 - El orden **tiene que coincidir exactamente** con lo que aplica el cursor: fecha, tipo,
   id numérico. Ordenar por la clave `tipo:id` como texto parece equivalente pero no lo

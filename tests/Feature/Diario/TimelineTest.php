@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AplicacionVacuna;
+use App\Models\Bano;
 use App\Models\CicloCelo;
 use App\Models\Desparasitacion;
 use App\Models\Dieta;
@@ -16,7 +17,7 @@ use App\Services\TimelineService;
  * El criterio de la fase: el timeline de una mascota con 200 eventos carga en
  * menos de un segundo y pagina sin saltos.
  *
- * "Sin saltos" es lo que hace difícil el paginado por cursor sobre ocho fuentes
+ * "Sin saltos" es lo que hace difícil el paginado por cursor sobre nueve fuentes
  * distintas: si el orden no es determinístico, la página siguiente repite o se
  * saltea eventos. Eso es lo que más se prueba acá.
  */
@@ -35,7 +36,7 @@ function mascotaDeTimeline(): Mascota
         ->create(['nombre' => 'Greta']);
 }
 
-it('mezcla las ocho fuentes en una sola lista ordenada', function () {
+it('mezcla las nueve fuentes en una sola lista ordenada', function () {
     $mascota = mascotaDeTimeline();
 
     Visita::factory()->for($mascota)->create([
@@ -59,6 +60,7 @@ it('mezcla las ocho fuentes en una sola lista ordenada', function () {
     RegistroPeso::factory()->elDia('2026-08-14', 18.4)->create(['mascota_id' => $mascota->id]);
     Dieta::factory()->create(['mascota_id' => $mascota->id, 'fecha_inicio' => '2026-08-04']);
     CicloCelo::factory()->empezoEl('2026-08-02')->create(['mascota_id' => $mascota->id]);
+    Bano::factory()->enSalon()->elDia('2026-08-01')->create(['mascota_id' => $mascota->id]);
     EntradaDiario::factory()->elDia('2026-08-16')->create([
         'mascota_id' => $mascota->id,
         'titulo' => 'Vomitó dos veces',
@@ -68,15 +70,15 @@ it('mezcla las ocho fuentes en una sola lista ordenada', function () {
     $fechas = array_column($resultado['eventos'], 'fecha');
     $tipos = array_column($resultado['eventos'], 'tipo');
 
-    expect($resultado['eventos'])->toHaveCount(8)
+    expect($resultado['eventos'])->toHaveCount(9)
         // De lo más nuevo a lo más viejo.
         ->and($fechas)->toBe([
             '2026-08-16', '2026-08-14', '2026-08-12', '2026-08-10',
-            '2026-08-08', '2026-08-06', '2026-08-04', '2026-08-02',
+            '2026-08-08', '2026-08-06', '2026-08-04', '2026-08-02', '2026-08-01',
         ])
         ->and($tipos)->toBe([
             'entrada', 'peso', 'vacuna', 'visita',
-            'desparasitacion', 'tratamiento', 'dieta', 'celo',
+            'desparasitacion', 'tratamiento', 'dieta', 'celo', 'bano',
         ])
         ->and($resultado['hay_mas'])->toBeFalse()
         ->and($resultado['cursor'])->toBeNull();

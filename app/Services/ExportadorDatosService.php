@@ -38,6 +38,7 @@ class ExportadorDatosService
                 'vacunasAplicadas.vacuna',
                 'desparasitaciones.medicamento',
                 'pesos',
+                'banos',
                 'dietas.alimento',
                 'ciclosCelo',
                 'entradasDiario',
@@ -178,6 +179,12 @@ class ExportadorDatosService
                 'origen' => $peso->origen->etiqueta(),
                 'condicion_corporal' => $peso->condicion_corporal,
                 'notas' => $peso->notas,
+            ])->all(),
+
+            'banos' => $mascota->banos->map(fn ($bano) => [
+                'fecha' => $bano->fecha->toDateString(),
+                'lugar' => $bano->lugar->etiqueta(),
+                'notas' => $bano->notas,
             ])->all(),
 
             'dietas' => $mascota->dietas->map(fn ($dieta) => [
