@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import {
     BellRing,
     CalendarClock,
@@ -10,7 +10,7 @@ import {
     Scale,
     UtensilsCrossed,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import FichaMascota from '@/components/FichaMascota.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
@@ -30,8 +30,13 @@ import { dashboard } from '@/routes';
 import { create } from '@/routes/mascotas';
 import { store as storePeso } from '@/routes/mascotas/pesos';
 import { index as seguimiento } from '@/routes/mascotas/seguimiento';
-import { index as medicacion, update as marcarToma } from '@/routes/medicacion';
+import {
+    index as medicacion,
+    update as rutaMarcarToma,
+} from '@/routes/medicacion';
 import { index as recordatoriosIndex } from '@/routes/recordatorios';
+import { encolable, marcarToma } from '@/sinConexion/escribir';
+import { pendientesDe, tomasMarcadas } from '@/sinConexion/pendientes';
 import type {
     DatosFichaMascota,
     Dieta,
@@ -52,7 +57,7 @@ import type {
  * saber qué le toca, no cuánto pesa.
  */
 
-defineProps<{
+const props = defineProps<{
     mascotaActiva: Mascota | null;
     ficha: DatosFichaMascota | null;
     totalMascotas: number;
@@ -74,13 +79,55 @@ defineOptions({
 
 const sheetPeso = ref(false);
 
+/*
+ * Sin conexión, marcar una toma y pesar van a la cola y se ven ya: la toma deja
+ * la lista y el peso aparece en su tarjeta, marcado "sin sincronizar" hasta que
+ * vuelva la señal. Ver `sinConexion/`.
+ */
+const tomasVisibles = computed(() =>
+    props.tomasDeHoy.filter(
+        (toma) => tomasMarcadas.value.get(toma.id) !== 'administrada',
+    ),
+);
+
 function marcarDada(toma: TomaDelDia) {
-    router.patch(
-        marcarToma(toma.id).url,
+    marcarToma(
+        rutaMarcarToma(toma.id).url,
+        {
+            id: toma.id,
+            resumen: `${toma.medicamento} de ${toma.mascota}, dada`,
+        },
         { estado: 'administrada' },
-        { preserveScroll: true, preserveState: true },
     );
 }
+
+const pesosEnCola = computed(() =>
+    props.mascotaActiva
+        ? pendientesDe('peso', props.mascotaActiva.id).value
+        : [],
+);
+/** El último peso cargado sin conexión, si hay: es más nuevo que el del servidor. */
+const pesoEnCola = computed(() => {
+    const op = pesosEnCola.value.at(-1);
+
+    return op
+        ? {
+              kilos: `${Number(op.datos.peso_kg).toLocaleString('es-AR')} kg`,
+              fecha: String(op.datos.fecha),
+          }
+        : null;
+});
+
+const formPeso = encolable(
+    (datos) => ({
+        entidad: 'peso',
+        accion: 'crear',
+        id: props.mascotaActiva!.id,
+        datos,
+        resumen: `Peso ${datos.peso_kg} kg · ${props.mascotaActiva!.nombre}`,
+    }),
+    () => (sheetPeso.value = false),
+);
 </script>
 
 <template>
@@ -129,7 +176,7 @@ function marcarDada(toma: TomaDelDia) {
             <FichaMascota v-if="ficha" v-bind="ficha" plegable ficha-arriba>
                 <template #tras-alergias>
                     <!-- 1. Lo que hay que dar hoy -->
-                    <Card v-if="tomasDeHoy.length" class="py-0">
+                    <Card v-if="tomasVisibles.length" class="py-0">
                         <CardContent class="flex flex-col gap-3 p-4">
                             <div
                                 class="flex items-center justify-between gap-3"
@@ -152,7 +199,7 @@ function marcarDada(toma: TomaDelDia) {
 
                             <ul class="flex flex-col divide-y divide-border">
                                 <li
-                                    v-for="toma in tomasDeHoy"
+                                    v-for="toma in tomasVisibles"
                                     :key="toma.id"
                                     class="flex items-center gap-3 py-2"
                                 >
@@ -279,8 +326,19 @@ function marcarDada(toma: TomaDelDia) {
                                         >
                                             Peso
                                         </p>
+                                        <template v-if="pesoEnCola">
+                                            <p class="text-lg font-semibold">
+                                                {{ pesoEnCola.kilos }}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {{ pesoEnCola.fecha }} · sin
+                                                sincronizar
+                                            </p>
+                                        </template>
                                         <p
-                                            v-if="ultimoPeso"
+                                            v-else-if="ultimoPeso"
                                             class="text-lg font-semibold"
                                         >
                                             {{ ultimoPeso.peso_legible }}
@@ -305,7 +363,7 @@ function marcarDada(toma: TomaDelDia) {
                                             Sin registrar
                                         </p>
                                         <p
-                                            v-if="ultimoPeso"
+                                            v-if="ultimoPeso && !pesoEnCola"
                                             class="text-xs text-muted-foreground"
                                         >
                                             {{ ultimoPeso.fecha_legible }}
@@ -403,6 +461,8 @@ function marcarDada(toma: TomaDelDia) {
                         method="post"
                         class="flex flex-col gap-4 p-4"
                         v-slot="{ errors, processing }"
+                        :on-before="formPeso.antes"
+                        :on-network-error="formPeso.errorDeRed"
                         @success="sheetPeso = false"
                     >
                         <div class="grid gap-4 sm:grid-cols-2">

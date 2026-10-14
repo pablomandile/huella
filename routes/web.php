@@ -23,6 +23,7 @@ use App\Http\Controllers\PreventivoController;
 use App\Http\Controllers\Publico\FichaCompartidaController;
 use App\Http\Controllers\RecordatorioController;
 use App\Http\Controllers\SeguimientoController;
+use App\Http\Controllers\SincronizacionController;
 use App\Http\Controllers\TratamientoController;
 use App\Http\Controllers\VisitaController;
 use Illuminate\Support\Facades\Route;
@@ -99,6 +100,16 @@ Route::middleware('signed')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    /*
+     * La cola sin conexión: las tomas, pesos, baños y notas que se cargaron sin
+     * red y se mandan al volver. Cada operación pasa por el FormRequest de su
+     * ruta de siempre (ver SincronizacionService). El throttle es holgado: la app
+     * reintenta sola al volver la conexión y cada 30 segundos con cola pendiente.
+     */
+    Route::post('sincronizar', SincronizacionController::class)
+        ->middleware('throttle:30,1')
+        ->name('sincronizar');
 
     Route::resource('mascotas', MascotaController::class)
         ->parameters(['mascotas' => 'mascota']);

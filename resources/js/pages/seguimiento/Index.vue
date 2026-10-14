@@ -15,6 +15,7 @@ import { computed, ref } from 'vue';
 import CampoCheck from '@/components/CampoCheck.vue';
 import ComboboxCatalogo from '@/components/ComboboxCatalogo.vue';
 import CurvaDePeso from '@/components/CurvaDePeso.vue';
+import PendientesSinSincronizar from '@/components/PendientesSinSincronizar.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
 import TextareaNativo from '@/components/TextareaNativo.vue';
@@ -60,6 +61,9 @@ import type {
     VariacionPeso,
     Veterinario,
 } from '@/types/huella';
+import type { Operacion } from '@/sinConexion/cola';
+import { encolable } from '@/sinConexion/escribir';
+import { pendientesDe } from '@/sinConexion/pendientes';
 
 const props = defineProps<{
     mascota: Mascota;
@@ -89,6 +93,46 @@ const sheetPeso = ref(false);
 const sheetDieta = ref(false);
 const sheetBano = ref(false);
 const sheetCelo = ref(false);
+
+/*
+ * Peso y baño se pueden cargar sin conexión: van a la cola y se ven arriba de su
+ * lista, marcados, hasta que vuelva la señal. La curva no los dibuja: se
+ * recalcula con lo del servidor al sincronizar, y un punto provisorio en un
+ * gráfico clínico se leería como un dato.
+ */
+const pesosEnCola = pendientesDe('peso', props.mascota.id);
+const banosEnCola = pendientesDe('bano', props.mascota.id);
+
+const LUGARES: Record<string, string> = Object.fromEntries(
+    props.lugaresBano.map((o) => [o.value, o.label]),
+);
+
+const describirPeso = (op: Operacion) =>
+    `${Number(op.datos.peso_kg).toLocaleString('es-AR')} kg · ${op.datos.fecha}`;
+const describirBano = (op: Operacion) =>
+    `Baño del ${op.datos.fecha} · ${LUGARES[String(op.datos.lugar)] ?? op.datos.lugar}`;
+
+const formPeso = encolable(
+    (datos) => ({
+        entidad: 'peso',
+        accion: 'crear',
+        id: props.mascota.id,
+        datos,
+        resumen: `Peso ${datos.peso_kg} kg · ${props.mascota.nombre}`,
+    }),
+    () => (sheetPeso.value = false),
+);
+
+const formBano = encolable(
+    (datos) => ({
+        entidad: 'bano',
+        accion: 'crear',
+        id: props.mascota.id,
+        datos,
+        resumen: `Baño del ${datos.fecha} · ${props.mascota.nombre}`,
+    }),
+    () => (sheetBano.value = false),
+);
 
 const ultimoPeso = computed(() => props.pesos[props.pesos.length - 1] ?? null);
 const dietaVigente = computed(
@@ -227,7 +271,7 @@ function eliminarCiclo(ciclo: CicloCelo) {
             </Card>
 
             <p
-                v-else
+                v-else-if="!pesosEnCola.length"
                 class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
             >
                 Todavía no cargaste ningún peso. Con dos ya se ve la curva.
@@ -237,6 +281,11 @@ function eliminarCiclo(ciclo: CicloCelo) {
                 La lista, además del gráfico: con lector de pantalla o con dos
                 puntos encimados, el gráfico solo no alcanza.
             -->
+            <PendientesSinSincronizar
+                :ops="pesosEnCola"
+                :describir="describirPeso"
+            />
+
             <ul
                 v-if="pesos.length"
                 class="flex flex-col divide-y divide-border"
@@ -395,6 +444,11 @@ function eliminarCiclo(ciclo: CicloCelo) {
                 </Button>
             </div>
 
+            <PendientesSinSincronizar
+                :ops="banosEnCola"
+                :describir="describirBano"
+            />
+
             <Card v-if="ultimoBano" class="py-0">
                 <CardContent class="flex items-start gap-3 p-4">
                     <div
@@ -433,7 +487,7 @@ function eliminarCiclo(ciclo: CicloCelo) {
             </Card>
 
             <p
-                v-else
+                v-else-if="!banosEnCola.length"
                 class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
             >
                 Todavía no cargaste ningún baño.
@@ -618,6 +672,8 @@ function eliminarCiclo(ciclo: CicloCelo) {
                     method="post"
                     class="flex flex-col gap-4 p-4"
                     v-slot="{ errors, processing }"
+                    :on-before="formPeso.antes"
+                    :on-network-error="formPeso.errorDeRed"
                     @success="sheetPeso = false"
                 >
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -847,6 +903,8 @@ function eliminarCiclo(ciclo: CicloCelo) {
                     method="post"
                     class="flex flex-col gap-4 p-4"
                     v-slot="{ errors, processing }"
+                    :on-before="formBano.antes"
+                    :on-network-error="formBano.errorDeRed"
                     @success="sheetBano = false"
                 >
                     <div class="grid gap-4 sm:grid-cols-2">

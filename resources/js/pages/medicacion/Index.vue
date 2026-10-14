@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { Check, PawPrint, PillBottle, Undo2, X } from '@lucide/vue';
 import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { update } from '@/routes/medicacion';
+import { marcarToma } from '@/sinConexion/escribir';
+import { tomasMarcadas } from '@/sinConexion/pendientes';
 import type { TomaHoy } from '@/types/huella';
 
 /*
@@ -22,8 +24,35 @@ const props = defineProps<{
     hoy: string;
 }>();
 
-const atrasadas = computed(() => props.tomas.filter((t) => t.atrasada));
-const deHoy = computed(() => props.tomas.filter((t) => !t.atrasada));
+const ETIQUETAS: Record<string, string> = {
+    administrada: 'Dada',
+    omitida: 'Salteada',
+    pendiente: 'Pendiente',
+};
+
+/*
+ * Las tomas con lo marcado sin conexión ya aplicado: se ven como dadas apenas se
+ * tocan, con "sin sincronizar" en la etiqueta hasta que vuelva la señal. Una
+ * atrasada que se marcó deja la lista de atrasadas, igual que con conexión.
+ */
+const tomas = computed(() =>
+    props.tomas.map((toma) => {
+        const estado = tomasMarcadas.value.get(toma.id);
+
+        return estado === undefined
+            ? toma
+            : {
+                  ...toma,
+                  estado,
+                  estado_etiqueta: `${ETIQUETAS[estado] ?? estado} · sin sincronizar`,
+              };
+    }),
+);
+
+const atrasadas = computed(() =>
+    tomas.value.filter((t) => t.atrasada && t.estado === 'pendiente'),
+);
+const deHoy = computed(() => tomas.value.filter((t) => !t.atrasada));
 const pendientesDeHoy = computed(
     () => deHoy.value.filter((t) => t.estado === 'pendiente').length,
 );
@@ -32,10 +61,13 @@ function marcar(
     toma: TomaHoy,
     estado: 'administrada' | 'omitida' | 'pendiente',
 ) {
-    router.patch(
+    marcarToma(
         update(toma.id).url,
+        {
+            id: toma.id,
+            resumen: `${toma.medicamento} de ${toma.mascota_nombre}: ${ETIQUETAS[estado].toLowerCase()}`,
+        },
         { estado },
-        { preserveScroll: true, preserveState: true },
     );
 }
 </script>

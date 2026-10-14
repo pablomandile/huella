@@ -429,12 +429,63 @@ Service worker propio en `public/sw.js`. **No** usar `vite-plugin-pwa`.
 - `beforeinstallprompt` se captura con un **script inline en el `<head>`**, antes de que
   monte Vue. Hacerlo en `onMounted` deja el botón sin aparecer, de forma intermitente.
 - `cache-first` **solo** para `/build/` (tiene hash de contenido). Todo lo demás
-  network-first. **Las respuestas de Inertia no se cachean**: son datos clínicos, y mostrar
-  una dosis vieja es peor que mostrar un cartel de "sin conexión".
+  network-first: con red se ve lo último y se guarda, sin red se sirve lo guardado (ver
+  *Sin conexión*).
+- **Nunca se actualiza solo**: el SW nuevo queda en espera hasta que el usuario toca
+  "Actualizar" en el toast. Puede estar a mitad de cargar una visita.
 - Al cambiar un ícono hay que tocar **tres lugares**: el nombre de `CACHE` en `sw.js`,
   el `?v=` de los `<link rel="icon">` y el `?v=` del manifest.
 - En producción, `sw.js` y `manifest.webmanifest` necesitan `no-cache` en `.htaccess`,
   o el CDN sirve un service worker viejo durante días y congela todo lo demás.
+- Las reglas del SW que fallan en silencio las cuida `ServiceWorkerTest`.
+
+## Sin conexión
+
+Se navega todo lo que ya se vio o se precalentó, y **cuatro escrituras** funcionan sin
+red: marcar una toma, registrar un peso, un baño o una nota. Van a una cola en
+IndexedDB y se mandan solas al volver. Calcado de Mi Billetera, con recortes a propósito.
+
+- **Antes la regla era la contraria** —"no se cachean datos: una dosis vieja es peor que
+  un cartel"—, y su motivo sigue valiendo. Por eso **lo guardado se muestra siempre con
+  la franja que dice de cuándo es**. Una dosis vieja es peligrosa cuando parece actual,
+  no cuando dice "de hace 3 horas". Si algún día la franja no aparece sobre datos viejos,
+  es el bug más grave que puede tener esto.
+- **Solo esas cuatro** y no las 73 rutas de escritura: visitas, tratamientos, vacunas y
+  fotos tienen efectos que calcula el servidor —las tomas de un tratamiento, los
+  recordatorios— y la app no podría mostrarlos antes de sincronizar sin inventarlos.
+  Las demás, sin red, avisan "esto necesita conexión".
+- **`SincronizacionService` no reimplementa ninguna regla.** Cada operación pasa por
+  el FormRequest de su ruta de siempre y el mismo método del controlador. Lo cargado
+  sin red cumple lo mismo que el formulario: un peso por día y balanza, nada a futuro,
+  nada en una ficha fallecida, ajena o de lector. Lo cuida `SincronizacionTest`.
+- El FormRequest se arma a mano con una `Route` cuyo parámetro es el **modelo**: los
+  `authorize()` preguntan `instanceof Mascota`, y con el id crudo dirían que no.
+- **Idempotente por `op_id`** (tabla `sincronizaciones`): si la respuesta se pierde y el
+  teléfono reenvía, no se duplica.
+- **Un error en una operación no tumba el lote.** Un 500 del lote haría que la app
+  reintente cada 30 s para siempre, con todo trabado detrás de una sola y sin avisar.
+  Se atrapa por operación, se reporta, y queda "no se pudo guardar" en la franja.
+- **La toma viaja con su `fecha_hora_real`**: si no, el controlador pone `now()`, que
+  sería la hora de sincronizar y no la de cuando se dio.
+- **Precalentado**: con red, se piden en segundo plano las pantallas principales y las
+  de cada mascota. También al tomar control el SW, porque en la primera visita se
+  instala **después** de cargar la página; y la marca de "hecho" se pone **al
+  terminar**, o una recarga a mitad lo deja diez minutos con la mitad guardada.
+- El SW guarda también el HTML que pide el precalentado con `fetch`, no solo las
+  navegaciones: quien entra por el login no hace ninguna carga completa, y sin eso
+  nunca podría abrir la app en frío sin red.
+- **Las recargas parciales (`only: [...]`) no se guardan**: pisarían la copia completa
+  de la pantalla con la mitad de las props.
+- **Cómo se entera la app de que no hay conexión**, porque `navigator.onLine` miente
+  (el wifi de la veterinaria, conectado y sin internet): el SW avisa si la pantalla salió
+  de lo guardado; al arrancar se le pregunta si la página misma salió de una copia
+  (`como-arranque`), y mientras dure, una sonda a `/up` cada 30 s detecta la vuelta.
+  Sin la sonda, la franja no se iría nunca.
+- **Al salir de la cuenta se borra todo lo guardado**, HTML incluido (lleva las props
+  embebidas). Es historia clínica en un teléfono que puede ser compartido.
+- `/compartido/` sigue fuera del SW: ni se guarda ni se repide.
+- **Probarlo de verdad es apagar el servidor**, no el modo offline de Chrome, que no
+  siempre alcanza a los pedidos del propio SW. Y es el caso real: red que no llega.
 
 ## Caché de las respuestas de Inertia
 

@@ -56,10 +56,16 @@
                 </svg>
             </div>
 
+            {{--
+                Solo se ve cuando no hay NINGUNA copia guardada en este teléfono:
+                si la hubiera, el service worker abre el inicio guardado, con la
+                franja que dice de cuándo son los datos.
+            --}}
             <h1>Te quedaste sin conexión</h1>
             <p>
-                Huella necesita internet para mostrarte el historial al día.
-                Preferimos avisarte antes que mostrarte datos viejos.
+                Todavía no hay nada guardado de Huella en este teléfono. Abrila
+                una vez con conexión y después vas a poder verla aunque no tengas
+                señal.
             </p>
 
             <button type="button" onclick="window.location.reload()">

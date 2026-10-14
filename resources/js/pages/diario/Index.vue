@@ -10,6 +10,7 @@ import {
     watch,
 } from 'vue';
 import EventoDelDiario from '@/components/EventoDelDiario.vue';
+import PendientesSinSincronizar from '@/components/PendientesSinSincronizar.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
 import TextareaNativo from '@/components/TextareaNativo.vue';
@@ -38,6 +39,9 @@ import type {
     Mascota,
     OpcionEnum,
 } from '@/types/huella';
+import { cola } from '@/sinConexion/cola';
+import type { Operacion } from '@/sinConexion/cola';
+import { encolable } from '@/sinConexion/escribir';
 
 /*
  * El diario: la línea de tiempo unificada de una mascota.
@@ -88,6 +92,45 @@ const cargando = ref(false);
 
 const sheetFiltros = ref(false);
 const sheetNota = ref(false);
+
+/*
+ * Lo cargado sin conexión para esta mascota —notas, y también pesos y baños,
+ * que el diario muestra igual— va arriba de la línea de tiempo, marcado, hasta
+ * que vuelva la señal y lo traiga el servidor en su lugar.
+ */
+const enCola = computed(() =>
+    cola.value.filter(
+        (op) =>
+            op.estado === 'pendiente' &&
+            op.id === props.mascota.id &&
+            ['entrada', 'peso', 'bano'].includes(op.entidad),
+    ),
+);
+
+function describir(op: Operacion): string {
+    const { datos } = op;
+
+    if (op.entidad === 'peso') {
+        return `Peso: ${Number(datos.peso_kg).toLocaleString('es-AR')} kg · ${datos.fecha}`;
+    }
+
+    if (op.entidad === 'bano') {
+        return `Baño · ${datos.fecha}`;
+    }
+
+    return `${datos.titulo || datos.contenido} · ${datos.fecha}`;
+}
+
+const formNota = encolable(
+    (datos) => ({
+        entidad: 'entrada',
+        accion: 'crear',
+        id: props.mascota.id,
+        datos,
+        resumen: `Nota: ${String(datos.titulo || datos.contenido).slice(0, 60)} · ${props.mascota.nombre}`,
+    }),
+    () => (sheetNota.value = false),
+);
 const sheetExportar = ref(false);
 
 const busqueda = ref(props.filtros.busqueda ?? '');
@@ -340,6 +383,8 @@ onBeforeUnmount(() => observador?.disconnect());
             </Button>
         </div>
 
+        <PendientesSinSincronizar :ops="enCola" :describir="describir" />
+
         <!-- Vacío -->
         <div
             v-if="!acumulados.length"
@@ -504,6 +549,8 @@ onBeforeUnmount(() => observador?.disconnect());
                     method="post"
                     class="flex flex-col gap-4 p-4"
                     v-slot="{ errors, processing }"
+                    :on-before="formNota.antes"
+                    :on-network-error="formNota.errorDeRed"
                     @success="sheetNota = false"
                 >
                     <div class="grid gap-2">

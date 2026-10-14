@@ -5,6 +5,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { registrarServiceWorker } from '@/lib/serviceWorker';
+import { iniciarSinConexion } from '@/sinConexion/iniciar';
 import type { Auth } from '@/types/auth';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Huella';
@@ -47,3 +48,7 @@ initializeFlashToast();
 
 // Registra el service worker y avisa cuando hay una versión nueva.
 registrarServiceWorker();
+
+// Navegar sin conexión con lo último guardado, y la cola de tomas, pesos,
+// baños y notas que se sincroniza al volver la señal.
+iniciarSinConexion();
