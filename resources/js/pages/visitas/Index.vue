@@ -27,7 +27,7 @@ defineOptions({
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">
-                <h1 class="truncate text-xl font-semibold">Visitas</h1>
+                <h1 class="text-xl font-semibold wrap-anywhere">Visitas</h1>
                 <p class="text-sm text-muted-foreground">
                     {{ mascota.nombre }} · {{ visitas.length }}
                     {{ visitas.length === 1 ? 'registrada' : 'registradas' }}

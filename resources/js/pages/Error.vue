@@ -103,7 +103,7 @@ function volver() {
     <Head :title="detalle.titulo" />
 
     <div
-        class="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 py-16 text-center text-foreground"
+        class="flex min-h-screen flex-col items-center justify-center gap-6 bg-background fondo-huellas px-6 py-16 text-center text-foreground"
     >
         <AppLogoIcon class="size-12" />
 

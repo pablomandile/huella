@@ -13,6 +13,30 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
+    /*
+      Tamaño de letra elegible (Ajustes → Apariencia): cada tamaño de texto de
+      Tailwind se multiplica por --font-scale. Solo el texto: los espaciados
+      siguen en rem fijo, así una letra más grande hace crecer las filas hacia
+      abajo y no hacia los costados.
+
+      Tiene que ser `@theme inline` para que el calc() quede dentro de cada
+      utilidad y la variable se resuelva en el elemento que la usa. Con un
+      @theme común se resolvería una sola vez en :root, y el tope de las barras
+      fijas (`.letra-con-tope`, más abajo) no tendría ningún efecto.
+
+      Las alturas de línea de Tailwind son proporciones sin unidad, así que
+      acompañan solas.
+    */
+    --text-xs: calc(0.75rem * var(--font-scale));
+    --text-sm: calc(0.875rem * var(--font-scale));
+    --text-base: calc(1rem * var(--font-scale));
+    --text-lg: calc(1.125rem * var(--font-scale));
+    --text-xl: calc(1.25rem * var(--font-scale));
+    --text-2xl: calc(1.5rem * var(--font-scale));
+    --text-3xl: calc(1.875rem * var(--font-scale));
+    --text-4xl: calc(2.25rem * var(--font-scale));
+    --text-5xl: calc(3rem * var(--font-scale));
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -90,7 +114,21 @@
 }
 
 :root {
-    --background: hsl(0 0% 100%);
+    /*
+      El lienzo de la app no es blanco puro: es un verde menta muy desaturado,
+      de la misma familia que el teal de marca. Blanco puro a pantalla llena es
+      la superficie que más cansa la vista, y acá se mira el teléfono adentro de
+      una veterinaria, con mala luz y a veces con el brillo al máximo.
+
+      El color es **opaco**, no una transparencia: una capa semitransparente
+      sobre blanco se calcula de nuevo en cada superficie apilada y los sheets,
+      los diálogos y las tarjetas terminan cada uno con un tono distinto.
+
+      Con el lienzo teñido, `--card` pasa a ser el blanco que antes era el fondo:
+      es lo que hace que una tarjeta se lea como una tarjeta sin depender del
+      borde. Ese reparto —lienzo templado, contenido blanco— es todo el cambio.
+    */
+    --background: hsl(174 30% 96%);
     --foreground: hsl(0 0% 3.9%);
     --card: hsl(0 0% 100%);
     --card-foreground: hsl(0 0% 3.9%);
@@ -99,23 +137,29 @@
     /* Teal 700: el color de marca de Huella, también en el theme_color del manifest. */
     --primary: hsl(175 77% 26%);
     --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
+    --secondary: hsl(174 18% 90%);
     --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 41%);
-    --accent: hsl(175 30% 94%);
+    --muted: hsl(174 20% 92%);
+    --muted-foreground: hsl(180 8% 38%);
+    /*
+      El accent es el hover de los menús y de las filas. Antes era un menta al
+      94% que sobre blanco se notaba; sobre un lienzo al 96% quedaría invisible.
+      Va al 89% y más saturado para seguir leyéndose como un resalte.
+    */
+    --accent: hsl(174 40% 89%);
     --accent-foreground: hsl(175 77% 20%);
     /* 72%/45% y no el 84%/60% del kit: con ese rojo, el texto casi blanco del
        botón daba 3.60:1 y no llegaba a AA. El botón de borrar es el más peligroso
-       de la app y era el menos legible. Ahora da 5.56:1. */
+       de la app y era el menos legible. Ahora da 5.40:1 sobre el lienzo. */
     --destructive: hsl(0 72% 45%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
+    --border: hsl(174 16% 87%);
     /* El borde de los controles va más oscuro que el decorativo: es lo único que
-       identifica un input, y WCAG 1.4.11 le pide 3:1. Este es el mínimo que
-       cumple (3.04:1). --border se deja claro porque separa tarjetas, no
-       controles. */
-    --input: hsl(0 0% 58%);
+       identifica un input, y WCAG 1.4.11 le pide 3:1. Bajó de 58% a 51% porque
+       ahora el caso peor no es el blanco de la tarjeta sino el lienzo teñido,
+       que es más oscuro: así da 3.15:1 sobre el lienzo y 3.39:1 sobre la
+       tarjeta. --border se deja claro porque separa tarjetas, no controles. */
+    --input: hsl(180 12% 51%);
     --ring: hsl(175 77% 26%);
     --chart-1: hsl(12 76% 61%);
     --chart-2: hsl(173 58% 39%);
@@ -123,56 +167,102 @@
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
+    /* La sidebar va un punto más profunda que el lienzo: así se lee como panel
+       y no como una continuación del contenido. */
+    --sidebar-background: hsl(174 26% 93%);
+    --sidebar-foreground: hsl(185 12% 26%);
     --sidebar-primary: hsl(175 77% 26%);
     --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(175 30% 94%);
+    --sidebar-accent: hsl(174 40% 86%);
     --sidebar-accent-foreground: hsl(175 77% 20%);
-    --sidebar-border: hsl(0 0% 91%);
+    --sidebar-border: hsl(174 16% 85%);
     --sidebar-ring: hsl(175 77% 26%);
-    --sidebar: hsl(0 0% 98%);
+    --sidebar: hsl(174 26% 93%);
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
+    /*
+      Tampoco negro puro. Blanco sobre negro absoluto produce halación —las
+      letras parecen sangrar— y es lo que hace que un modo oscuro se lea peor
+      que el claro. El lienzo es un pizarra con el mismo tinte frío de la marca,
+      y las superficies suben de a dos o tres puntos de luminosidad: lienzo 9%,
+      tarjeta 12%, muted 18%. Esa escalera es la que da profundidad sin usar
+      sombras, que en oscuro no se ven.
+    */
+    --background: hsl(190 24% 9%);
     --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
+    --card: hsl(190 18% 12%);
     --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
+    --popover: hsl(190 18% 12%);
     --popover-foreground: hsl(0 0% 98%);
     /* En oscuro el teal se aclara: el 700 sobre negro no llega al contraste AA. */
     --primary: hsl(173 70% 45%);
     --primary-foreground: hsl(175 90% 8%);
-    --secondary: hsl(0 0% 14.9%);
+    --secondary: hsl(190 14% 17%);
     --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 66%);
-    --accent: hsl(175 25% 18%);
+    --muted: hsl(190 14% 18%);
+    --muted-foreground: hsl(185 10% 66%);
+    --accent: hsl(182 22% 22%);
     --accent-foreground: hsl(173 70% 80%);
-    /* Acá **no** va el rojo oscuro del modo claro: sobre el fondo negro este
-       color se usa como texto (la hora de una toma atrasada, los errores) y a
-       45% de luminosidad daba 3.39:1. El 60% del kit cumple los dos usos, porque
-       el botón en oscuro se pinta con `bg-destructive/60`, que lo oscurece. */
-    --destructive: hsl(0 84% 60%);
+    /* Acá **no** va el rojo oscuro del modo claro: sobre el fondo oscuro este
+       color se usa como texto (la hora de una toma atrasada, los errores).
+       Sube de 60% a 64% porque el lienzo dejó de ser negro: con el fondo al 9%
+       y la tarjeta al 12%, el 60% daba 4.27:1 sobre una tarjeta y se quedaba
+       corto. A 64% da 4.76:1, y el botón —que se pinta con `bg-destructive/60`,
+       lo que lo oscurece— sigue dando 6.33:1 contra su texto. */
+    --destructive: hsl(0 84% 64%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 37%);
+    --border: hsl(190 13% 20%);
+    /* 42% y no 40%: el caso peor es el borde sobre una tarjeta (12%), no sobre
+       el lienzo. Da 3.22:1 ahí y 3.50:1 sobre el lienzo. */
+    --input: hsl(190 10% 42%);
     --ring: hsl(173 70% 45%);
     --chart-1: hsl(220 70% 50%);
     --chart-2: hsl(160 60% 45%);
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
+    /* En oscuro la sidebar va más profunda que el lienzo, no más clara: al
+       revés que en claro, pero con el mismo resultado —se lee como panel—. */
+    --sidebar-background: hsl(192 28% 7%);
+    --sidebar-foreground: hsl(180 8% 94%);
     --sidebar-primary: hsl(173 70% 45%);
     --sidebar-primary-foreground: hsl(175 90% 8%);
-    --sidebar-accent: hsl(175 25% 18%);
+    --sidebar-accent: hsl(182 24% 24%);
     --sidebar-accent-foreground: hsl(173 70% 80%);
-    --sidebar-border: hsl(0 0% 15.9%);
+    --sidebar-border: hsl(190 14% 18%);
     --sidebar-ring: hsl(173 70% 45%);
-    --sidebar: hsl(240 5.9% 10%);
+    --sidebar: hsl(192 28% 7%);
+}
+
+/*
+  Los tres tamaños de letra. Mediano es el default y no lleva atributo: si el
+  script del <head> no corre —o el navegador no deja leer localStorage— la app
+  se ve igual en el tamaño pensado para todos.
+
+  Pequeño es exactamente como se veía la app antes de que existiera esto, 16px
+  de base. Mediano y Grande suben de a 2px, igual que en Mi Billetera.
+*/
+:root {
+    --font-scale: 1.125; /* mediano: 18px */
+}
+
+:root[data-tamano-letra='pequeno'] {
+    --font-scale: 1; /* pequeño: 16px, el tamaño de siempre */
+}
+
+:root[data-tamano-letra='grande'] {
+    --font-scale: 1.25; /* grande: 20px */
+}
+
+/*
+  Las barras de alto fijo —el encabezado, la barra inferior del celular— se
+  quedan en mediano aunque se elija grande. No es estética: con cinco destinos
+  en 390px, "Medicación" a 15px ya no entra en su quinto de pantalla, y un
+  título que baja de línea se sale de una barra que no puede crecer.
+*/
+:root[data-tamano-letra='grande'] .letra-con-tope {
+    --font-scale: 1.125;
 }
 
 @layer base {
@@ -181,6 +271,7 @@
     }
     body {
         @apply bg-background text-foreground;
+        font-size: calc(1rem * var(--font-scale));
     }
 }
 
@@ -194,6 +285,39 @@
 
 @utility pt-safe {
     padding-top: env(safe-area-inset-top, 0px);
+}
+
+/*
+  Patitas en el fondo: un camino en diagonal, como si la mascota hubiera cruzado
+  la pantalla con las patas sucias. Es una baldosa SVG que se repite, y está
+  armada para empalmar: la diagonal va de esquina a esquina y hay un número
+  PAR de huellas, así la alternancia izquierda/derecha sigue en la baldosa de
+  al lado sin que se note la costura. Lo genera un script (las coordenadas no
+  se tocan a mano); si cambia la paleta, cambia el `fill` de los dos `url()`.
+
+  - Va en `background-image` sobre el lienzo, nunca como capa encima: las
+    tarjetas son opacas y la tapan, así que las huellas solo asoman en los
+    huecos y nunca quedan debajo del texto de una tarjeta.
+  - Opacidad 7% en claro y 5% en oscuro: es textura, no ilustración. Más
+    fuerte compite con el contenido y se lee como ruido.
+  - Sin `background-attachment: fixed`: iOS lo ignora y en Android repinta en
+    cada scroll. Que las huellas se muevan con el contenido es lo natural.
+  - Es decorativa: al ser fondo CSS no llega al lector de pantalla, y en
+    `forced-colors` el navegador la descarta solo.
+*/
+@utility fondo-huellas {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640' viewBox='0 0 640 640'%3E%3Cdefs%3E%3Cg id='p'%3E%3Cellipse cx='0' cy='9' rx='13' ry='11'/%3E%3Cellipse cx='-17' cy='-6' rx='5.5' ry='8' transform='rotate(-20 -17 -6)'/%3E%3Cellipse cx='-6' cy='-17' rx='5.5' ry='8.5' transform='rotate(-6 -6 -17)'/%3E%3Cellipse cx='6' cy='-17' rx='5.5' ry='8.5' transform='rotate(6 6 -17)'/%3E%3Cellipse cx='17' cy='-6' rx='5.5' ry='8' transform='rotate(20 17 -6)'/%3E%3C/g%3E%3C/defs%3E%3Cg fill='%230f766e' fill-opacity='0.07'%3E%3Cuse href='%23p' transform='translate(49.9 609.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(110.1 510.1) rotate(39) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(209.9 449.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(270.1 350.1) rotate(39) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(369.9 289.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(430.1 190.1) rotate(39) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(529.9 129.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(590.1 30.1) rotate(39) scale(0.9)'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 640px 640px;
+}
+
+.dark .fondo-huellas {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640' viewBox='0 0 640 640'%3E%3Cdefs%3E%3Cg id='p'%3E%3Cellipse cx='0' cy='9' rx='13' ry='11'/%3E%3Cellipse cx='-17' cy='-6' rx='5.5' ry='8' transform='rotate(-20 -17 -6)'/%3E%3Cellipse cx='-6' cy='-17' rx='5.5' ry='8.5' transform='rotate(-6 -6 -17)'/%3E%3Cellipse cx='6' cy='-17' rx='5.5' ry='8.5' transform='rotate(6 6 -17)'/%3E%3Cellipse cx='17' cy='-6' rx='5.5' ry='8' transform='rotate(20 17 -6)'/%3E%3C/g%3E%3C/defs%3E%3Cg fill='%235eead4' fill-opacity='0.05'%3E%3Cuse href='%23p' transform='translate(49.9 609.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(110.1 510.1) rotate(39) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(209.9 449.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(270.1 350.1) rotate(39) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(369.9 289.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(430.1 190.1) rotate(39) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(529.9 129.9) rotate(51) scale(0.9)'/%3E%3Cuse href='%23p' transform='translate(590.1 30.1) rotate(39) scale(0.9)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@media print {
+    .fondo-huellas {
+        background-image: none !important;
+    }
 }
 
 /* Alto mínimo recomendado para un objetivo táctil. */

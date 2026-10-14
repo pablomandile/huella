@@ -182,15 +182,17 @@ async function crear() {
             @click="abrir"
         >
             <span v-if="seleccionado" class="min-w-0">
-                <span class="block truncate">{{ seleccionado.etiqueta }}</span>
+                <span class="block wrap-anywhere">{{
+                    seleccionado.etiqueta
+                }}</span>
                 <span
                     v-if="seleccionado.detalle"
-                    class="block truncate text-xs text-muted-foreground"
+                    class="block text-xs wrap-anywhere text-muted-foreground"
                 >
                     {{ seleccionado.detalle }}
                 </span>
             </span>
-            <span v-else class="truncate text-muted-foreground">
+            <span v-else class="wrap-anywhere text-muted-foreground">
                 {{ placeholder ?? `Elegí ${etiqueta}` }}
             </span>
 
@@ -257,12 +259,12 @@ async function crear() {
                             @click="elegir(item.id)"
                         >
                             <span class="min-w-0">
-                                <span class="block truncate text-sm">{{
+                                <span class="block text-sm wrap-anywhere">{{
                                     item.etiqueta
                                 }}</span>
                                 <span
                                     v-if="item.detalle"
-                                    class="block truncate text-xs text-muted-foreground"
+                                    class="block text-xs wrap-anywhere text-muted-foreground"
                                 >
                                     {{ item.detalle }}
                                 </span>
@@ -290,7 +292,7 @@ async function crear() {
                             @click="irACrear"
                         >
                             <Plus class="size-4" aria-hidden="true" />
-                            <span v-if="busqueda.trim()" class="truncate">
+                            <span v-if="busqueda.trim()" class="wrap-anywhere">
                                 Agregar «{{ busqueda.trim() }}»
                             </span>
                             <span v-else>No está en la lista</span>

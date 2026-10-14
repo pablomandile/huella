@@ -8,12 +8,11 @@ use App\Http\Resources\DietaResource;
 use App\Http\Resources\MascotaResource;
 use App\Http\Resources\RecordatorioResource;
 use App\Http\Resources\RegistroPesoResource;
-use App\Http\Resources\VisitaResource;
 use App\Models\Mascota;
 use App\Models\Recordatorio;
 use App\Models\TomaMedicamento;
 use App\Models\User;
-use App\Services\EstadoVacunacionService;
+use App\Services\FichaMascotaService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,8 +21,8 @@ use Inertia\Response;
  * El dashboard completo de la especificación §5.
  *
  * El orden de los bloques no es decorativo: primero lo que hay que hacer hoy
- * (medicación y recordatorios), después el estado (peso, dieta, vacunación) y
- * al final el historial. Quien abre la app a la mañana quiere saber qué le toca,
+ * (medicación y recordatorios), después el estado (peso, dieta) y al final la
+ * ficha completa de la mascota activa, la misma que muestra su pantalla. Quien abre la app a la mañana quiere saber qué le toca,
  * no cuánto pesa.
  */
 class DashboardController extends Controller
@@ -31,7 +30,7 @@ class DashboardController extends Controller
     /** Los recordatorios que se muestran: los próximos 30 días. */
     private const DIAS_DE_AGENDA = 30;
 
-    public function __construct(private readonly EstadoVacunacionService $vacunacion) {}
+    public function __construct(private readonly FichaMascotaService $ficha) {}
 
     public function index(Request $request): Response
     {
@@ -64,8 +63,12 @@ class DashboardController extends Controller
                 : null,
             'variacionPeso' => $this->variacionPeso($activa),
             'dietaVigente' => $this->dietaVigente($activa),
-            'estadoVacunacion' => $activa ? $this->vacunacion->para($activa) : null,
-            'ultimaVisita' => $this->ultimaVisita($activa, $request),
+
+            // La ficha completa de la activa: lo mismo que su pantalla, armado
+            // por el mismo servicio. Va anidada y no suelta porque varias claves
+            // chocarían con las del inicio —`recordatorios` acá son los de todas
+            // las mascotas; en la ficha, solo los de esta—.
+            'ficha' => $activa ? $this->ficha->datos($activa, $usuario) : null,
 
             'origenesPeso' => OrigenPeso::opciones(),
             'hoy' => $usuario->hoy()->toDateString(),
@@ -145,18 +148,6 @@ class DashboardController extends Controller
 
         return $dieta !== null
             ? DietaResource::make($dieta)->resolve()
-            : null;
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function ultimaVisita(?Mascota $mascota, Request $request): ?array
-    {
-        $visita = $mascota?->visitas()->with('veterinaria')->first();
-
-        return $visita !== null
-            ? VisitaResource::make($visita)->toArray($request)
             : null;
     }
 

@@ -160,7 +160,10 @@ function alTeclado(evento: KeyboardEvent) {
                 class="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
             >
                 <div class="min-w-0">
-                    <p v-if="actual" class="truncate text-sm text-neutral-200">
+                    <p
+                        v-if="actual"
+                        class="text-sm wrap-anywhere text-neutral-200"
+                    >
                         {{ actual.fecha }}
                         <template v-if="actual.epigrafe">
                             · {{ actual.epigrafe }}</template

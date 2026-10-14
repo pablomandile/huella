@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import Heading from '@/components/Heading.vue';
+import SelectorTamanoLetra from '@/components/SelectorTamanoLetra.vue';
 import { edit } from '@/routes/appearance';
 
 defineOptions({
@@ -28,5 +29,14 @@ defineOptions({
             description="Elegí cómo se ve la app en este dispositivo"
         />
         <AppearanceTabs />
+
+        <div class="space-y-3">
+            <Heading
+                variant="small"
+                title="Tamaño de letra"
+                description="Más grande se lee mejor con el celular en la mano; la pantalla crece hacia abajo, nunca hacia los costados"
+            />
+            <SelectorTamanoLetra />
+        </div>
     </div>
 </template>

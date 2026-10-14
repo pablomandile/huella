@@ -299,6 +299,30 @@ la dosis y que el veterinario emita el certificado.
 - Las dos imágenes se cruzan por opacidad. Con `mode="out-in"` habría un instante en negro
   entre una y otra, que es lo que hace que un pase se sienta brusco.
 
+## El inicio es la ficha
+
+El inicio muestra la ficha **completa** de la mascota activa, la misma que su
+pantalla: alergias, documentación, vacunación, tratamientos, visitas, datos y
+galería. Arriba de todo, debajo del nombre, va la tarjeta de datos
+(`fichaArriba`); después las alergias, y lo de hoy —tomas, próximos 30 días, peso
+y dieta— en el hueco `tras-alergias`. En la pantalla de la mascota la tarjeta de
+datos sigue más abajo.
+
+- **Un solo armado y un solo dibujo.** Los datos los arma `FichaMascotaService`
+  y los dibuja `FichaMascota.vue`; `mascotas/Show` y el inicio son envoltorios.
+  Si una pantalla armara lo suyo, un dato nuevo aparecería en una y en la otra
+  no, sin error. Lo cuida `FichaEnElInicioTest`, clave por clave.
+- **La ficha viaja anidada en `ficha`**, no suelta: `recordatorios` en el inicio
+  son los de todas las mascotas a cargo, y en la ficha los de esa sola.
+- Todo lo que se escribe desde la ficha vuelve con **`back()`**. Por eso anda
+  igual desde el inicio, y por eso el inicio tiene que recibir la ficha entera:
+  un `back()` a una pantalla que no trae lo que dibuja es un 500.
+- **Documentación y galería arrancan cerradas en el inicio** (`plegable`) y
+  abiertas en la pantalla de la mascota, que es donde se las va a buscar.
+  `SeccionPlegable` recuerda la elección en `sessionStorage`: subir una foto
+  vuelve con `back()` y remonta la página, y sin eso la sección se cerraría
+  justo después de usarla.
+
 ## Mobile first
 
 La carga real ocurre en la veterinaria, con el celular en la mano.
@@ -317,6 +341,38 @@ La carga real ocurre en la veterinaria, con el celular en la mano.
 - Cámara directa en la subida de fotos: `capture="environment"`.
 - Nada que dependa solo de `hover`.
 
+### Tamaño de letra
+
+Tres tamaños elegibles en Ajustes → Apariencia: **Pequeño** (16px, como se veía la
+app antes), **Mediano** (18px, el default) y **Grande** (20px). Calcado de Mi Billetera.
+
+- **Escala solo el texto.** Cada `--text-*` de Tailwind es `calc(… * var(--font-scale))`
+  en el `@theme inline` de `app.css`; los espaciados siguen en rem fijo. Por eso una
+  letra más grande hace crecer las filas **hacia abajo** y nunca hacia los costados.
+- Tiene que ser **`@theme inline`**: así el `calc()` queda adentro de cada utilidad y
+  la variable se resuelve en el elemento. Con un `@theme` común se resolvería una vez
+  en `:root` y el tope de las barras no tendría efecto.
+- **Las barras de alto fijo llevan `letra-con-tope`**: el encabezado y la zona
+  inferior del celular se quedan en Mediano aunque se elija Grande. Con cinco
+  destinos en 390px, "Medicación" no entra en su quinto de pantalla.
+- **Nada de `truncate` en el contenido**: va `wrap-anywhere`, que baja de línea y
+  además deja achicar una fila flex sin `min-w-0`. Con letra grande, un `truncate`
+  esconde cada vez más texto. Solo quedan en las barras fijas, donde bajar de línea
+  rompería la barra.
+- **Ningún tamaño en px** (`text-[11px]`): no pasaría por la escala. Va
+  `text-[calc(0.6875rem*var(--font-scale))]`.
+- Ojo con el `Button` del kit: trae `whitespace-nowrap` y alto fijo. Con una etiqueta
+  larga hay que pisarlos (`h-auto whitespace-normal`) o empuja lo de al lado afuera.
+- Se guarda por dispositivo en `localStorage` y lo aplica un **script inline del
+  `<head>`** antes del primer pintado; si lo aplicara Vue, cada carga saltaría de
+  tamaño. Mediano no lleva atributo: si el almacenamiento falla, queda el default.
+  Los valores viven en tres archivos que nada ata; lo cuida `TamanoLetraTest`.
+- **El `<main>` tiene `overflow-x-hidden`**: ahí un desborde no hace scroll, se
+  **recorta**, y medir `scrollWidth` del documento da limpio aunque haya texto
+  cortado contra el borde. Hay que buscar elementos cuyo borde derecho pase el
+  viewport. Así se encontró la flecha del "Más detalles" del formulario de mascota,
+  que se salía en 320px desde antes de que existiera esto.
+
 ## Marca
 
 Los assets están en `public/img/`: `huella-icono-app.webp` (ícono),
@@ -324,11 +380,47 @@ Los assets están en `public/img/`: `huella-icono-app.webp` (ícono),
 
 - `AppLogoIcon.vue` renderiza el ícono de marca; cambiándolo ahí se actualizan
   la sidebar, el header y las pantallas de auth de una sola vez.
-- Los logos tienen **fondo blanco opaco**, sin transparencia. En modo oscuro no
-  se invierten (arruinaría los colores): se les da una base clara redondeada.
+- Los logos tienen **fondo blanco opaco**, sin transparencia. No se invierten
+  en oscuro (arruinaría los colores): se les da una base blanca redondeada, y
+  **en los dos modos**, porque el lienzo claro tampoco es blanco puro.
 - Los PNG del set PWA (`public/icons/`) se generan **desde** el ícono de marca,
   no a mano. El maskable rellena el lienzo con el color de fondo del propio
   ícono y lo centra al 92%, para sobrevivir al recorte de Android.
+
+## El fondo de la app
+
+Ni blanco puro ni negro puro. El lienzo es un menta muy desaturado de la familia
+del teal de marca (claro) y un pizarra con el mismo tinte frío (oscuro). Se mira
+el teléfono adentro de una veterinaria, con mala luz y el brillo al máximo:
+blanco a pantalla llena es la superficie que más cansa, y blanco sobre negro
+absoluto produce halación —las letras parecen sangrar—.
+
+- El color es **opaco**, no una capa semitransparente. Una transparencia se
+  recalcula sobre cada superficie apilada, y los sheets, los diálogos y las
+  tarjetas terminan cada uno con un tono distinto.
+- **`--card` dejó de ser igual a `--background`.** Ese es todo el cambio: el
+  lienzo se tiñe y la tarjeta se queda con el blanco que antes era el fondo. Al
+  tocar un color hay que medirlo contra **las dos** superficies, porque ya no son
+  la misma; `ContrasteTest` lo hace y por eso lista los pares por duplicado.
+- En oscuro la escalera va al revés de lo que dice la intuición: lo que se eleva
+  **se aclara**. Lienzo 9%, tarjeta 12%, muted 18%. Es lo que da profundidad sin
+  sombras, que en oscuro no se ven. La sidebar, en cambio, va más **profunda**
+  que el lienzo en los dos modos: se lee como panel y no como continuación.
+- **El fondo del `<html>` vive en un `<style>` inline de `app.blade.php`,** no en
+  `app.css`: pinta el primer frame y la zona de rebote del scroll en iOS, que
+  queda fuera del `<body>`. Son dos archivos que nada ata, y desincronizarlos no
+  da error ni rompe el build: deja una franja blanca al final del scroll, en el
+  celular. Lo cuida `FondoDeArranqueTest`.
+- Nada de escalas `neutral`/`gray` del starter kit sobre el lienzo: un gris puro
+  al lado de un menta se ve sucio, no neutro. Van los tokens del tema.
+- **Las patitas** son la utilidad `fondo-huellas` de `app.css`: una baldosa SVG
+  con un camino en diagonal. Empalma porque la diagonal va de esquina a esquina
+  y hay un número **par** de huellas, así la alternancia izquierda/derecha sigue
+  en la baldosa de al lado. Va como `background-image` del lienzo y no como
+  capa encima: las tarjetas son opacas y la tapan, así que nunca queda debajo
+  de un texto. 7% de opacidad en claro, 5% en oscuro: es textura, no dibujo.
+  **No va en la ficha pública ni en el PDF**: esos se muestran en un mostrador
+  o se fotocopian, y ahí sobra cualquier adorno.
 
 ## PWA
 

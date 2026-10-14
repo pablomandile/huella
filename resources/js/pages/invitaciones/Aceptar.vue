@@ -59,10 +59,10 @@ defineProps<{
             </div>
 
             <div class="min-w-0">
-                <p class="truncate text-lg font-semibold">
+                <p class="text-lg font-semibold wrap-anywhere">
                     {{ mascota.nombre }}
                 </p>
-                <p class="truncate text-sm text-muted-foreground">
+                <p class="text-sm wrap-anywhere text-muted-foreground">
                     {{ mascota.especie_etiqueta }} · te la compartió
                     {{ invitadoPor }}
                 </p>

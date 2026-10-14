@@ -138,11 +138,13 @@ function revocar(enlace: EnlaceCompartido) {
                                 class="flex items-center justify-between gap-3"
                             >
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-medium">
+                                    <p
+                                        class="text-sm font-medium wrap-anywhere"
+                                    >
                                         {{ acceso.nombre }}
                                     </p>
                                     <p
-                                        class="truncate text-xs text-muted-foreground"
+                                        class="text-xs wrap-anywhere text-muted-foreground"
                                     >
                                         {{ acceso.email }}
                                     </p>
@@ -290,7 +292,9 @@ function revocar(enlace: EnlaceCompartido) {
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-medium">
+                                    <p
+                                        class="text-sm font-medium wrap-anywhere"
+                                    >
                                         {{ enlace.nombre ?? 'Sin nombre' }}
                                     </p>
                                     <!--

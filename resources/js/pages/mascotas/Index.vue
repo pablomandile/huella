@@ -89,7 +89,7 @@ defineOptions({
                         </div>
 
                         <div class="min-w-0">
-                            <p class="truncate font-medium">
+                            <p class="font-medium wrap-anywhere">
                                 {{ mascota.nombre }}
                                 <span
                                     v-if="mascota.fallecida"
@@ -97,7 +97,9 @@ defineOptions({
                                     >✦</span
                                 >
                             </p>
-                            <p class="truncate text-sm text-muted-foreground">
+                            <p
+                                class="text-sm wrap-anywhere text-muted-foreground"
+                            >
                                 {{ mascota.especie_etiqueta }}
                                 <template v-if="mascota.raza">
                                     · {{ mascota.raza }}</template

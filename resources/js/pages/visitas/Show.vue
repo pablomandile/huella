@@ -324,10 +324,10 @@ function progreso(tratamiento: Tratamiento): string | null {
                     </component>
 
                     <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm font-medium">
+                        <p class="text-sm font-medium wrap-anywhere">
                             {{ adjunto.tipo_etiqueta }}
                         </p>
-                        <p class="truncate text-xs text-muted-foreground">
+                        <p class="text-xs wrap-anywhere text-muted-foreground">
                             {{ adjunto.nombre_original }}
                             <template v-if="adjunto.tamanio_legible">
                                 · {{ adjunto.tamanio_legible }}</template

@@ -298,7 +298,7 @@ function eliminar(recordatorio: Recordatorio) {
             >
                 <CardContent class="flex items-center gap-3 p-3">
                     <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm text-muted-foreground">
+                        <p class="text-sm wrap-anywhere text-muted-foreground">
                             {{ recordatorio.titulo }}
                         </p>
                         <p class="text-xs text-muted-foreground">

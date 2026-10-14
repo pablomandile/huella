@@ -11,6 +11,10 @@
  * Ojo con --border: es el borde decorativo (tarjetas, separadores) y queda a
  * propósito por debajo de 3:1. El que identifica un control es --input, y ese sí
  * tiene que cumplir.
+ *
+ * Desde que el lienzo está teñido, --card ya NO es el mismo color que
+ * --background, así que cada cosa que se dibuja sobre las dos superficies se
+ * mide contra las dos: una sola de ellas dejaría la otra sin cubrir.
  */
 
 /**
@@ -116,6 +120,7 @@ function paresDeContraste(): array
         ['muted-foreground', 'background', 4.5, 'texto secundario'],
         ['muted-foreground', 'muted', 4.5, 'texto secundario sobre gris'],
         ['card-foreground', 'card', 4.5, 'texto en tarjeta'],
+        ['muted-foreground', 'card', 4.5, 'texto secundario en tarjeta'],
         ['popover-foreground', 'popover', 4.5, 'texto en popover'],
         ['primary-foreground', 'primary', 4.5, 'texto del botón principal'],
         ['secondary-foreground', 'secondary', 4.5, 'texto del botón secundario'],
@@ -131,7 +136,9 @@ function paresDeContraste(): array
         // El rojo también se escribe como texto (la hora de una toma atrasada,
         // los mensajes de error), así que le toca 4.5 y no el 3 de un ícono.
         ['destructive', 'background', 4.5, 'texto de error'],
+        ['destructive', 'card', 4.5, 'texto de error en tarjeta'],
         ['input', 'background', 3.0, 'borde de un control'],
+        ['input', 'card', 3.0, 'borde de un control en tarjeta'],
     ];
 }
 
@@ -185,9 +192,13 @@ it('el botón de borrar se lee en los dos modos', function () {
     $oscuro = paletaDe('.dark');
 
     $enClaro = razonDeContraste($claro['destructive-foreground'], $claro['destructive']);
+    // Y se compone contra `card`, no contra `background`: desde que el lienzo
+    // está teñido, la tarjeta es la superficie MÁS CLARA de las dos en oscuro,
+    // así que es la que deja el botón con menos contraste. Medirlo sobre el
+    // lienzo daría un número mejor que el que se ve en pantalla.
     $enOscuro = razonDeContraste(
         $oscuro['destructive-foreground'],
-        sobre($oscuro['destructive'], $oscuro['background'], 0.6),
+        sobre($oscuro['destructive'], $oscuro['card'], 0.6),
     );
 
     expect($enClaro)->toBeGreaterThanOrEqual(4.5, sprintf('modo claro: %.2f:1', $enClaro))

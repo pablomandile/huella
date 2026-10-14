@@ -345,8 +345,9 @@ it('el dashboard muestra lo de hoy, la agenda y el estado', function () {
             ->where('recordatorios.0.titulo', 'Cerca')
             ->where('ultimoPeso.peso_legible', '18,4 kg')
             ->where('variacionPeso.texto', '+ 1,40 kg')
-            ->where('ultimaVisita.motivo', 'Gastroenteritis')
-            ->where('estadoVacunacion.estado', 'sin_datos'),
+            // La ficha completa de la activa viaja anidada.
+            ->where('ficha.visitas.0.motivo', 'Gastroenteritis')
+            ->where('ficha.estadoVacunacion.estado', 'sin_datos'),
         );
 });
 

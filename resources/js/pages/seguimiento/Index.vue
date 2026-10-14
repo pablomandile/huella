@@ -254,7 +254,7 @@ function eliminarCiclo(ciclo: CicloCelo) {
                         {{ peso.peso_legible }}
                     </span>
                     <span
-                        class="min-w-0 flex-1 truncate text-sm text-muted-foreground"
+                        class="min-w-0 flex-1 text-sm wrap-anywhere text-muted-foreground"
                     >
                         {{ peso.fecha_legible }}
                         <template v-if="peso.en_veterinaria">
@@ -360,7 +360,7 @@ function eliminarCiclo(ciclo: CicloCelo) {
                         class="flex items-center gap-3 py-2"
                     >
                         <div class="min-w-0 flex-1">
-                            <p class="truncate">{{ dieta.alimento }}</p>
+                            <p class="wrap-anywhere">{{ dieta.alimento }}</p>
                             <p class="text-xs text-muted-foreground">
                                 {{ dieta.periodo }}
                             </p>
@@ -452,7 +452,9 @@ function eliminarCiclo(ciclo: CicloCelo) {
                         class="flex items-center gap-3 py-2"
                     >
                         <div class="min-w-0 flex-1">
-                            <p class="truncate">{{ bano.fecha_legible }}</p>
+                            <p class="wrap-anywhere">
+                                {{ bano.fecha_legible }}
+                            </p>
                             <p class="text-xs text-muted-foreground">
                                 {{ bano.lugar_etiqueta }}
                             </p>

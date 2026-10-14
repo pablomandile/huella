@@ -39,10 +39,10 @@ defineOptions({
         :url-baja="(r) => destroy(r.id).url"
     >
         <template #item="{ registro }">
-            <p class="truncate font-medium">{{ registro.nombre }}</p>
+            <p class="font-medium wrap-anywhere">{{ registro.nombre }}</p>
             <p
                 v-if="registro.especialidad || registro.matricula"
-                class="truncate text-sm text-muted-foreground"
+                class="text-sm wrap-anywhere text-muted-foreground"
             >
                 {{
                     [registro.especialidad, registro.matricula]

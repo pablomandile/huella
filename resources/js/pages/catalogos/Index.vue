@@ -112,7 +112,9 @@ const secciones = [
                                     {{ seccion.total }}
                                 </span>
                             </p>
-                            <p class="truncate text-sm text-muted-foreground">
+                            <p
+                                class="text-sm wrap-anywhere text-muted-foreground"
+                            >
                                 {{ seccion.texto }}
                             </p>
                         </div>

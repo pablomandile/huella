@@ -167,14 +167,21 @@ const nacimientoEstimado = ref(
 
         <Collapsible v-model:open="masDetalles">
             <CollapsibleTrigger as-child>
+                <!--
+                    `h-auto` y `whitespace-normal` pisan el alto fijo y el
+                    nowrap del Button del kit: con la etiqueta en una sola
+                    línea, en 320px la flecha quedaba afuera de la pantalla.
+                -->
                 <Button
                     type="button"
                     variant="ghost"
-                    class="w-full justify-between"
+                    class="h-auto min-h-9 w-full justify-between py-2 text-left whitespace-normal"
                 >
-                    Más detalles (identificación, seguro, señas)
+                    <span class="min-w-0 flex-1 wrap-anywhere"
+                        >Más detalles (identificación, seguro, señas)</span
+                    >
                     <ChevronDown
-                        class="size-4 transition-transform"
+                        class="size-4 shrink-0 transition-transform"
                         :class="{ 'rotate-180': masDetalles }"
                         aria-hidden="true"
                     />

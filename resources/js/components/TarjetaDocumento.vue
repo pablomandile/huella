@@ -189,7 +189,7 @@ function eliminar(adjunto: Adjunto) {
                         </span>
 
                         <span class="min-w-0 flex-1">
-                            <span class="block truncate text-sm">
+                            <span class="block text-sm wrap-anywhere">
                                 {{ adjunto.nombre_original }}
                             </span>
                             <span class="block text-xs text-muted-foreground">

@@ -99,7 +99,7 @@ defineOptions({
                                     </Badge>
                                 </span>
                                 <span
-                                    class="block truncate text-sm text-muted-foreground"
+                                    class="block text-sm wrap-anywhere text-muted-foreground"
                                 >
                                     {{ mascota.especie_etiqueta }}
                                     <template v-if="mascota.visitas_count">

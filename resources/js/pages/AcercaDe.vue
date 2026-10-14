@@ -24,7 +24,13 @@ const conSesion = computed(() => Boolean(page.props.auth.user));
 <template>
     <Head title="Acerca de" />
 
-    <div :class="conSesion ? '' : 'min-h-svh bg-background text-foreground'">
+    <div
+        :class="
+            conSesion
+                ? ''
+                : 'min-h-svh bg-background fondo-huellas text-foreground'
+        "
+    >
         <!--
             Solo para quien llega sin cuenta: adentro de la app el camino de
             vuelta ya lo dan la sidebar y la barra inferior.
@@ -52,16 +58,19 @@ const conSesion = computed(() => Boolean(page.props.auth.user));
                 <!--
                     El logo viene con fondo blanco opaco: invertirlo en oscuro
                     arruinaría los colores de marca, así que se le da su propia
-                    base clara redondeada. Las medidas reales del archivo van en
-                    los atributos para que el hueco esté reservado antes de que
-                    la imagen cargue y nada se corra al aparecer.
+                    base blanca redondeada, en los dos modos —el lienzo claro es
+                    un menta, no blanco puro, y sin la base el rectángulo del
+                    archivo se recorta contra el fondo—. Las medidas reales del
+                    archivo van en los atributos para que el hueco esté
+                    reservado antes de que la imagen cargue y nada se corra al
+                    aparecer.
                 -->
                 <img
                     src="/img/huella-logo-horizontal.webp"
                     alt="Huella — cuidá, registrá, acompañá. Siempre."
                     width="681"
                     height="222"
-                    class="h-10 w-auto rounded-lg sm:h-12 dark:bg-white dark:px-2.5 dark:py-1.5"
+                    class="h-10 w-auto rounded-lg bg-white px-2.5 py-1.5 sm:h-12"
                 />
 
                 <p class="mt-6 text-lg leading-relaxed text-pretty">

@@ -27,14 +27,39 @@
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{--
+            El tamaño de letra, antes del primer pintado: si lo aplicara Vue al
+            montar, cada carga mostraría un instante la letra mediana y después
+            saltaría a la elegida, corriendo todo el contenido. Mediano no lleva
+            atributo, así que si localStorage falla queda en el default.
+        --}}
+        <script>
+            (function () {
+                try {
+                    var t = localStorage.getItem('tamanoLetra');
+                    if (t === 'pequeno' || t === 'grande') {
+                        document.documentElement.dataset.tamanoLetra = t;
+                    }
+                } catch (e) {
+                    /* ventana privada: queda mediano */
+                }
+            })();
+        </script>
+
+        {{--
+            El color de fondo del <html>, antes de que llegue app.css. Pinta el
+            primer frame y, sobre todo, la zona de rebote del scroll en iOS, que
+            queda fuera del <body>. Tiene que ser EL MISMO --background de
+            app.css: si se cambia la paleta y no esto, el rebote del scroll
+            muestra una franja blanca —o negra— que no es de ningún lado.
+        --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: hsl(174 30% 96%);
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: hsl(190 24% 9%);
             }
         </style>
 

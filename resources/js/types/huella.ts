@@ -492,3 +492,30 @@ export type TomaDelDia = {
     dosis: string;
     mascota: string;
 };
+
+/**
+ * Todo lo que muestra la ficha de una mascota. Lo arma `FichaMascotaService` y
+ * lo reciben igual la pantalla de la mascota y el inicio.
+ */
+export type DatosFichaMascota = {
+    mascota: Mascota;
+    fotos: FotoGaleria[];
+    alergias: Alergia[];
+    visitas: Visita[];
+    totalVisitas: number;
+    tratamientosEnCurso: Tratamiento[];
+    recordatorios: Recordatorio[];
+    estadoVacunacion: EstadoVacunacion;
+    documentos: DocumentosDeMascota;
+    vencimientoRabia: string | null;
+    estadoRabia: EstadoVencimiento | null;
+    puedeEditar: boolean;
+    puedeRegistrar: boolean;
+    puedeCompartir: boolean;
+    accesos: AccesoCompartido[];
+    enlaces: EnlaceCompartido[];
+    rolesInvitables: OpcionDeRol[];
+    vigencias: OpcionEnum[];
+    vigenciaPorDefecto: string;
+    tiposAlergia: OpcionEnum[];
+};

@@ -34,7 +34,9 @@ const funcionalidades = [
 <template>
     <Head title="El historial de tus mascotas, siempre a mano" />
 
-    <div class="flex min-h-screen flex-col bg-background text-foreground">
+    <div
+        class="flex min-h-screen flex-col bg-background fondo-huellas text-foreground"
+    >
         <header class="mx-auto w-full max-w-5xl px-6 py-6">
             <nav class="flex items-center justify-between gap-4">
                 <!--
@@ -58,7 +60,7 @@ const funcionalidades = [
                     alt="Huella — cuidá, registrá, acompañá. Siempre."
                     width="681"
                     height="222"
-                    class="h-9 w-auto rounded-lg sm:h-12 dark:bg-white dark:px-2.5 dark:py-1.5"
+                    class="h-9 w-auto rounded-lg bg-white px-2.5 py-1.5 sm:h-12"
                 />
 
                 <div class="flex shrink-0 items-center gap-2">

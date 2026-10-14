@@ -99,10 +99,12 @@ function marcar(
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-medium">
+                            <p class="text-sm font-medium wrap-anywhere">
                                 {{ toma.medicamento }}
                             </p>
-                            <p class="truncate text-xs text-muted-foreground">
+                            <p
+                                class="text-xs wrap-anywhere text-muted-foreground"
+                            >
                                 {{ toma.dosis }} · {{ toma.mascota_nombre }}
                             </p>
                         </div>
@@ -171,7 +173,7 @@ function marcar(
 
                         <div class="min-w-0 flex-1">
                             <p
-                                class="truncate text-sm font-medium"
+                                class="text-sm font-medium wrap-anywhere"
                                 :class="
                                     toma.estado === 'administrada'
                                         ? 'line-through'
@@ -180,12 +182,14 @@ function marcar(
                             >
                                 {{ toma.medicamento }}
                             </p>
-                            <p class="truncate text-xs text-muted-foreground">
+                            <p
+                                class="text-xs wrap-anywhere text-muted-foreground"
+                            >
                                 {{ toma.dosis }} · {{ toma.mascota_nombre }}
                             </p>
                             <p
                                 v-if="toma.notas_tratamiento"
-                                class="truncate text-xs text-muted-foreground"
+                                class="text-xs wrap-anywhere text-muted-foreground"
                             >
                                 {{ toma.notas_tratamiento }}
                             </p>

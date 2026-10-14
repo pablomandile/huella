@@ -91,7 +91,7 @@ function elegir(mascota: MascotaLigera) {
                         aria-hidden="true"
                     />
                 </span>
-                <span class="flex-1 truncate">{{ mascota.nombre }}</span>
+                <span class="flex-1 wrap-anywhere">{{ mascota.nombre }}</span>
                 <Check
                     v-if="mascota.id === activaId"
                     class="size-4"

@@ -115,7 +115,9 @@ function eliminar(registro: T) {
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">
-                <h1 class="truncate text-xl font-semibold">{{ titulo }}</h1>
+                <h1 class="text-xl font-semibold wrap-anywhere">
+                    {{ titulo }}
+                </h1>
                 <!-- Sin género: sirve igual para veterinarias y medicamentos. -->
                 <p class="text-sm text-muted-foreground">
                     {{ propios.length }} que cargaste
@@ -179,12 +181,12 @@ function eliminar(registro: T) {
                 <CardContent class="flex items-start gap-3 p-3">
                     <div class="min-w-0 flex-1">
                         <slot name="item" :registro="registro">
-                            <p class="truncate font-medium">
+                            <p class="font-medium wrap-anywhere">
                                 {{ registro.etiqueta }}
                             </p>
                             <p
                                 v-if="registro.detalle"
-                                class="truncate text-sm text-muted-foreground"
+                                class="text-sm wrap-anywhere text-muted-foreground"
                             >
                                 {{ registro.detalle }}
                             </p>

@@ -24,16 +24,19 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
     </div>
 
     <!--
-        El archivo tiene fondo blanco opaco, sin transparencia. En modo oscuro
-        se le da una base clara redondeada en vez de invertirlo, que le
-        arruinaría los colores.
+        El archivo tiene fondo blanco opaco, sin transparencia, así que se le da
+        una base blanca redondeada en vez de invertirlo, que le arruinaría los
+        colores.
+
+        La base va en los **dos** modos y no solo en oscuro: el lienzo de la app
+        es un menta claro, no blanco puro, y sin ella el rectángulo blanco del
+        archivo se recorta contra el fondo. Con la base, ese blanco se lee como
+        una pastilla a propósito.
 
         El relleno va en este contenedor y no en la imagen: aplicado a la imagen
-        le comía 8px de alto y el logo quedaba más chico en oscuro que en claro.
+        le comía 8px de alto y el logo quedaba más chico.
     -->
-    <div
-        class="rounded-md group-data-[collapsible=icon]:hidden dark:bg-white dark:p-1"
-    >
+    <div class="rounded-md bg-white p-1 group-data-[collapsible=icon]:hidden">
         <img
             src="/img/huella-logo-horizontal.webp"
             alt="Huella"

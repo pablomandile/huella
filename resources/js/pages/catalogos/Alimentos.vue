@@ -83,8 +83,10 @@ defineOptions({
                 </button>
 
                 <div class="min-w-0 flex-1">
-                    <p class="truncate font-medium">{{ registro.etiqueta }}</p>
-                    <p class="truncate text-sm text-muted-foreground">
+                    <p class="font-medium wrap-anywhere">
+                        {{ registro.etiqueta }}
+                    </p>
+                    <p class="text-sm wrap-anywhere text-muted-foreground">
                         {{ registro.tipo_etiqueta }}
                         <template v-if="registro.gama_etiqueta">
                             · {{ registro.gama_etiqueta }}</template

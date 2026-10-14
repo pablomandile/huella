@@ -47,10 +47,12 @@ defineOptions({
         :url-duplicar="(r) => duplicar(r.id).url"
     >
         <template #item="{ registro }">
-            <p class="truncate font-medium">{{ registro.nombre_comercial }}</p>
+            <p class="font-medium wrap-anywhere">
+                {{ registro.nombre_comercial }}
+            </p>
             <p
                 v-if="registro.droga"
-                class="truncate text-sm text-muted-foreground"
+                class="text-sm wrap-anywhere text-muted-foreground"
             >
                 {{ registro.droga }}
             </p>

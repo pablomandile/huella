@@ -34,7 +34,11 @@ withDefaults(defineProps<Props>(), {
 
     <AppShell variant="sidebar">
         <AppSidebar />
-        <AppContent id="contenido" variant="sidebar" class="overflow-x-hidden">
+        <AppContent
+            id="contenido"
+            variant="sidebar"
+            class="overflow-x-hidden fondo-huellas"
+        >
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <!--
                 pb-20 deja lugar para la barra inferior del celular, que es fija.
@@ -50,7 +54,7 @@ withDefaults(defineProps<Props>(), {
             de la barra de navegación en vez de pelearle el bottom-0. Desde `md`
             desaparece entera y manda la sidebar.
         -->
-        <div class="fixed inset-x-0 bottom-0 z-50 md:hidden">
+        <div class="letra-con-tope fixed inset-x-0 bottom-0 z-50 md:hidden">
             <BannerInstalar />
             <BottomNav />
         </div>

@@ -72,7 +72,7 @@ defineExpose({ limpiar });
             <li
                 v-for="(nombre, i) in elegidos"
                 :key="`${nombre}-${i}`"
-                class="truncate"
+                class="wrap-anywhere"
             >
                 {{ nombre }}
             </li>
