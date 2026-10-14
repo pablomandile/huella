@@ -38,6 +38,7 @@ Route::inertia('/', 'Welcome')->name('home');
  * para ese caso.
  */
 Route::inertia('acerca-de', 'AcercaDe')->name('acerca');
+Route::inertia('cookies', 'Cookies')->name('cookies');
 
 // Respaldo que sirve el service worker cuando no hay conexión. Es una vista
 // suelta, no Inertia: tiene que poder mostrarse sin los assets compilados.

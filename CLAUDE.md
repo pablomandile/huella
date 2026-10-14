@@ -487,6 +487,32 @@ IndexedDB y se mandan solas al volver. Calcado de Mi Billetera, con recortes a p
 - **Probarlo de verdad es apagar el servidor**, no el modo offline de Chrome, que no
   siempre alcanza a los pedidos del propio SW. Y es el caso real: red que no llega.
 
+## Aviso de cookies
+
+Un aviso **informativo**, con un solo botón «Entendido» y un enlace a `/cookies`, que
+lista todo lo que Huella guarda en el navegador y para qué.
+
+- **No hay «Rechazar» porque no hay nada que rechazar**: sesión, `XSRF-TOKEN`, tema,
+  tamaño de letra, la cola sin conexión y las cachés del SW son todos necesarios. Un
+  rechazo solo podría apagar el login.
+- **Si algún día entra algo no necesario** (analíticas, un píxel, un widget de
+  terceros), el modelo cambia entero: hay que pedir permiso **antes** de cargarlo,
+  con aceptar y rechazar del mismo peso, y subir `VERSION` en `useAvisoCookies.ts`
+  para que el aviso vuelva a aparecer a todos.
+- **La página es el inventario y `AvisoCookiesTest` la ata al código**: busca cada
+  `setItem`, cookie, base de `idb` y caché del SW, y exige que la clave figure en
+  `Cookies.vue`. Una clave nueva sin declarar rompe la suite; si no, la frase
+  «todo es necesario» se vuelve falsa sin ningún síntoma.
+- El estado es **de módulo**, no del componente: en la app hay dos instancias —la
+  apilada sobre la barra del celular y la flotante de escritorio— y cerrar una cierra
+  las dos. Se decide en `onMounted`, o quien ya lo cerró lo vería parpadear.
+- En el celular va **en la zona inferior**, encima del banner de instalación y la
+  barra, sin `letra-con-tope`: es texto corrido. Desde `md` flota abajo a la
+  izquierda, porque la derecha es de los toasts.
+- Se monta en `PublicoLayout` (portada, Acerca de y Cookies sin sesión), `AuthLayout`
+  y `AppSidebarLayout`. **No va en `/compartido/`**: es Blade suelta, se muestra en un
+  mostrador y no deja nada guardado.
+
 ## Caché de las respuestas de Inertia
 
 Una misma URL contesta **dos cuerpos distintos** según el header `X-Inertia`: el HTML de

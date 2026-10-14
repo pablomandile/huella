@@ -3,6 +3,7 @@ import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
+import AvisoCookies from '@/components/AvisoCookies.vue';
 import AvisoSinConexion from '@/components/AvisoSinConexion.vue';
 import BannerInstalar from '@/components/BannerInstalar.vue';
 import BottomNav from '@/components/BottomNav.vue';
@@ -54,9 +55,21 @@ withDefaults(defineProps<Props>(), {
             de la barra de navegación en vez de pelearle el bottom-0. Desde `md`
             desaparece entera y manda la sidebar.
         -->
-        <div class="letra-con-tope fixed inset-x-0 bottom-0 z-50 md:hidden">
-            <BannerInstalar />
-            <BottomNav />
+        <div class="fixed inset-x-0 bottom-0 z-50 md:hidden">
+            <!--
+                El aviso de cookies va afuera del tope de letra: es texto
+                corrido que baja de línea, no una barra de alto fijo.
+            -->
+            <AvisoCookies variante="apilado" />
+            <div class="letra-con-tope">
+                <BannerInstalar />
+                <BottomNav />
+            </div>
+        </div>
+
+        <!-- Desde `md` no hay zona inferior: el aviso flota en una esquina. -->
+        <div class="hidden md:block">
+            <AvisoCookies />
         </div>
 
         <Toaster />

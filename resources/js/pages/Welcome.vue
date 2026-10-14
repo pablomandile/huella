@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarClock, HeartPulse, NotebookPen, Syringe } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
-import { acerca, dashboard, login } from '@/routes';
+import { acerca, cookies, dashboard, login } from '@/routes';
 /* @chisel-registration */
 import { register } from '@/routes';
 /* @end-chisel-registration */
@@ -143,12 +143,20 @@ const funcionalidades = [
                 cualquier duda, consultá a tu veterinario.
             </p>
 
-            <Link
-                :href="acerca()"
-                class="inline-flex min-h-11 shrink-0 items-center transition-colors hover:text-foreground sm:min-h-0"
-            >
-                Acerca de
-            </Link>
+            <div class="flex shrink-0 gap-6">
+                <Link
+                    :href="acerca()"
+                    class="inline-flex min-h-11 items-center transition-colors hover:text-foreground sm:min-h-0"
+                >
+                    Acerca de
+                </Link>
+                <Link
+                    :href="cookies()"
+                    class="inline-flex min-h-11 items-center transition-colors hover:text-foreground sm:min-h-0"
+                >
+                    Cookies
+                </Link>
+            </div>
         </footer>
     </div>
 </template>

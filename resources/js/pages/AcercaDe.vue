@@ -2,7 +2,7 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Globe, Mail } from '@lucide/vue';
 import { computed } from 'vue';
-import { home } from '@/routes';
+import { cookies, home } from '@/routes';
 
 /*
  * Qué es Huella y quién la hizo. Es la única pantalla que se abre igual con
@@ -83,6 +83,16 @@ const conSesion = computed(() => Boolean(page.props.auth.user));
                 <p class="mt-3 text-sm text-pretty text-muted-foreground">
                     Huella registra información, no da consejos clínicos. Ante
                     cualquier duda, consultá a tu veterinario.
+                </p>
+
+                <p class="mt-3 text-sm text-pretty text-muted-foreground">
+                    Qué guarda en tu navegador y para qué:
+                    <Link
+                        :href="cookies()"
+                        class="text-foreground underline underline-offset-4 hover:text-primary"
+                    >
+                        cookies y datos guardados</Link
+                    >.
                 </p>
 
                 <div class="mt-8 border-t border-border pt-6">

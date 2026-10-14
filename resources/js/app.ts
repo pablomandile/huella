@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import PublicoLayout from '@/layouts/PublicoLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { registrarServiceWorker } from '@/lib/serviceWorker';
@@ -15,15 +16,18 @@ createInertiaApp({
     layout: (name, page) => {
         switch (true) {
             case name === 'Welcome':
-                return null;
+                return PublicoLayout;
             /*
-             * Acerca de se abre con sesión y sin ella. Sin usuario no puede ir
-             * en AppLayout —NavUser recibiría un `auth.user` nulo y rompería la
-             * página antes de mostrarse—, así que se dibuja sola: la página
-             * trae su propio encabezado para ese caso.
+             * Acerca de y Cookies se abren con sesión y sin ella. Sin usuario
+             * no pueden ir en AppLayout —NavUser recibiría un `auth.user` nulo
+             * y rompería la página antes de mostrarse—, así que se dibujan
+             * solas: cada página trae su propio encabezado para ese caso.
              */
             case name === 'AcercaDe':
-                return (page.props.auth as Auth).user ? AppLayout : null;
+            case name === 'Cookies':
+                return (page.props.auth as Auth).user
+                    ? AppLayout
+                    : PublicoLayout;
             case name.startsWith('auth/'):
             // La invitación se abre sin sesión: con AppLayout, NavUser recibiría
             // un `auth.user` nulo y rompería la página antes de mostrarse.

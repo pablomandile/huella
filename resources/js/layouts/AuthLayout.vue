@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AvisoCookies from '@/components/AvisoCookies.vue';
 import AuthLayout from '@/layouts/auth/AuthSimpleLayout.vue';
 
 const { title = '', description = '' } = defineProps<{
@@ -11,4 +12,7 @@ const { title = '', description = '' } = defineProps<{
     <AuthLayout :title="title" :description="description">
         <slot />
     </AuthLayout>
+
+    <!-- El login y el registro son la primera pantalla de mucha gente. -->
+    <AvisoCookies />
 </template>
