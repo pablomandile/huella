@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { BookMarked, Cookie, Info, LogOut, Settings } from '@lucide/vue';
+import {
+    BookMarked,
+    Cookie,
+    FileText,
+    Info,
+    LogOut,
+    Settings,
+} from '@lucide/vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -9,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import InstalarApp from '@/components/InstalarApp.vue';
 import UserInfo from '@/components/UserInfo.vue';
-import { acerca, cookies, logout } from '@/routes';
+import { acerca, cookies, logout, terminos } from '@/routes';
 import { index as catalogos } from '@/routes/catalogos';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
@@ -72,6 +79,16 @@ defineProps<Props>();
             >
                 <Cookie class="mr-2 h-4 w-4" />
                 Cookies y datos guardados
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <Link
+                class="block w-full cursor-pointer"
+                :href="terminos()"
+                prefetch
+            >
+                <FileText class="mr-2 h-4 w-4" />
+                Términos y privacidad
             </Link>
         </DropdownMenuItem>
         <!--

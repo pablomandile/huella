@@ -22,12 +22,21 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+            'terminos' => ['accepted'],
+        ], [
+            'terminos.accepted' => 'Para crear la cuenta tenés que aceptar los términos y la política de privacidad.',
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
         ]);
+
+        // Con la casilla marcada, la constancia queda acá: así el registro
+        // con formulario nunca pasa por la pantalla de aceptación.
+        $user->aceptarTerminos();
+
+        return $user;
     }
 }

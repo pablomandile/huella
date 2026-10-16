@@ -513,6 +513,37 @@ lista todo lo que Huella guarda en el navegador y para qué.
   y `AppSidebarLayout`. **No va en `/compartido/`**: es Blade suelta, se muestra en un
   mostrador y no deja nada guardado.
 
+## Términos y privacidad
+
+Los textos viven en `resources/legales/*.md` y `LegalesController` los convierte;
+la página es una sola (`Legal.vue`). Están escritos **para esta app**: cada cosa que
+prometen tiene que ser cierta, y al cambiar un comportamiento que describen hay que
+cambiarlos.
+
+- **Una versión para los dos**, en `config('legales.version')`. Subirla vuelve a
+  pedir la aceptación a todos. La constancia (`terminos_version`,
+  `terminos_aceptados_en`) **no es fillable**: la escribe `User::aceptarTerminos()`.
+- El registro con formulario acepta con la casilla. El resto —las cuentas de antes,
+  el alta con Google, un cambio de versión— lo frena el middleware `AceptoTerminos`,
+  que va en **todo el grupo `web`**: una ruta nueva nace cubierta.
+- **Las exentas son una lista a la vista** (`AceptoTerminos::EXENTAS`) y un test fija
+  cuáles con sesión hay. Sin aceptar se puede leer, salir, **descargar los datos y
+  borrar la cuenta**: son derechos que no dependen de aceptar nada.
+- **`/sincronizar` pasa**: lo cargado sin conexión se registró bajo la aceptación
+  anterior, y frenarlo trabaría la cola para siempre.
+- **El precalentado manda `X-Precalentado` y recibe 409.** Si se lo redirigiera,
+  cada pedido de fondo pisaría `url.intended` y después de aceptar el usuario no
+  volvería a donde iba. Pasó en la prueba real.
+- **El SW no guarda respuestas `redirected`**: el `fetch` sigue la redirección y el
+  200 de la pantalla de aceptación se guardaría como la copia del inicio.
+- **Borrar la cuenta borra de verdad, a los 30 días.** `User` es SoftDeletes y antes
+  no se borraba nada nunca. `huella:purgar-cuentas` (diario) borra primero los
+  archivos —la cascada se lleva las filas que dicen dónde están—, después los
+  adjuntos a mano —son polimórficos, sin FK— y por último `forceDelete()`. El plazo
+  lo promete la política; un test ata los dos.
+- La política promete descargar los datos desde *Ajustes → Perfil*: el botón
+  existe por eso, y un test lo cuida.
+
 ## Caché de las respuestas de Inertia
 
 Una misma URL contesta **dos cuerpos distintos** según el header `X-Inertia`: el HTML de

@@ -24,7 +24,7 @@
  *   2. el ?v= de los <link rel="icon"> del blade
  *   3. el ?v= de los "src" del manifest
  */
-const CACHE = 'huella-v4';
+const CACHE = 'huella-v5';
 const DATOS = 'huella-datos-v1';
 const VIGENTES = [CACHE, DATOS];
 const OFFLINE_URL = '/offline';
@@ -297,9 +297,13 @@ async function datosDeInertia(request, clientId) {
         const respuesta = await fetch(request);
 
         // Solo páginas completas: un 409 de versión, un 302 al login o un error
-        // del servidor no son "la pantalla".
+        // del servidor no son "la pantalla". Y nada que llegó redirigido: el
+        // fetch sigue la redirección y devuelve el 200 de OTRA página (la de
+        // aceptar los términos, el login), que se guardaría con el nombre de
+        // la pedida y aparecería en su lugar sin conexión.
         if (
             !parcial &&
+            !respuesta.redirected &&
             respuesta.status === 200 &&
             respuesta.headers.get('x-inertia')
         ) {

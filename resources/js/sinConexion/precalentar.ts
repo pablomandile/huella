@@ -75,7 +75,7 @@ async function recorrer(
     // El HTML de arranque, para poder abrir la app en frío sin red.
     await fetch('/dashboard', {
         credentials: 'same-origin',
-        headers: { Accept: 'text/html' },
+        headers: { Accept: 'text/html', 'X-Precalentado': '1' },
     }).catch(() => {});
 
     // De a una: así no compiten con lo que el usuario esté haciendo.
@@ -86,6 +86,9 @@ async function recorrer(
                 'X-Inertia': 'true',
                 'X-Inertia-Version': version ?? '',
                 'X-Requested-With': 'XMLHttpRequest',
+                // Lo reconoce `AceptoTerminos`: un pedido de fondo no puede
+                // pisar a dónde volver después de aceptar los términos.
+                'X-Precalentado': '1',
                 Accept: 'text/html, application/xhtml+xml',
             },
         })

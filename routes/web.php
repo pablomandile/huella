@@ -16,6 +16,7 @@ use App\Http\Controllers\DocumentoMascotaController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\FotoMascotaController;
 use App\Http\Controllers\InvitacionController;
+use App\Http\Controllers\Legales\LegalesController;
 use App\Http\Controllers\MascotaActivaController;
 use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\MedicacionController;
@@ -39,6 +40,18 @@ Route::inertia('/', 'Welcome')->name('home');
  */
 Route::inertia('acerca-de', 'AcercaDe')->name('acerca');
 Route::inertia('cookies', 'Cookies')->name('cookies');
+Route::get('terminos', [LegalesController::class, 'terminos'])->name('terminos');
+Route::get('privacidad', [LegalesController::class, 'privacidad'])->name('privacidad');
+
+/*
+ * La pantalla de «aceptar y continuar». Solo `auth`, sin `verified`: una cuenta
+ * con el mail sin verificar también tiene que poder aceptar. El middleware
+ * `AceptoTerminos` manda acá a quien no aceptó la versión vigente.
+ */
+Route::middleware('auth')->group(function () {
+    Route::get('terminos/aceptar', [LegalesController::class, 'aceptar'])->name('terminos.aceptar');
+    Route::post('terminos/aceptar', [LegalesController::class, 'guardarAceptacion'])->name('terminos.aceptar.store');
+});
 
 // Respaldo que sirve el service worker cuando no hay conexión. Es una vista
 // suelta, no Inertia: tiene que poder mostrarse sin los assets compilados.

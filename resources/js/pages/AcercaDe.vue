@@ -2,7 +2,7 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Globe, Mail } from '@lucide/vue';
 import { computed } from 'vue';
-import { cookies, home } from '@/routes';
+import { cookies, home, privacidad, terminos } from '@/routes';
 
 /*
  * Qué es Huella y quién la hizo. Es la única pantalla que se abre igual con
@@ -92,6 +92,17 @@ const conSesion = computed(() => Boolean(page.props.auth.user));
                         class="text-foreground underline underline-offset-4 hover:text-primary"
                     >
                         cookies y datos guardados</Link
+                    >. También podés leer los
+                    <Link
+                        :href="terminos()"
+                        class="text-foreground underline underline-offset-4 hover:text-primary"
+                        >términos y condiciones</Link
+                    >
+                    y la
+                    <Link
+                        :href="privacidad()"
+                        class="text-foreground underline underline-offset-4 hover:text-primary"
+                        >política de privacidad</Link
                     >.
                 </p>
 

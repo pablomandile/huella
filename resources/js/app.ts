@@ -25,6 +25,7 @@ createInertiaApp({
              */
             case name === 'AcercaDe':
             case name === 'Cookies':
+            case name === 'Legal':
                 return (page.props.auth as Auth).user
                     ? AppLayout
                     : PublicoLayout;
@@ -32,6 +33,8 @@ createInertiaApp({
             // La invitación se abre sin sesión: con AppLayout, NavUser recibiría
             // un `auth.user` nulo y rompería la página antes de mostrarse.
             case name.startsWith('invitaciones/'):
+            // Aceptar los términos: con sesión pero todavía sin acceso a la app.
+            case name.startsWith('terminos/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];

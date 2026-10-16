@@ -2,7 +2,14 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarClock, HeartPulse, NotebookPen, Syringe } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
-import { acerca, cookies, dashboard, login } from '@/routes';
+import {
+    acerca,
+    cookies,
+    dashboard,
+    login,
+    privacidad,
+    terminos,
+} from '@/routes';
 /* @chisel-registration */
 import { register } from '@/routes';
 /* @end-chisel-registration */
@@ -143,7 +150,7 @@ const funcionalidades = [
                 cualquier duda, consultá a tu veterinario.
             </p>
 
-            <div class="flex shrink-0 gap-6">
+            <div class="flex flex-wrap gap-x-6 sm:shrink-0">
                 <Link
                     :href="acerca()"
                     class="inline-flex min-h-11 items-center transition-colors hover:text-foreground sm:min-h-0"
@@ -155,6 +162,18 @@ const funcionalidades = [
                     class="inline-flex min-h-11 items-center transition-colors hover:text-foreground sm:min-h-0"
                 >
                     Cookies
+                </Link>
+                <Link
+                    :href="terminos()"
+                    class="inline-flex min-h-11 items-center transition-colors hover:text-foreground sm:min-h-0"
+                >
+                    Términos
+                </Link>
+                <Link
+                    :href="privacidad()"
+                    class="inline-flex min-h-11 items-center transition-colors hover:text-foreground sm:min-h-0"
+                >
+                    Privacidad
                 </Link>
             </div>
         </footer>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AceptoTerminos;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ProtegerFichaCompartida;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            AceptoTerminos::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

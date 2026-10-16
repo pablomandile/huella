@@ -35,6 +35,10 @@ class UserFactory extends Factory
             // sin esto quedaría con la zona en null en memoria.
             'zona_horaria' => 'America/Argentina/Buenos_Aires',
             'dias_anticipacion_celo' => 14,
+            // Con los términos vigentes aceptados: si no, el middleware
+            // `AceptoTerminos` mandaría cada pedido de cada test a aceptarlos.
+            'terminos_version' => config('legales.version'),
+            'terminos_aceptados_en' => now(),
             /* @chisel-2fa */
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -50,6 +54,17 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Una cuenta de antes de los términos (o un alta con Google): sin aceptar.
+     */
+    public function sinAceptarTerminos(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'terminos_version' => null,
+            'terminos_aceptados_en' => null,
         ]);
     }
 

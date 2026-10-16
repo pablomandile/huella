@@ -2,7 +2,7 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ArrowLeft } from '@lucide/vue';
 import { computed } from 'vue';
-import { home } from '@/routes';
+import { home, privacidad } from '@/routes';
 
 /*
  * Qué guarda Huella en el navegador y para qué. Es el inventario completo:
@@ -203,6 +203,15 @@ const conSesion = computed(() => Boolean(page.props.auth.user));
                     las cookies, vas a tener que volver a iniciar sesión.
                 </p>
             </section>
+
+            <p class="text-sm text-pretty text-muted-foreground">
+                Qué hacemos con tus datos, más allá del navegador, está en la
+                <Link
+                    :href="privacidad()"
+                    class="text-foreground underline underline-offset-4 hover:text-primary"
+                    >política de privacidad</Link
+                >.
+            </p>
         </main>
     </div>
 </template>

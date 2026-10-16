@@ -71,6 +71,28 @@ const texto = computed(() =>
             </a>
         </Button>
 
+        <!--
+            Informativo: la constancia la deja la pantalla de aceptación, que
+            el middleware `AceptoTerminos` muestra en el primer pedido de una
+            cuenta nueva. El alta con Google no pasa por la casilla del registro.
+        -->
+        <p class="-mt-4 text-center text-xs text-pretty text-muted-foreground">
+            Al continuar con Google aceptás los
+            <a
+                href="/terminos"
+                target="_blank"
+                class="underline underline-offset-4 hover:text-foreground"
+                >términos</a
+            >
+            y la
+            <a
+                href="/privacidad"
+                target="_blank"
+                class="underline underline-offset-4 hover:text-foreground"
+                >política de privacidad</a
+            >.
+        </p>
+
         <!-- Separador con la etiqueta encima de la línea, para lector de pantalla. -->
         <div v-if="conSeparador" class="relative text-center text-sm">
             <span

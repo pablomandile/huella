@@ -88,6 +88,43 @@ defineOptions({
                 <InputError :message="errors.password_confirmation" />
             </div>
 
+            <!--
+                Checkbox nativo y no CampoCheck: la etiqueta lleva enlaces, y
+                CampoCheck solo acepta texto. Los enlaces abren en otra pestaña
+                para no perder lo que ya se cargó.
+            -->
+            <div class="grid gap-1">
+                <label
+                    class="flex min-h-11 cursor-pointer items-start gap-3 text-sm text-pretty"
+                >
+                    <input
+                        type="checkbox"
+                        name="terminos"
+                        value="1"
+                        required
+                        class="mt-0.5 size-5 shrink-0 accent-primary"
+                        data-test="aceptar-terminos"
+                    />
+                    <span>
+                        Leí y acepto los
+                        <a
+                            href="/terminos"
+                            target="_blank"
+                            class="underline underline-offset-4 hover:text-primary"
+                            >términos y condiciones</a
+                        >
+                        y la
+                        <a
+                            href="/privacidad"
+                            target="_blank"
+                            class="underline underline-offset-4 hover:text-primary"
+                            >política de privacidad</a
+                        >.
+                    </span>
+                </label>
+                <InputError :message="errors.terminos" />
+            </div>
+
             <Button
                 type="submit"
                 class="mt-2 w-full"

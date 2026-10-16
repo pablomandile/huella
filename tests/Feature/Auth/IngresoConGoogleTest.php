@@ -226,3 +226,18 @@ it('no rehace el flujo si ya hay una sesión abierta', function () {
         ->get(route('google.redirect'))
         ->assertRedirect(route('dashboard'));
 });
+
+it('una cuenta nueva por Google pasa por aceptar los términos', function () {
+    // El alta con Google no pasa por la casilla del registro: la constancia la
+    // deja la pantalla de aceptación, que el middleware muestra en el primer
+    // pedido.
+    conCredencialesDeGoogle();
+    socialiteDevuelve(respuestaDeGoogle());
+
+    $this->get(route('google.callback'));
+
+    $usuario = User::where('email', 'nuevo@gmail.com')->firstOrFail();
+    expect($usuario->terminos_version)->toBeNull();
+
+    $this->get(route('dashboard'))->assertRedirect(route('terminos.aceptar'));
+});

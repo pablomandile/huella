@@ -28,3 +28,12 @@ Schedule::command('huella:cerrar-tratamientos')
 Schedule::command('huella:procesar-recordatorios')
     ->hourly()
     ->withoutOverlapping();
+
+/*
+ * Las cuentas eliminadas se borran de verdad a los 30 días, con sus archivos:
+ * es lo que promete la política de privacidad. Antes de eso «Eliminar cuenta»
+ * solo marcaba la fila (SoftDeletes) y no se borraba nada nunca.
+ */
+Schedule::command('huella:purgar-cuentas')
+    ->dailyAt('04:00')
+    ->withoutOverlapping();

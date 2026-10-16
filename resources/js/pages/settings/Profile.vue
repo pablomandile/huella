@@ -3,6 +3,7 @@ import { Form, Head, usePage } from '@inertiajs/vue3';
 /* @chisel-email-verification */
 import { Link } from '@inertiajs/vue3';
 /* @end-chisel-email-verification */
+import { Download } from '@lucide/vue';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -13,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
 /* @chisel-email-verification */
+import { datos as misDatos } from '@/routes/exportacion';
 import { send } from '@/routes/verification';
 /* @end-chisel-email-verification */
 
@@ -105,6 +107,24 @@ const user = computed(() => page.props.auth.user);
                 >
             </div>
         </Form>
+    </div>
+
+    <!--
+        El derecho de acceso que promete la política de privacidad. Es un <a>
+        y no un <Link>: la respuesta es un archivo para bajar, no una página.
+    -->
+    <div class="space-y-6">
+        <Heading
+            variant="small"
+            title="Tus datos"
+            description="Descargá todo lo que guardaste en Huella: tu cuenta, tus mascotas y sus registros"
+        />
+        <Button as-child variant="outline">
+            <a :href="misDatos().url" data-test="descargar-mis-datos">
+                <Download class="size-4" aria-hidden="true" />
+                Descargar mis datos
+            </a>
+        </Button>
     </div>
 
     <DeleteUser />

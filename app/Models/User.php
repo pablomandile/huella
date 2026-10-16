@@ -38,6 +38,8 @@ use Throwable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property string|null $terminos_version La de config('legales.version') que aceptó. No es fillable: la escribe aceptarTerminos().
+ * @property Carbon|null $terminos_aceptados_en
  */
 #[Fillable(['name', 'email', 'password', 'telefono', 'zona_horaria', 'dias_anticipacion_celo'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -57,6 +59,7 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'dias_anticipacion_celo' => 'integer',
+            'terminos_aceptados_en' => 'datetime',
             /* @chisel-2fa */
             'two_factor_confirmed_at' => 'datetime',
             /* @end-chisel-2fa */
@@ -188,5 +191,24 @@ class User extends Authenticatable implements PasskeyUser
     public function hoyCalendario(): CarbonImmutable
     {
         return CarbonImmutable::parse($this->hoy()->toDateString());
+    }
+
+    /**
+     * Deja constancia de que aceptó los términos y la privacidad vigentes.
+     *
+     * No va por `fill()`, igual que `fecha_completado`: lo escribe el sistema
+     * al aceptar, nunca un formulario.
+     */
+    public function aceptarTerminos(): void
+    {
+        $this->forceFill([
+            'terminos_version' => config('legales.version'),
+            'terminos_aceptados_en' => now(),
+        ])->save();
+    }
+
+    public function aceptoTerminosVigentes(): bool
+    {
+        return $this->terminos_version === config('legales.version');
     }
 }
