@@ -51,12 +51,16 @@ it('no le manda al lector el aviso que es del dueño', function () {
 
     [$duenio, $mascota, $lector] = fichaCompartida();
 
+    // El reloj se fija ANTES de crear el recordatorio: `porAvisar()` calcula
+    // su fecha con now(), y creado con la fecha real quedaba fuera de la
+    // ventana del 2026-08-17 en cuanto pasaron unas semanas.
+    Carbon::setTestNow(Carbon::parse('2026-08-17 15:00:00'));
+
     Recordatorio::factory()->for($mascota)->porAvisar()->create([
         'hora_notificacion' => '09:00',
     ]);
 
     // Mediodía en Buenos Aires: ya pasó la hora de notificación de los dos.
-    Carbon::setTestNow(Carbon::parse('2026-08-17 15:00:00'));
 
     $this->artisan('huella:procesar-recordatorios')->assertSuccessful();
 

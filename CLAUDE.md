@@ -355,6 +355,10 @@ app antes), **Mediano** (18px, el default) y **Grande** (20px). Calcado de Mi Bi
 - **Las barras de alto fijo llevan `letra-con-tope`**: el encabezado y la zona
   inferior del celular se quedan en Mediano aunque se elija Grande. Con cinco
   destinos en 390px, "Medicación" no entra en su quinto de pantalla.
+  Y aun con el tope, las etiquetas de `BottomNav` se **escalonan por ancho**
+  (10/11/12px de base en 320/360/390) con padding horizontal mínimo: medida,
+  "Medicación" ocupa 60px a la letra de 320 y el casillero tiene 64. Antes
+  empujaba a "Perfil" fuera de la pantalla en 320 y se pisaba con sus vecinos.
 - **Nada de `truncate` en el contenido**: va `wrap-anywhere`, que baja de línea y
   además deja achicar una fila flex sin `min-w-0`. Con letra grande, un `truncate`
   esconde cada vez más texto. Solo quedan en las barras fijas, donde bajar de línea

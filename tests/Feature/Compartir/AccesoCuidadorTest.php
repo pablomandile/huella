@@ -146,11 +146,14 @@ it('le manda el aviso solo al dueño, aunque haya un cuidador', function () {
 
     [$duenio, $mascota, $cuidador] = fichaConCuidador();
 
+    // El reloj se fija ANTES de crear el recordatorio: `porAvisar()` calcula
+    // su fecha con now(), y creado con la fecha real quedaba fuera de la
+    // ventana del 2026-08-17 en cuanto pasaron unas semanas.
+    Carbon::setTestNow(Carbon::parse('2026-08-17 15:00:00'));
+
     Recordatorio::factory()->for($mascota)->porAvisar()->create([
         'hora_notificacion' => '09:00',
     ]);
-
-    Carbon::setTestNow(Carbon::parse('2026-08-17 15:00:00'));
 
     $this->artisan('huella:procesar-recordatorios')->assertSuccessful();
 

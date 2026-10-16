@@ -21,11 +21,11 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
             <li
                 v-for="destino in destinosBarraInferior"
                 :key="toUrl(destino.href)"
-                class="flex-1"
+                class="min-w-0 flex-1"
             >
                 <Link
                     :href="destino.href"
-                    class="flex touch-target flex-col items-center justify-center gap-1 px-2 py-2 text-xs transition-colors"
+                    class="flex touch-target flex-col items-center justify-center gap-1 px-0.5 py-2 text-[calc(0.625rem*var(--font-scale))] transition-colors min-[360px]:text-[calc(0.6875rem*var(--font-scale))] min-[390px]:text-xs"
                     :class="
                         isCurrentOrParentUrl(destino.href)
                             ? 'text-sidebar-primary'
@@ -41,7 +41,16 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                         class="size-5"
                         aria-hidden="true"
                     />
-                    <span>{{ destino.title }}</span>
+                    <!--
+                        Cada destino es un quinto del ancho, y «Medicación» es la
+                        etiqueta más larga: medida, ocupa 60px a 11.25px, 66 a
+                        12.4 y 72 a 13.5. Con 64px de casillero en 320, 72 en 360
+                        y 78 en 390, la letra se escalona por ancho y el padding
+                        horizontal queda mínimo. Antes empujaba a «Perfil» fuera
+                        de la pantalla en 320 y se pisaba con sus vecinos hasta
+                        en 390. `min-w-0` deja que el ítem se achique.
+                    -->
+                    <span class="max-w-full">{{ destino.title }}</span>
                 </Link>
             </li>
         </ul>

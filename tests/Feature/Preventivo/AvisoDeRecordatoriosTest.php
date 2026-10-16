@@ -51,12 +51,16 @@ it('no avisa antes de que llegue la hora en el reloj del usuario', function () {
     $usuario = User::factory()->create(['zona_horaria' => 'America/Argentina/Buenos_Aires']);
     $mascota = Mascota::factory()->for($usuario, 'propietario')->create();
 
+    // El reloj se fija ANTES de crear el recordatorio: `porAvisar()` calcula
+    // su fecha con now(), y creado con la fecha real quedaba fuera de la
+    // ventana del 2026-08-17 en cuanto pasaron unas semanas.
+    Carbon::setTestNow(Carbon::parse('2026-08-17 11:00:00'));
+
     Recordatorio::factory()->for($mascota)->porAvisar()->create([
         'hora_notificacion' => '09:00',
     ]);
 
     // 11:00 UTC son las 8 de la mañana en Buenos Aires: todavía no.
-    Carbon::setTestNow(Carbon::parse('2026-08-17 11:00:00'));
 
     $this->artisan('huella:procesar-recordatorios')->assertSuccessful();
 
