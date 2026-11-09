@@ -1,9 +1,10 @@
 <?php
 
+use App\Enums\EstadoToma;
 use App\Models\CicloCelo;
-use App\Models\Dieta;
 use App\Models\Mascota;
 use App\Models\RegistroPeso;
+use App\Models\TomaMedicamento;
 use App\Models\Tratamiento;
 use App\Models\User;
 use App\Models\Vacuna;
@@ -49,6 +50,13 @@ it('carga una demo navegable', function () {
 
     // Las tomas de los dos tratamientos, ya generadas.
     expect(Tratamiento::has('tomas')->count())->toBe(2);
+
+    // Las de ayer, dadas; las que vienen, pendientes. Una demo con todo atrasado
+    // se lee como un descuido.
+    $tomas = TomaMedicamento::query();
+    expect((clone $tomas)->where('fecha_hora_programada', '<', now())->where('estado', EstadoToma::Pendiente)->count())->toBe(0)
+        ->and((clone $tomas)->where('estado', EstadoToma::Administrada)->count())->toBeGreaterThan(0)
+        ->and((clone $tomas)->where('fecha_hora_programada', '>', now())->where('estado', EstadoToma::Pendiente)->count())->toBeGreaterThan(0);
 
     // Una sola dieta vigente: es la regla de negocio 1, y el seeder la ejercita
     // iniciando dos.

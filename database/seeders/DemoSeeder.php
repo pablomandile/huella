@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Animo;
 use App\Enums\CategoriaEntrada;
 use App\Enums\Especie;
+use App\Enums\EstadoToma;
 use App\Enums\IntensidadCelo;
 use App\Enums\LugarBano;
 use App\Enums\OrigenPeso;
@@ -29,6 +30,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\Demo\Ilustraciones;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class DemoSeeder extends Seeder
@@ -251,6 +253,15 @@ class DemoSeeder extends Seeder
 
             $tratamiento->setRelation('mascota', $greta);
             $tomas->generar($tratamiento);
+
+            // Las que ya pasaron, dadas a horario: una demo que arranca con todo
+            // atrasado se lee como un descuido, no como un tratamiento en curso.
+            $tratamiento->tomas()
+                ->where('fecha_hora_programada', '<', now())
+                ->update([
+                    'estado' => EstadoToma::Administrada->value,
+                    'fecha_hora_real' => DB::raw('fecha_hora_programada'),
+                ]);
         }
 
         // El hemograma de la urgencia, como PDF adjunto a la visita.
@@ -527,10 +538,15 @@ class DemoSeeder extends Seeder
         }
     }
 
+    /*
+     * Los PDF van en Helvetica, una de las fuentes base de PDF: no se incrusta.
+     * Con DejaVu, dompdf metía la fuente entera y un certificado de una hoja
+     * pesaba 858 KB. Los acentos y la ñ entran en su codificación.
+     */
     private function htmlCertificado(string $mascota, string $aplicada, string $vence): string
     {
         return <<<HTML
-            <html><body style="font-family: DejaVu Sans, sans-serif; color: #223; padding: 40px">
+            <html><body style="font-family: Helvetica, sans-serif; color: #223; padding: 40px">
             <h1 style="font-size: 22px; text-align: center; letter-spacing: 2px">CERTIFICADO DE VACUNACIÓN ANTIRRÁBICA</h1>
             <p style="text-align: center; color: #667">Documento de ejemplo — demo de Huella</p>
             <table style="margin-top: 40px; width: 100%; font-size: 14px; border-collapse: collapse">
@@ -562,7 +578,7 @@ class DemoSeeder extends Seeder
         }
 
         return <<<HTML
-            <html><body style="font-family: DejaVu Sans, sans-serif; color: #223; padding: 30px">
+            <html><body style="font-family: Helvetica, sans-serif; color: #223; padding: 30px">
             <h1 style="font-size: 20px">Laboratorio Veterinario Caballito</h1>
             <p style="color: #667">Documento de ejemplo — demo de Huella</p>
             <p>Paciente: <strong>{$mascota}</strong> · Canino · Hembra</p>
