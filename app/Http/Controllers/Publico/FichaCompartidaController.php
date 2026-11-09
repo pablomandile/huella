@@ -148,13 +148,24 @@ class FichaCompartidaController extends Controller
      */
     private function adjuntosVisibles(EnlaceCompartido $enlace, Mascota $mascota): array
     {
+        /*
+         * `alcanza()` sube de cada adjunto a su mascota (adjunto → visita →
+         * mascota). Los dueños ya están en la mano: se los pasa como relación en
+         * vez de dejar que cada adjunto los vuelva a pedir, que era una consulta
+         * por archivo y lo atrapó `preventLazyLoading` en cuanto la demo tuvo
+         * papeles. La cadena se sigue evaluando entera; solo no va a la base.
+         */
         $documentos = $mascota->adjuntos()->get()
+            ->each(fn (Adjunto $a) => $a->setRelation('adjuntable', $mascota))
             ->filter(fn (Adjunto $a) => $enlace->alcanza($a))
             ->values();
 
         $clinicos = $enlace->incluye_adjuntos
             ? $mascota->visitas()->with('adjuntos')->get()
-                ->flatMap(fn ($visita) => $visita->adjuntos)
+                ->each(fn ($visita) => $visita->setRelation('mascota', $mascota))
+                ->flatMap(fn ($visita) => $visita->adjuntos->each(
+                    fn (Adjunto $a) => $a->setRelation('adjuntable', $visita),
+                ))
                 ->filter(fn (Adjunto $a) => $enlace->alcanza($a))
                 ->values()
             : collect();

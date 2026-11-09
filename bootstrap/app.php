@@ -3,6 +3,7 @@
 use App\Http\Middleware\AceptoTerminos;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ProtegerDemo;
 use App\Http\Middleware\ProtegerFichaCompartida;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -38,6 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
              */
             AddLinkHeadersForPreloadedAssets::using(20),
             AceptoTerminos::class,
+            // Solo actúa con APP_DEMO=true (la copia de pablomandile).
+            ProtegerDemo::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

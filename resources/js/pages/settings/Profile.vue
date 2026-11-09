@@ -6,6 +6,7 @@ import { Link } from '@inertiajs/vue3';
 import { Download } from '@lucide/vue';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import AvisoDemo from '@/components/AvisoDemo.vue';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -45,7 +46,13 @@ const user = computed(() => page.props.auth.user);
             description="Actualizá tu nombre y tu email"
         />
 
+        <AvisoDemo
+            v-if="page.props.demo"
+            texto="Es la cuenta compartida de la demo: el nombre y el email no se cambian. Todo lo demás sí, y se reinicia cada noche."
+        />
+
         <Form
+            v-else
             v-bind="ProfileController.update.form()"
             class="space-y-6"
             v-slot="{ errors, processing }"
@@ -127,5 +134,5 @@ const user = computed(() => page.props.auth.user);
         </Button>
     </div>
 
-    <DeleteUser />
+    <DeleteUser v-if="!page.props.demo" />
 </template>

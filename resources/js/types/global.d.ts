@@ -21,6 +21,8 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             /** Falso mientras no haya credenciales de Google en el .env. */
             googleHabilitado: boolean;
+            /** Con APP_DEMO=true, el usuario compartido de la demo; si no, null. */
+            demo: { email: string; password: string } | null;
             [key: string]: unknown;
         };
     }

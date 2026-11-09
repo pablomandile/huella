@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Visita;
 use Database\Seeders\CatalogosSeeder;
 use Database\Seeders\DemoSeeder;
+use Illuminate\Support\Facades\Storage;
 
 /*
  * Recorre todas las pantallas con la demo cargada.
@@ -25,10 +26,13 @@ beforeEach(function () {
     // 200 y recibí 500" no dice qué relación faltó cargar.
     $this->withoutExceptionHandling();
 
+    // La demo sube fotos y papeles por los servicios de siempre: al disco falso.
+    Storage::fake('local');
+
     $this->seed(CatalogosSeeder::class);
     $this->seed(DemoSeeder::class);
 
-    $this->usuario = User::where('email', 'demo@huella.test')->sole();
+    $this->usuario = User::where('email', config('demo.email'))->sole();
     $this->mascota = Mascota::where('nombre', 'Greta')->sole();
 });
 
@@ -66,7 +70,8 @@ it('abre con datos reales', function (string $ruta, array $parametros) {
 })->with('pantallas');
 
 it('abre la ficha de una visita con todo lo que salió de ella', function () {
-    $visita = Visita::where('mascota_id', $this->mascota->id)->sole();
+    // La urgencia: la que tiene tratamientos y un análisis adjunto.
+    $visita = Visita::where('mascota_id', $this->mascota->id)->has('tratamientos')->sole();
 
     $this->actingAs($this->usuario)
         ->get(route('mascotas.visitas.show', [$this->mascota, $visita]))

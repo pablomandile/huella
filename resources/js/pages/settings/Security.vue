@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, usePage } from '@inertiajs/vue3';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import AvisoDemo from '@/components/AvisoDemo.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -25,6 +26,8 @@ type Props = {
 
 const props = defineProps<Props>();
 
+const page = usePage();
+
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -42,7 +45,12 @@ defineOptions({
 
     <h1 class="sr-only">Configuración de seguridad</h1>
 
-    <div class="space-y-6">
+    <AvisoDemo
+        v-if="page.props.demo"
+        texto="Es la cuenta compartida de la demo: la contraseña, la verificación en dos pasos y las llaves de acceso no se cambian, o el próximo visitante no podría entrar."
+    />
+
+    <div v-else class="space-y-6">
         <!--
             Quien entró con Google no tiene contraseña: se le ofrece definir una
             para poder entrar también por email, y no se le pide la actual porque
@@ -131,6 +139,7 @@ defineOptions({
 
     <!-- @chisel-2fa -->
     <ManageTwoFactor
+        v-if="!page.props.demo"
         :canManageTwoFactor="canManageTwoFactor"
         :requiresConfirmation="requiresConfirmation"
         :twoFactorEnabled="twoFactorEnabled"
@@ -139,6 +148,7 @@ defineOptions({
 
     <!-- @chisel-passkeys -->
     <ManagePasskeys
+        v-if="!page.props.demo"
         :canManagePasskeys="canManagePasskeys"
         :passkeys="passkeys"
     />

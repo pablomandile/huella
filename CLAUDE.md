@@ -772,15 +772,39 @@ del framework para todos los componentes que no estén ahí.
   perder el mail, esconde también los errores de programación —ese `read()` inexistente
   no dio ningún síntoma hasta que un test miró el MIME—.
 
+## La demo
+
+`huella.pablomandile.com.ar` es la demo del portfolio: **el mismo código** que la
+productiva, con `APP_DEMO=true` (`config/demo.php`). Sin el flag nada de esto actúa.
+
+- **Una sola cuenta compartida** (`demo@pablomandile.com.ar` / `demo1234`). El login
+  muestra los datos y un botón «Entrar a la demo»; Perfil y Seguridad cambian sus
+  formularios por `AvisoDemo`.
+- **`ProtegerDemo`** (grupo `web`): registro, Google y recuperar la clave van al login;
+  cambiar la cuenta, 2FA, passkeys, **invitaciones y enlaces públicos** vuelven con un
+  toast. Lo último porque mandarían mails o servirían lo que suba un visitante desde
+  este dominio. Todo lo demás se puede: es lo que se quiere mostrar.
+- **`huella:demo-reset`** a las 07:00 UTC: `migrate:fresh`, borra `mascotas/` y
+  `catalogos/` del disco y resiembra. La demo corre con `APP_ENV=production`, donde
+  `prohibitDestructiveCommands` hace que `migrate:fresh` **salga con un aviso, sin
+  fallar**: el comando levanta la prohibición tras chequear el flag y corta si
+  `migrate:fresh` no devuelve 0. Lo cuida `ReiniciarDemoTest`.
+- **`DemoSeeder` no usa factories**: en el server no está Faker (`--no-dev`). Las
+  fotos son **dibujos** (`Demo\Ilustraciones`, GD + la DejaVu que trae dompdf) y los
+  papeles PDF salen de dompdf; todo pasa por `ImagenService` y `ArchivoService`, como
+  una subida. Fechas relativas a hoy, para que siempre haya una toma pendiente y una
+  vacuna por vencer.
+- La demo va con `MAIL_MAILER=log`, sin `GOOGLE_CLIENT_*` y con `APP_KEY` propia.
+
 ## Seeders
 
 Están separados porque uno va a producción y el otro no:
 
 - `CatalogosSeeder` — semilla compartida (`usuario_id` NULL). Idempotente. **Corre en
   producción:** `php artisan db:seed --class=CatalogosSeeder --force`.
-- `DemoSeeder` — la mascota de ejemplo. **Lanza excepción si `isProduction()`**, y
-  `DatabaseSeeder` no lo llama allá. Un usuario de demo en producción es una cuenta real
-  que nadie creó.
+- `DemoSeeder` — la demo. **Lanza excepción en producción salvo con `APP_DEMO`**, y
+  `DatabaseSeeder` no lo llama allá. Un usuario de demo en la productiva es una cuenta
+  real que nadie creó.
 
 Ninguno de los dos usa `WithoutModelEvents`: los observers tienen que correr, son los que
 escriben el pivote de propietario y los recordatorios.

@@ -11,6 +11,7 @@ use App\Models\Visita;
 use Database\Seeders\CatalogosSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoSeeder;
+use Illuminate\Support\Facades\Storage;
 
 /*
  * El seeder de demo es lo primero que corre alguien que clona el repo: si se
@@ -18,10 +19,12 @@ use Database\Seeders\DemoSeeder;
  */
 
 it('carga una demo navegable', function () {
+    Storage::fake('local');
+
     $this->seed(CatalogosSeeder::class);
     $this->seed(DemoSeeder::class);
 
-    $usuario = User::where('email', 'demo@huella.test')->sole();
+    $usuario = User::where('email', config('demo.email'))->sole();
     $greta = Mascota::where('nombre', 'Greta')->sole();
 
     // Dos mascotas: una entera y una castrada, para ver el módulo de celo en sus
@@ -41,7 +44,7 @@ it('carga una demo navegable', function () {
         ->and(CicloCelo::count())->toBe(3)
         ->and($greta->entradasDiario()->count())->toBeGreaterThanOrEqual(3)
         ->and($greta->vacunasAplicadas()->count())->toBe(2)
-        ->and($greta->desparasitaciones()->count())->toBe(1)
+        ->and($greta->desparasitaciones()->count())->toBe(2)
         ->and($greta->alergias()->count())->toBe(1);
 
     // Las tomas de los dos tratamientos, ya generadas.
@@ -49,11 +52,62 @@ it('carga una demo navegable', function () {
 
     // Una sola dieta vigente: es la regla de negocio 1, y el seeder la ejercita
     // iniciando dos.
-    expect(Dieta::count())->toBe(2)
-        ->and(Dieta::whereNull('fecha_fin')->count())->toBe(1);
+    expect($greta->dietas()->count())->toBe(2)
+        ->and($greta->dietas()->whereNull('fecha_fin')->count())->toBe(1);
 
     // Y recordatorios, que es lo que hace que el dashboard no arranque vacío.
     expect($greta->recordatorios()->count())->toBeGreaterThan(0);
+
+    // Las imágenes y los papeles, pasados por los servicios de una subida real:
+    // cada archivo existe en el disco, con su miniatura.
+    $fotos = $greta->fotos()->get();
+    expect($fotos)->toHaveCount(4)
+        ->and($greta->foto_perfil)->toBe($fotos->sortBy('fecha')->last()->ruta);
+
+    foreach ($fotos as $foto) {
+        Storage::disk('local')->assertExists([$foto->ruta, $foto->ruta_miniatura]);
+    }
+
+    $papeles = $greta->adjuntos()->get();
+    expect($papeles->pluck('tipo.value')->sort()->values()->all())
+        ->toBe(['certificado_rabia', 'libreta_sanitaria', 'libreta_sanitaria']);
+
+    foreach ($papeles as $papel) {
+        Storage::disk('local')->assertExists($papel->ruta);
+    }
+
+    expect(Visita::has('adjuntos')->count())->toBe(1);
+});
+
+it('la cuenta demo puede entrar sin pasos previos', function () {
+    Storage::fake('local');
+
+    $this->seed(CatalogosSeeder::class);
+    $this->seed(DemoSeeder::class);
+
+    // Verificada y con los términos vigentes aceptados: si no, el visitante de
+    // la demo choca con la verificación del email o con «aceptar y continuar».
+    $usuario = User::where('email', config('demo.email'))->sole();
+
+    expect($usuario->hasVerifiedEmail())->toBeTrue()
+        ->and($usuario->aceptoTerminosVigentes())->toBeTrue();
+
+    $this->post('/login', ['email' => config('demo.email'), 'password' => config('demo.password')])
+        ->assertRedirect();
+
+    $this->assertAuthenticatedAs($usuario);
+});
+
+it('con la demo activa corre aunque sea producción', function () {
+    Storage::fake('local');
+    $this->seed(CatalogosSeeder::class);
+
+    app()->detectEnvironment(fn () => 'production');
+    config(['demo.enabled' => true]);
+
+    (new DemoSeeder)->setContainer($this->app)->run();
+
+    expect(User::where('email', config('demo.email'))->exists())->toBeTrue();
 });
 
 it('no crea el usuario de demo en producción', function () {

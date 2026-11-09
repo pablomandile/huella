@@ -85,6 +85,11 @@ class HandleInertiaRequests extends Middleware
             // Sin credenciales de Google el botón no se muestra: sus rutas dan
             // 404, así que ofrecerlo sería mandar al usuario a una pared.
             'googleHabilitado' => IngresoConGoogleService::configurado(),
+            // Datos de acceso de la demo (solo con APP_DEMO=true), para el login.
+            // En la demo además se esconden los formularios de la cuenta.
+            'demo' => config('demo.enabled')
+                ? ['email' => config('demo.email'), 'password' => config('demo.password')]
+                : null,
             // Lista liviana para el selector de mascota activa del header.
             // Lazy: solo se evalúa cuando hay sesión.
             'mascotas' => fn () => $request->user()

@@ -37,3 +37,12 @@ Schedule::command('huella:procesar-recordatorios')
 Schedule::command('huella:purgar-cuentas')
     ->dailyAt('04:00')
     ->withoutOverlapping();
+
+/*
+ * Solo en la demo (APP_DEMO=true): la deja como nueva todas las noches. A las
+ * 07:00 UTC, las 4 de la mañana en Buenos Aires, cuando nadie la está mirando.
+ */
+Schedule::command('huella:demo-reset')
+    ->dailyAt('07:00')
+    ->when(fn () => config('demo.enabled'))
+    ->withoutOverlapping();
