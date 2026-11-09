@@ -28,7 +28,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
+            /*
+             * Con tope. Sin él, el inicio —que dibuja la ficha completa y carga
+             * decenas de chunks— mandaba un header `Link` de 8,5 KB, y LiteSpeed
+             * o el CDN de Hostinger lo cortan pasando los 8 KB con un 500 propio:
+             * Laravel ya contestó 200, así que no queda nada en el log. Lo que
+             * queda afuera del header se precarga igual con los
+             * `<link rel="modulepreload">` del HTML; el header es solo una pista.
+             */
+            AddLinkHeadersForPreloadedAssets::using(20),
             AceptoTerminos::class,
         ]);
     })

@@ -817,6 +817,11 @@ producción:
 - El docroot del subdominio es un **symlink** a `huella/public`, porque hPanel lo creó
   adentro del public del sitio principal.
 - Los cron de hPanel **no aceptan `cd ... &&`**: ruta absoluta a `artisan`, sin `cd`.
+- **El header `Link` va con tope** (`AddLinkHeadersForPreloadedAssets::using(20)`). Sin él,
+  el inicio mandaba 8,5 KB de preloads y LiteSpeed o el CDN lo cortaban con un 500 propio
+  —"An internal server error has occured", con typo— **después** de que Laravel contestara
+  200: nada en el log y nada en local. Si aparece un 500 sin rastro en `laravel.log`, lo
+  primero es medir los headers. Lo cuida `HeaderLinkAcotadoTest`.
 - Alcanza con **un** cron: `schedule:run`. Nada se encola —`RecordatoriosDelDia`
   **no** es `ShouldQueue`, a propósito— así que no hace falta un `queue:work`, que en
   hosting compartido se cae en silencio. (Esta línea decía lo contrario y era falsa.)
