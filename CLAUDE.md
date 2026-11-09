@@ -806,9 +806,11 @@ case equivocado que en Linux rompería el build.
 
 ## Deploy
 
-Está en producción en `huella.pablomandile.com.ar` (Hostinger compartido). Los pasos,
-las trampas y los cron exactos están en [docs/deploy.md](docs/deploy.md). Lo que hay
-que tener presente antes de tocar producción:
+Está en producción en `huella.bambudev.com.ar` (Hostinger compartido).
+`huella.pablomandile.com.ar` es la **demo** del portfolio: mismo código, otra base, y
+cada deploy va a las dos raíces. Los pasos, las trampas y los cron exactos están en
+[docs/deploy.md](docs/deploy.md). Lo que hay que tener presente antes de tocar
+producción:
 
 - **El server no tiene Node**: el bundle se compila en local y se copia `public/build/`.
 - El `php` del CLI es 8.1: `artisan` y `composer` van con `/opt/alt/php84/usr/bin/php`.

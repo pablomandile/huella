@@ -13,7 +13,7 @@ aparece y la app funciona exactamente como antes.
    - Tipo de usuario: **Externo**.
    - Nombre de la app: `Huella`. Email de asistencia: el tuyo.
    - Logo (opcional): `public/img/huella-icono-app.webp` convertido a PNG.
-   - Dominio autorizado: `pablomandile.com.ar`.
+   - Dominio autorizado: `bambudev.com.ar`.
    - Permisos: alcanzan los tres básicos —`userinfo.email`, `userinfo.profile` y
      `openid`—. **No pidas nada más**: cualquier permiso extra dispara una revisión
      de Google que tarda semanas.
@@ -27,7 +27,7 @@ aparece y la app funciona exactamente como antes.
    - **URI de redireccionamiento autorizados** (agregá los dos):
 
      ```
-     https://huella.pablomandile.com.ar/auth/google/callback
+     https://huella.bambudev.com.ar/auth/google/callback
      http://localhost:8000/auth/google/callback
      ```
 
@@ -50,7 +50,7 @@ En producción, lo mismo en el `.env` del server y después **`config:cache`**, 
 app sigue leyendo la configuración vieja:
 
 ```bash
-R=~/domains/pablomandile.com.ar/huella
+R=~/domains/bambudev.com.ar/huella
 /opt/alt/php84/usr/bin/php $R/artisan config:cache
 ```
 
@@ -61,7 +61,7 @@ El redirect se arma solo sobre `APP_URL`. Si hiciera falta otro, está
 
 ```bash
 # el botón aparece cuando el prop viene en true
-curl -s https://huella.pablomandile.com.ar/login | grep -o 'googleHabilitado&quot;:[a-z]*'
+curl -s https://huella.bambudev.com.ar/login | grep -o 'googleHabilitado&quot;:[a-z]*'
 ```
 
 Y entrar a `/login`: tiene que estar el botón «Continuar con Google» arriba del

@@ -1,7 +1,12 @@
 # Deploy
 
 Huella corre en el hosting compartido de Hostinger, en
-`https://huella.pablomandile.com.ar`.
+`https://huella.bambudev.com.ar`.
+
+`https://huella.pablomandile.com.ar` es la **demo** del portfolio: el mismo código,
+con su propia base de datos de prueba que se reinicia cada noche. Cada deploy va a
+**las dos** raíces (`~/domains/bambudev.com.ar/huella` y
+`~/domains/pablomandile.com.ar/huella`), y las migraciones se corren en las dos.
 
 > Los datos de acceso (host, usuario y puerto SSH) **no están en este repo**: viven
 > en la skill `deploy-hostinger` a nivel usuario (`~/.claude/skills/`). Este
@@ -9,7 +14,7 @@ Huella corre en el hosting compartido de Hostinger, en
 > de PHP 8.4.
 >
 > ```bash
-> R=~/domains/pablomandile.com.ar/huella
+> R=~/domains/bambudev.com.ar/huella
 > PHP=/opt/alt/php84/usr/bin/php
 > ```
 
@@ -33,16 +38,17 @@ $PHP /usr/local/bin/composer install --no-dev --optimize-autoloader
 ```
 
 **El docroot del subdominio no es `huella/public`.** hPanel lo creó dentro del
-public del sitio principal, así que hay un **symlink relativo** que lo redirige:
+public del sitio de bambudev (que además es un clone de git: el symlink está en su
+`.git/info/exclude`), así que hay un **symlink relativo** que lo redirige:
 
 ```
-pablomandile/public/huella -> ../../huella/public
+bambudev/public/huella -> ../../huella/public
 ```
 
 Si el sitio empieza a mostrar la "Página por defecto" de Hostinger, lo primero que
 hay que mirar es ese symlink: es probable que hPanel lo haya reemplazado por una
 carpeta con su `default.php` (el original quedó guardado en
-`pablomandile/public/huella_default_bak/`).
+`~/huella_bambudev_default_bak/`).
 
 **Nunca se sobreescriben** en el server: `.env`, `storage/` ni la base de datos.
 
@@ -54,7 +60,7 @@ Inertia* en `CLAUDE.md`). Se comprueba en tres líneas:
 ```bash
 for AE in "gzip, deflate, br, zstd" "gzip" "identity"; do
   printf "%-26s -> " "$AE"
-  curl -sI https://huella.pablomandile.com.ar/login -H "Accept-Encoding: $AE" \
+  curl -sI https://huella.bambudev.com.ar/login -H "Accept-Encoding: $AE" \
     | tr -d '\r' | grep -iE "^(vary|content-encoding):" | paste -sd' · '
 done
 # br    -> content-encoding: br    ·  (sin Vary)   <- lo que manda un navegador real
@@ -100,7 +106,7 @@ ssh <alias> "cd \$R && \$PHP artisan config:cache && \$PHP artisan route:cache &
 
 ```bash
 # el hash del bundle en vivo tiene que ser el mismo que el local
-curl -sL https://huella.pablomandile.com.ar/login | grep -oE 'app-[A-Za-z0-9_-]+\.js'
+curl -sL https://huella.bambudev.com.ar/login | grep -oE 'app-[A-Za-z0-9_-]+\.js'
 ls public/build/assets/ | grep -E '^app-.*\.js$'
 ```
 
@@ -110,7 +116,7 @@ vacío, lo que parece un deploy fallido y no lo es.
 Y la PWA, con el script de la skill `adaptar-a-pwa`:
 
 ```bash
-node ~/.claude/skills/adaptar-a-pwa/scripts/check-pwa.mjs https://huella.pablomandile.com.ar/login
+node ~/.claude/skills/adaptar-a-pwa/scripts/check-pwa.mjs https://huella.bambudev.com.ar/login
 ```
 
 Tiene que devolver `installabilityErrors: []`, el manifest sin errores y el service
@@ -135,7 +141,7 @@ notificación es local de cada usuario) y `huella:cerrar-tratamientos` (todos lo
 días a las 03:00 UTC, medianoche en Buenos Aires).
 
 ```
-/opt/alt/php84/usr/bin/php <HOME>/domains/pablomandile.com.ar/huella/artisan schedule:run
+/opt/alt/php84/usr/bin/php <HOME>/domains/bambudev.com.ar/huella/artisan schedule:run
 ```
 
 ### No hace falta un worker de cola
@@ -161,7 +167,7 @@ listeners. `QUEUE_CONNECTION=database` está puesto pero nada lo usa: la tabla
 Si algún día se encola algo de verdad, el cron sería este —y recién entonces:
 
 ```
-/usr/bin/flock -n /tmp/huella-queue.lock /opt/alt/php84/usr/bin/php <HOME>/domains/pablomandile.com.ar/huella/artisan queue:work --stop-when-empty --max-time=55 --tries=3
+/usr/bin/flock -n /tmp/huella-queue.lock /opt/alt/php84/usr/bin/php <HOME>/domains/bambudev.com.ar/huella/artisan queue:work --stop-when-empty --max-time=55 --tries=3
 ```
 
 ### Comprobar que el scheduler dispara de verdad
@@ -183,9 +189,9 @@ MAIL_MAILER=smtp
 MAIL_HOST=smtp.hostinger.com
 MAIL_PORT=465
 MAIL_SCHEME=smtps
-MAIL_USERNAME=huella@pablomandile.com.ar
+MAIL_USERNAME=huella@bambudev.com.ar
 MAIL_PASSWORD="<la de la casilla, entre comillas>"
-MAIL_FROM_ADDRESS="huella@pablomandile.com.ar"
+MAIL_FROM_ADDRESS="huella@bambudev.com.ar"
 MAIL_FROM_NAME="Huella"
 ```
 

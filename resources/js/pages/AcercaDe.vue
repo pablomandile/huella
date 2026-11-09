@@ -15,7 +15,7 @@ import { cookies, home, privacidad, terminos } from '@/routes';
  */
 
 const EMAIL = 'pablo.mandile@gmail.com';
-const SITIO = 'https://bioinfo.pablomandile.com.ar/pablo';
+const SITIO = 'https://bioinfo.bambudev.com.ar/pablo';
 
 const page = usePage();
 const conSesion = computed(() => Boolean(page.props.auth.user));
