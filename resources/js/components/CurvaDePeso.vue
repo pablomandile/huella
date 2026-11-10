@@ -135,47 +135,71 @@ const datos = computed<ChartData<'line'>>(() => ({
     ],
 }));
 
-const opciones = computed<ChartOptions<'line'>>(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    interaction: { mode: 'index', intersect: false },
-    scales: {
-        y: {
-            min: limites.value.min,
-            max: limites.value.max,
-            // El eje va etiquetado porque no arranca en cero: sin la unidad, la
-            // pendiente se lee más grande de lo que es.
-            title: { display: true, text: 'Kilos' },
-            ticks: { callback: (valor) => `${valor} kg` },
-            grid: { color: 'oklch(0.6 0 0 / 0.15)' },
-        },
-        x: {
-            grid: { display: false },
-            ticks: { maxRotation: 0, autoSkipPadding: 12 },
-        },
-    },
-    plugins: {
-        legend: { display: false },
-        tooltip: {
-            callbacks: {
-                label: (contexto: TooltipItem<'line'>) => {
-                    const peso = visibles.value[contexto.dataIndex];
+/*
+ * Chart.js mide sus letras en px y no sigue al tamaño elegido en Ajustes: con
+ * Grande, la app entera escala y los números del eje quedarían chiquitos. Se
+ * toma el font-size vigente del <html> (que ya lleva el % elegido y el del
+ * navegador) y se usa al 80%, lo que era 12px sobre una base de 16.
+ */
+function tamanoFuente(): number {
+    if (typeof document === 'undefined') {
+        return 12;
+    }
 
-                    return [
-                        peso.peso_legible,
-                        peso.origen_etiqueta,
-                        peso.condicion_corporal
-                            ? `Condición corporal ${peso.condicion_corporal}/9`
-                            : '',
-                    ].filter(Boolean);
-                },
-                title: (items: TooltipItem<'line'>[]) =>
-                    visibles.value[items[0].dataIndex]?.fecha_legible ?? '',
+    return (
+        parseFloat(
+            getComputedStyle(document.documentElement).fontSize || '16',
+        ) * 0.8
+    );
+}
+
+const opciones = computed<ChartOptions<'line'>>(() => {
+    const fuente = { size: tamanoFuente() };
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+            y: {
+                min: limites.value.min,
+                max: limites.value.max,
+                // El eje va etiquetado porque no arranca en cero: sin la unidad, la
+                // pendiente se lee más grande de lo que es.
+                title: { display: true, text: 'Kilos', font: fuente },
+                ticks: { callback: (valor) => `${valor} kg`, font: fuente },
+                grid: { color: 'oklch(0.6 0 0 / 0.15)' },
+            },
+            x: {
+                grid: { display: false },
+                ticks: { maxRotation: 0, autoSkipPadding: 12, font: fuente },
             },
         },
-    },
-}));
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                titleFont: fuente,
+                bodyFont: fuente,
+                callbacks: {
+                    label: (contexto: TooltipItem<'line'>) => {
+                        const peso = visibles.value[contexto.dataIndex];
+
+                        return [
+                            peso.peso_legible,
+                            peso.origen_etiqueta,
+                            peso.condicion_corporal
+                                ? `Condición corporal ${peso.condicion_corporal}/9`
+                                : '',
+                        ].filter(Boolean);
+                    },
+                    title: (items: TooltipItem<'line'>[]) =>
+                        visibles.value[items[0].dataIndex]?.fecha_legible ?? '',
+                },
+            },
+        },
+    };
+});
 
 const hayVeterinaria = computed(() =>
     visibles.value.some((peso) => peso.en_veterinaria),

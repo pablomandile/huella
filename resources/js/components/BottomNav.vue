@@ -25,7 +25,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
             >
                 <Link
                     :href="destino.href"
-                    class="flex touch-target flex-col items-center justify-center gap-1 px-0.5 py-2 text-[calc(0.625rem*var(--font-scale))] transition-colors min-[360px]:text-[calc(0.6875rem*var(--font-scale))] min-[390px]:text-xs"
+                    class="flex touch-target flex-col items-center justify-center gap-1 px-0.5 py-2 text-[calc(0.625rem*var(--tope-letra,1))] transition-colors min-[360px]:text-[calc(0.6875rem*var(--tope-letra,1))] min-[390px]:text-xs"
                     :class="
                         isCurrentOrParentUrl(destino.href)
                             ? 'text-sidebar-primary'

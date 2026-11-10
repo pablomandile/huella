@@ -65,7 +65,12 @@ onBeforeUnmount(liberar);
 </script>
 
 <template>
-    <div class="flex items-center gap-4">
+    <!--
+        flex-wrap y botones que parten su texto: con letra Grande en 320px,
+        la miniatura de 6rem y «Elegir de la galería» —el Button del kit trae
+        whitespace-nowrap— no entraban en una fila y se salían de la pantalla.
+    -->
+    <div class="flex flex-wrap items-center gap-4">
         <div
             class="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted"
         >
@@ -93,7 +98,7 @@ onBeforeUnmount(liberar);
             </button>
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div class="flex min-w-0 flex-col gap-2">
             <input
                 ref="input"
                 type="file"
@@ -107,6 +112,7 @@ onBeforeUnmount(liberar);
                 type="button"
                 variant="outline"
                 size="sm"
+                class="h-auto min-h-8 justify-start py-1.5 whitespace-normal"
                 @click="abrir(true)"
             >
                 <Camera class="size-4" aria-hidden="true" />
@@ -116,6 +122,7 @@ onBeforeUnmount(liberar);
                 type="button"
                 variant="ghost"
                 size="sm"
+                class="h-auto min-h-8 justify-start py-1.5 whitespace-normal"
                 @click="abrir(false)"
             >
                 <ImageUp class="size-4" aria-hidden="true" />

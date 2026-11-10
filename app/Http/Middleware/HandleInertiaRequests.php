@@ -2,9 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TamanoLetra;
 use App\Services\IngresoConGoogleService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use Inertia\Middleware;
 use Inertia\Support\Header;
 use Symfony\Component\HttpFoundation\Response;
@@ -113,6 +115,9 @@ class HandleInertiaRequests extends Middleware
             'mascotaActivaId' => fn () => $request->user()
                 ? session('mascota_activa_id')
                 : null,
+            // Lo resuelve HandleTamanoLetra (cuenta → cookie → default).
+            'tamanoLetra' => fn () => View::shared('tamanoLetra', TamanoLetra::porDefecto())->value,
+            'tamanosLetra' => fn () => TamanoLetra::opciones(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

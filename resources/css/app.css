@@ -13,30 +13,6 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
-    /*
-      Tamaño de letra elegible (Ajustes → Apariencia): cada tamaño de texto de
-      Tailwind se multiplica por --font-scale. Solo el texto: los espaciados
-      siguen en rem fijo, así una letra más grande hace crecer las filas hacia
-      abajo y no hacia los costados.
-
-      Tiene que ser `@theme inline` para que el calc() quede dentro de cada
-      utilidad y la variable se resuelva en el elemento que la usa. Con un
-      @theme común se resolvería una sola vez en :root, y el tope de las barras
-      fijas (`.letra-con-tope`, más abajo) no tendría ningún efecto.
-
-      Las alturas de línea de Tailwind son proporciones sin unidad, así que
-      acompañan solas.
-    */
-    --text-xs: calc(0.75rem * var(--font-scale));
-    --text-sm: calc(0.875rem * var(--font-scale));
-    --text-base: calc(1rem * var(--font-scale));
-    --text-lg: calc(1.125rem * var(--font-scale));
-    --text-xl: calc(1.25rem * var(--font-scale));
-    --text-2xl: calc(1.5rem * var(--font-scale));
-    --text-3xl: calc(1.875rem * var(--font-scale));
-    --text-4xl: calc(2.25rem * var(--font-scale));
-    --text-5xl: calc(3rem * var(--font-scale));
-
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -236,33 +212,52 @@
 }
 
 /*
-  Los tres tamaños de letra. Mediano es el default y no lleva atributo: si el
-  script del <head> no corre —o el navegador no deja leer localStorage— la app
-  se ve igual en el tamaño pensado para todos.
+  Los tres tamaños de letra (Ajustes → Apariencia). El atributo lo escribe el
+  servidor en el <html> de arranque (HandleTamanoLetra), sin script.
 
-  Pequeño es exactamente como se veía la app antes de que existiera esto, 16px
-  de base. Mediano y Grande suben de a 2px, igual que en Mi Billetera.
+  En PORCENTAJE y nunca en px: un px en la raíz pisaría el tamaño que la
+  persona ya puso en su navegador; con % las dos preferencias se multiplican.
+  Todo Tailwind está en rem, así que esto escala la letra Y el espaciado. Los
+  breakpoints no: con Grande entra menos en el mismo ancho.
+
+  Pequeño es como se veía Huella antes de que existiera esto (16px). El default
+  va también en :root suelto, para una vista sin el atributo (offline, error).
+  Los valores tienen que coincidir con TamanoLetra::porcentaje().
 */
 :root {
-    --font-scale: 1.125; /* mediano: 18px */
+    font-size: 112.5%;
 }
 
-:root[data-tamano-letra='pequeno'] {
-    --font-scale: 1; /* pequeño: 16px, el tamaño de siempre */
+html[data-tamano-letra='pequeno'] {
+    font-size: 100%;
 }
 
-:root[data-tamano-letra='grande'] {
-    --font-scale: 1.25; /* grande: 20px */
+html[data-tamano-letra='mediano'] {
+    font-size: 112.5%;
+}
+
+html[data-tamano-letra='grande'] {
+    font-size: 125%;
 }
 
 /*
-  Las barras de alto fijo —el encabezado, la barra inferior del celular— se
-  quedan en mediano aunque se elija grande. No es estética: con cinco destinos
-  en 390px, "Medicación" a 15px ya no entra en su quinto de pantalla, y un
-  título que baja de línea se sale de una barra que no puede crecer.
+  Las barras de alto fijo —el encabezado, la zona inferior del celular— dejan
+  la LETRA en mediano aunque se elija grande (el espaciado sí crece, hacia
+  abajo). Con cinco destinos en 390px, "Medicación" a 15px no entra en su quinto
+  de pantalla.
+
+  Funciona porque las utilidades `text-*` leen `var(--text-*)` (por eso esos
+  tamaños NO van en el `@theme inline`): acá se redefinen al 90% —112,5/125— y
+  los hijos las heredan. Los tamaños arbitrarios de la barra usan --tope-letra.
 */
-:root[data-tamano-letra='grande'] .letra-con-tope {
-    --font-scale: 1.125;
+html[data-tamano-letra='grande'] .letra-con-tope {
+    --tope-letra: 0.9;
+    --text-xs: calc(0.75rem * 0.9);
+    --text-sm: calc(0.875rem * 0.9);
+    --text-base: calc(1rem * 0.9);
+    --text-lg: calc(1.125rem * 0.9);
+    --text-xl: calc(1.25rem * 0.9);
+    --text-2xl: calc(1.5rem * 0.9);
 }
 
 @layer base {
@@ -271,7 +266,6 @@
     }
     body {
         @apply bg-background text-foreground;
-        font-size: calc(1rem * var(--font-scale));
     }
 }
 
@@ -322,8 +316,9 @@
 
 /* Alto mínimo recomendado para un objetivo táctil. */
 @utility touch-target {
-    min-height: 44px;
-    min-width: 44px;
+    /* En rem: con letra grande el área táctil crece con ella. */
+    min-height: 2.75rem;
+    min-width: 2.75rem;
 }
 
 /*
@@ -342,7 +337,7 @@
     summary,
     [role='button'],
     [data-slot='button'] {
-        min-height: 44px;
-        min-width: 44px;
+        min-height: 2.75rem;
+        min-width: 2.75rem;
     }
 }

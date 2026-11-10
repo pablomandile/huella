@@ -3,6 +3,7 @@
 use App\Http\Middleware\AceptoTerminos;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\HandleTamanoLetra;
 use App\Http\Middleware\ProtegerDemo;
 use App\Http\Middleware\ProtegerFichaCompartida;
 use Illuminate\Foundation\Application;
@@ -20,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'tamano_letra']);
 
         $middleware->alias([
             'ficha-compartida' => ProtegerFichaCompartida::class,
@@ -28,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
+            // Antes que Inertia: comparte el tamaño con la vista y con los props.
+            HandleTamanoLetra::class,
             HandleInertiaRequests::class,
             /*
              * Con tope. Sin él, el inicio —que dibuja la ficha completa y carga

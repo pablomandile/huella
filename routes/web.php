@@ -24,6 +24,7 @@ use App\Http\Controllers\PreventivoController;
 use App\Http\Controllers\Publico\FichaCompartidaController;
 use App\Http\Controllers\RecordatorioController;
 use App\Http\Controllers\SeguimientoController;
+use App\Http\Controllers\Settings\TamanoLetraController;
 use App\Http\Controllers\SincronizacionController;
 use App\Http\Controllers\TratamientoController;
 use App\Http\Controllers\VisitaController;
@@ -56,6 +57,12 @@ Route::middleware('auth')->group(function () {
 // Respaldo que sirve el service worker cuando no hay conexión. Es una vista
 // suelta, no Inertia: tiene que poder mostrarse sin los assets compilados.
 Route::view('offline', 'offline')->name('offline');
+
+/*
+ * Fuera de `auth` y exenta de AceptoTerminos: quien no llega a leer el login
+ * o la pantalla de aceptación es quien más necesita agrandar la letra.
+ */
+Route::put('tamano-letra', [TamanoLetraController::class, 'update'])->name('tamano-letra.update');
 
 /*
  * Ingreso con Google. Van en inglés y bajo /auth como el resto de las rutas de

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\RolCuidador;
+use App\Enums\TamanoLetra;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
@@ -40,6 +41,7 @@ use Throwable;
  * @property Carbon|null $deleted_at
  * @property string|null $terminos_version La de config('legales.version') que aceptó. No es fillable: la escribe aceptarTerminos().
  * @property Carbon|null $terminos_aceptados_en
+ * @property TamanoLetra $tamano_letra No es fillable: lo escribe TamanoLetraController con forceFill.
  */
 #[Fillable(['name', 'email', 'password', 'telefono', 'zona_horaria', 'dias_anticipacion_celo'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -47,6 +49,16 @@ class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
+
+    /**
+     * Sin esto, un usuario recién creado tiene `tamano_letra` en null hasta
+     * refrescarlo, y HandleTamanoLetra espera un enum.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'tamano_letra' => TamanoLetra::PORDEFECTO,
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -60,6 +72,7 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'dias_anticipacion_celo' => 'integer',
             'terminos_aceptados_en' => 'datetime',
+            'tamano_letra' => TamanoLetra::class,
             /* @chisel-2fa */
             'two_factor_confirmed_at' => 'datetime',
             /* @end-chisel-2fa */

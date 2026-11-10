@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+{{--
+    data-tamano-letra lo escribe el servidor (HandleTamanoLetra: cuenta → cookie
+    → default), así que el tamaño ya está en el primer pintado sin JavaScript.
+--}}
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-tamano-letra="{{ ($tamanoLetra ?? \App\Enums\TamanoLetra::porDefecto())->value }}"
+    @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
         {{-- viewport-fit=cover habilita env(safe-area-inset-*) en el notch de iOS --}}
@@ -23,25 +29,6 @@
                     if (prefersDark) {
                         document.documentElement.classList.add('dark');
                     }
-                }
-            })();
-        </script>
-
-        {{--
-            El tamaño de letra, antes del primer pintado: si lo aplicara Vue al
-            montar, cada carga mostraría un instante la letra mediana y después
-            saltaría a la elegida, corriendo todo el contenido. Mediano no lleva
-            atributo, así que si localStorage falla queda en el default.
-        --}}
-        <script>
-            (function () {
-                try {
-                    var t = localStorage.getItem('tamanoLetra');
-                    if (t === 'pequeno' || t === 'grande') {
-                        document.documentElement.dataset.tamanoLetra = t;
-                    }
-                } catch (e) {
-                    /* ventana privada: queda mediano */
                 }
             })();
         </script>

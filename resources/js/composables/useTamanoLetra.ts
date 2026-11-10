@@ -1,64 +1,91 @@
-import { ref } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { update } from '@/routes/tamano-letra';
 
 /*
  * El tamaño de letra elegido en Ajustes → Apariencia.
  *
- * Se guarda por dispositivo en localStorage, igual que el tema: es una
- * preferencia de cómo se lee en esta pantalla, no un dato de la cuenta —en la
- * compu se puede querer pequeño y en el celular grande—. El script inline del
- * <head> de app.blade.php lo aplica antes del primer pintado; esto solo lo
- * cambia en vivo y lo recuerda.
- *
- * Mediano es el default y se representa SIN atributo en <html>: así, si el
- * almacenamiento falla, la app queda en el tamaño pensado para todos.
+ * Lo decide el servidor (HandleTamanoLetra: cuenta → cookie → default) y lo
+ * escribe en el `<html>` de arranque, así que al cargar no hay nada que hacer.
+ * Esto cubre el otro momento: cuando la persona elige. Inertia no recarga el
+ * documento, así que el atributo lo mueve el cliente en el acto.
  */
 
 export type TamanoLetra = 'pequeno' | 'mediano' | 'grande';
 
-export const TAMANOS_LETRA: { valor: TamanoLetra; etiqueta: string }[] = [
-    { valor: 'pequeno', etiqueta: 'Pequeño' },
-    { valor: 'mediano', etiqueta: 'Mediano' },
-    { valor: 'grande', etiqueta: 'Grande' },
-];
+export type OpcionTamanoLetra = {
+    valor: TamanoLetra;
+    etiqueta: string;
+    descripcion: string;
+    /** El porcentaje como número (100, 112.5, 125), para dibujar la muestra. */
+    escala: number;
+};
 
-const CLAVE = 'tamanoLetra';
+const POR_DEFECTO: TamanoLetra = 'mediano';
 
-function leer(): TamanoLetra {
-    try {
-        const guardado = localStorage.getItem(CLAVE);
+/** Donde lo guardaba la versión anterior, por dispositivo. Solo se lee para migrarlo. */
+const CLAVE_VIEJA = 'tamanoLetra';
 
-        return guardado === 'pequeno' || guardado === 'grande'
-            ? guardado
-            : 'mediano';
-    } catch {
-        return 'mediano';
-    }
-}
-
-function aplicar(valor: TamanoLetra): void {
-    if (valor === 'mediano') {
-        delete document.documentElement.dataset.tamanoLetra;
-    } else {
+function aplicarAlDocumento(valor: TamanoLetra): void {
+    if (typeof document !== 'undefined') {
         document.documentElement.dataset.tamanoLetra = valor;
     }
 }
 
-// Un solo estado para toda la app, como el tema.
-const tamano = ref<TamanoLetra>(
-    typeof window === 'undefined' ? 'mediano' : leer(),
-);
-
 export function useTamanoLetra() {
+    const page = usePage();
+
+    const tamano = computed<TamanoLetra>(
+        () =>
+            (page.props.tamanoLetra as TamanoLetra | undefined) ?? POR_DEFECTO,
+    );
+
+    const opciones = computed<OpcionTamanoLetra[]>(
+        () =>
+            (page.props.tamanosLetra as OpcionTamanoLetra[] | undefined) ?? [],
+    );
+
     function elegir(valor: TamanoLetra): void {
-        tamano.value = valor;
-        aplicar(valor);
+        if (valor === tamano.value) {
+            return;
+        }
+
+        // Se aplica antes de que conteste: esperar el viaje se siente trabado.
+        // Si falla, `onError` lo deja como estaba.
+        const anterior = tamano.value;
+        aplicarAlDocumento(valor);
+
+        router.put(
+            update.url(),
+            { tamano_letra: valor },
+            {
+                preserveScroll: true,
+                // Para que `tamanoLetra` se relea de los props: con el estado
+                // preservado, el selector seguiría marcando la opción vieja.
+                preserveState: false,
+                onError: () => aplicarAlDocumento(anterior),
+            },
+        );
+    }
+
+    /**
+     * Antes el tamaño vivía en localStorage. Si quedó una elección de esa época,
+     * se pasa a la cuenta una sola vez y se borra, para que nadie la pierda.
+     */
+    function migrarDeLocalStorage(): void {
+        let vieja: string | null = null;
 
         try {
-            localStorage.setItem(CLAVE, valor);
+            vieja = localStorage.getItem(CLAVE_VIEJA);
+            localStorage.removeItem(CLAVE_VIEJA);
         } catch {
-            // Ventana privada o datos bloqueados: vale hasta recargar.
+            return;
+        }
+
+        if (vieja === 'pequeno' || vieja === 'grande') {
+            elegir(vieja);
         }
     }
 
-    return { tamano, elegir };
+    return { tamano, opciones, elegir, migrarDeLocalStorage };
 }

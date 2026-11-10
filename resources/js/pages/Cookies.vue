@@ -53,6 +53,11 @@ const GRUPOS: Grupo[] = [
                 dura: '1 año',
             },
             {
+                nombre: 'tamano_letra',
+                para: 'El tamaño de letra que elegiste, para mostrarte la app así desde la primera carga, con o sin sesión. Solo guarda el tamaño.',
+                dura: 'Hasta que lo cambies',
+            },
+            {
                 nombre: 'sidebar_state',
                 para: 'Si dejaste el menú lateral abierto o cerrado (en computadora).',
                 dura: '7 días',
@@ -65,8 +70,8 @@ const GRUPOS: Grupo[] = [
             'Datos que quedan en el navegador y nunca se mandan solos a ningún lado.',
         datos: [
             {
-                nombre: 'appearance · tamanoLetra',
-                para: 'El tema y el tamaño de letra que elegiste en este dispositivo.',
+                nombre: 'appearance',
+                para: 'El tema claro u oscuro que elegiste en este dispositivo.',
                 dura: 'Hasta que los cambies',
             },
             {

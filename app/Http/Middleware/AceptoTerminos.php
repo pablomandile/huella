@@ -41,6 +41,7 @@ class AceptoTerminos
         'profile.destroy',
         'exportacion.datos',
         'sincronizar',
+        'tamano-letra.update',
         'verification.*',
         'compartido.*',
         'storage.*',

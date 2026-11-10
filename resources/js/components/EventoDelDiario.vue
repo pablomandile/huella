@@ -117,16 +117,13 @@ const estilo = computed(
                 <p class="text-xs text-muted-foreground">
                     {{ evento.fecha_legible }}
                 </p>
-                <Badge
-                    variant="outline"
-                    class="text-[calc(0.625rem*var(--font-scale))] font-normal"
-                >
+                <Badge variant="outline" class="text-[0.625rem] font-normal">
                     {{ evento.etiqueta_tipo ?? estilo.etiqueta }}
                 </Badge>
                 <Badge
                     v-if="evento.vigente"
                     variant="secondary"
-                    class="text-[calc(0.625rem*var(--font-scale))] font-normal"
+                    class="text-[0.625rem] font-normal"
                 >
                     Come esto ahora
                 </Badge>

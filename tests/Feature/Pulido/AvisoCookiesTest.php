@@ -72,7 +72,6 @@ it('la página de cookies declara todo lo que el código guarda en el navegador'
     // Que la búsqueda encuentre lo que ya se sabe que existe: si un cambio de
     // estilo la dejara sin encontrar nada, el test pasaría sin probar nada.
     expect(array_keys($claves))->toContain(
-        'tamanoLetra',
         'huella:aviso-cookies',
         'huella:seccion:',
         'sin-conexion:usuario',
@@ -97,7 +96,9 @@ it('la página declara las cookies del servidor', function () {
     expect($pagina)
         ->toContain(config('session.cookie'))
         ->toContain('XSRF-TOKEN')
-        ->toContain('remember_web_');
+        ->toContain('remember_web_')
+        // La escribe TamanoLetraController, del lado del servidor.
+        ->toContain('tamano_letra');
 });
 
 it('el aviso está en todas las puertas de entrada', function () {

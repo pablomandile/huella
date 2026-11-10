@@ -22,21 +22,27 @@ defineOptions({
 
     <h1 class="sr-only">Configuración de apariencia</h1>
 
-    <div class="space-y-6">
-        <Heading
-            variant="small"
-            title="Apariencia"
-            description="Elegí cómo se ve la app en este dispositivo"
-        />
-        <AppearanceTabs />
-
+    <div class="space-y-8">
+        <!--
+            La letra va primero: es a lo que viene la mayoría de quien abre
+            esta pantalla. Viaja con la cuenta; el tema queda en el dispositivo.
+        -->
         <div class="space-y-3">
             <Heading
                 variant="small"
                 title="Tamaño de letra"
-                description="Más grande se lee mejor con el celular en la mano; la pantalla crece hacia abajo, nunca hacia los costados"
+                description="Se guarda en tu cuenta: lo vas a ver igual en cualquier dispositivo"
             />
             <SelectorTamanoLetra />
+        </div>
+
+        <div class="space-y-3">
+            <Heading
+                variant="small"
+                title="Tema"
+                description="Claro u oscuro, en este dispositivo"
+            />
+            <AppearanceTabs />
         </div>
     </div>
 </template>

@@ -343,39 +343,55 @@ La carga real ocurre en la veterinaria, con el celular en la mano.
 
 ### Tamaño de letra
 
-Tres tamaños elegibles en Ajustes → Apariencia: **Pequeño** (16px, como se veía la
-app antes), **Mediano** (18px, el default) y **Grande** (20px). Calcado de Mi Billetera.
+Tres tamaños elegibles en Ajustes → Apariencia: **Pequeño** (100 %, 16px, como se veía
+la app antes), **Mediano** (112,5 %, 18px, el default) y **Grande** (125 %, 20px).
+Sigue la skill `opciones-tamanio-texto` (la variante de MiSalud); antes era la de
+Mi Billetera, con `--font-scale` y `localStorage`, y se reemplazó entera.
 
-- **Escala solo el texto.** Cada `--text-*` de Tailwind es `calc(… * var(--font-scale))`
-  en el `@theme inline` de `app.css`; los espaciados siguen en rem fijo. Por eso una
-  letra más grande hace crecer las filas **hacia abajo** y nunca hacia los costados.
-- Tiene que ser **`@theme inline`**: así el `calc()` queda adentro de cada utilidad y
-  la variable se resuelve en el elemento. Con un `@theme` común se resolvería una vez
-  en `:root` y el tope de las barras no tendría efecto.
-- **Las barras de alto fijo llevan `letra-con-tope`**: el encabezado y la zona
-  inferior del celular se quedan en Mediano aunque se elija Grande. Con cinco
-  destinos en 390px, "Medicación" no entra en su quinto de pantalla.
-  Y aun con el tope, las etiquetas de `BottomNav` se **escalonan por ancho**
-  (10/11/12px de base en 320/360/390) con padding horizontal mínimo: medida,
-  "Medicación" ocupa 60px a la letra de 320 y el casillero tiene 64. Antes
-  empujaba a "Perfil" fuera de la pantalla en 320 y se pisaba con sus vecinos.
-- **Nada de `truncate` en el contenido**: va `wrap-anywhere`, que baja de línea y
-  además deja achicar una fila flex sin `min-w-0`. Con letra grande, un `truncate`
-  esconde cada vez más texto. Solo quedan en las barras fijas, donde bajar de línea
-  rompería la barra.
-- **Ningún tamaño en px** (`text-[11px]`): no pasaría por la escala. Va
-  `text-[calc(0.6875rem*var(--font-scale))]`.
+- **`font-size` en % sobre `<html>`, nunca en px.** Un px en la raíz pisaría el tamaño
+  que la persona puso en su navegador; con % se multiplican. Todo Tailwind está en
+  rem, así que escala la letra **y** el espaciado. Los breakpoints (`md:`) no: con
+  Grande entra menos en el mismo ancho.
+- **Lo escribe el servidor** (`data-tamano-letra` en `app.blade.php`), sin script
+  inline: no hay opción "según el sistema", así que el servidor sabe la respuesta.
+  `HandleTamanoLetra` resuelve **cuenta → cookie → default** y va antes de
+  `HandleInertiaRequests`.
+- **Se guarda en los dos lados** (`PUT /tamano-letra`): cookie `tamano_letra` sin
+  cifrar, y `users.tamano_letra` si hay sesión. La cuenta es la que sigue a la persona
+  a otro teléfono. La ruta va **sin `auth`** y exenta de `AceptoTerminos`: quien no
+  llega a leer el login es quien más necesita agrandar la letra.
+- **En la demo manda la cookie y no se escribe la cuenta**: es una sola y compartida,
+  y un visitante le cambiaría la letra a todos.
+- Con sesión, **poner la cookie no cambia nada**: manda la cuenta. Para probar con un
+  navegador hay que pegarle al endpoint (con `redirect: 'manual'`, o el 302 de
+  `back()` vuelve el PUT un GET y da 405).
+- El composable aplica el atributo en el acto (Inertia no recarga el documento) y
+  manda el PUT con `preserveState: false`. `migrarDeLocalStorage()` pasa a la cuenta,
+  una vez, lo que alguien había elegido con la versión anterior.
+- **Las barras de alto fijo llevan `letra-con-tope`**: con Grande, la **letra** del
+  encabezado y de la zona inferior se queda en Mediano (el espaciado sí crece, hacia
+  abajo). Con cinco destinos en 390px, "Medicación" a 15px no entra en su quinto de
+  pantalla. Funciona porque los `--text-*` **no** van en el `@theme inline`: las
+  utilidades leen `var(--text-*)` y la barra las redefine al 90 %. Los tamaños
+  arbitrarios de `BottomNav` usan `var(--tope-letra,1)`. Las etiquetas siguen
+  **escalonadas por ancho** (10/11/12px de base en 320/360/390).
+- **Lo que mide en px no sigue a la raíz**: Chart.js toma el `font-size` del `<html>`
+  al 80 % (`CurvaDePeso`). Nada de `text-[11px]`: va `text-[0.6875rem]`. Las áreas
+  táctiles van en `rem` (`touch-target` = 2.75rem).
+- **Nada de `truncate` en el contenido**: va `wrap-anywhere`. Solo quedan en las
+  barras fijas, donde bajar de línea rompería la barra.
 - Ojo con el `Button` del kit: trae `whitespace-nowrap` y alto fijo. Con una etiqueta
-  larga hay que pisarlos (`h-auto whitespace-normal`) o empuja lo de al lado afuera.
-- Se guarda por dispositivo en `localStorage` y lo aplica un **script inline del
-  `<head>`** antes del primer pintado; si lo aplicara Vue, cada carga saltaría de
-  tamaño. Mediano no lleva atributo: si el almacenamiento falla, queda el default.
-  Los valores viven en tres archivos que nada ata; lo cuida `TamanoLetraTest`.
+  larga hay que pisarlos (`h-auto whitespace-normal`).
+- **Renombrar un caso de `TamanoLetra` lleva migración de datos**: la cookie vieja cae
+  al default sin romper, pero la columna con un valor que el cast no reconoce, sí.
+- El HTML que guardó el service worker lleva el atributo del momento en que se guardó:
+  sin conexión se ve el tamaño de entonces hasta la próxima carga con red. Se acepta.
+- Los porcentajes viven en el enum y en `app.css`, que nada ata; lo cuida
+  `TamanoLetraTest`.
 - **El `<main>` tiene `overflow-x-hidden`**: ahí un desborde no hace scroll, se
   **recorta**, y medir `scrollWidth` del documento da limpio aunque haya texto
   cortado contra el borde. Hay que buscar elementos cuyo borde derecho pase el
-  viewport. Así se encontró la flecha del "Más detalles" del formulario de mascota,
-  que se salía en 320px desde antes de que existiera esto.
+  viewport.
 
 ## Marca
 

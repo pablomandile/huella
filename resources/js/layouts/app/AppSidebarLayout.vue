@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
@@ -8,6 +9,7 @@ import AvisoSinConexion from '@/components/AvisoSinConexion.vue';
 import BannerInstalar from '@/components/BannerInstalar.vue';
 import BottomNav from '@/components/BottomNav.vue';
 import { Toaster } from '@/components/ui/sonner';
+import { useTamanoLetra } from '@/composables/useTamanoLetra';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -17,6 +19,10 @@ type Props = {
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
 });
+
+// Lo que alguien eligió cuando el tamaño vivía en localStorage pasa a su cuenta.
+const { migrarDeLocalStorage } = useTamanoLetra();
+onMounted(migrarDeLocalStorage);
 </script>
 
 <template>
