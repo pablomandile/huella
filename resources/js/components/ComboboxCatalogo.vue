@@ -306,7 +306,7 @@ async function crear() {
                         <SheetTitle>Agregar {{ etiqueta }}</SheetTitle>
                         <SheetDescription>
                             Con el nombre alcanza. El resto de los datos se
-                            completan después desde Catálogos.
+                            completan después desde Datos recurrentes.
                         </SheetDescription>
                     </SheetHeader>
 

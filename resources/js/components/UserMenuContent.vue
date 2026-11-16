@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import {
-    BookMarked,
-    Cookie,
-    FileText,
-    Info,
-    LogOut,
-    Settings,
-} from '@lucide/vue';
+import { Cookie, FileText, Info, LogOut, Settings } from '@lucide/vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -17,7 +10,6 @@ import {
 import InstalarApp from '@/components/InstalarApp.vue';
 import UserInfo from '@/components/UserInfo.vue';
 import { acerca, cookies, logout, terminos } from '@/routes';
-import { index as catalogos } from '@/routes/catalogos';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
@@ -44,21 +36,6 @@ defineProps<Props>();
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
                 Configuración
-            </Link>
-        </DropdownMenuItem>
-        <!--
-            Catálogos no entra en la barra inferior del celular (más de cinco
-            destinos cortan las etiquetas), así que su acceso móvil es este:
-            son datos de referencia, y acá es donde uno los busca.
-        -->
-        <DropdownMenuItem :as-child="true">
-            <Link
-                class="block w-full cursor-pointer"
-                :href="catalogos()"
-                prefetch
-            >
-                <BookMarked class="mr-2 h-4 w-4" />
-                Catálogos
             </Link>
         </DropdownMenuItem>
         <!--

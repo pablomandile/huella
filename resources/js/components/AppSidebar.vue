@@ -14,7 +14,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { destinosPrincipales } from '@/lib/navegacion';
+import { datosRecurrentes, destinosPrincipales } from '@/lib/navegacion';
 import { dashboard } from '@/routes';
 
 const { isMobile, setOpenMobile } = useSidebar();
@@ -56,6 +56,7 @@ onUnmounted(
 
         <SidebarContent>
             <NavMain :items="destinosPrincipales" />
+            <NavMain :items="datosRecurrentes" titulo="Datos recurrentes" />
         </SidebarContent>
 
         <SidebarFooter>

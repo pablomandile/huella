@@ -329,8 +329,12 @@ La carga real ocurre en la veterinaria, con el celular en la mano.
 
 - Bottom tab bar + FAB en `< md`; sidebar en `>= md`. **Mismo árbol de rutas**, no dos apps.
 - La barra inferior tiene **cinco destinos y no más**: con seis hay que achicar el área
-  táctil por debajo de 44px o cortar las etiquetas. Catálogos y Visitas quedan afuera a
-  propósito y están en el menú. `lib/navegacion.ts` es la definición única de las dos.
+  táctil por debajo de 44px o cortar las etiquetas. Visitas y los catálogos quedan afuera
+  a propósito y están en el menú. `lib/navegacion.ts` es la definición única de las dos.
+- En el menú los catálogos **no** van como una entrada «Catálogos»: cada uno tiene la
+  suya bajo el subtítulo **«Datos recurrentes»** (`datosRecurrentes`). Así se los llama
+  en todo texto visible; el código, las rutas y las carpetas siguen diciendo `catalogos`.
+  El panel `catalogos.index` sigue existiendo, como destino de la miga de pan.
 - Las pantallas por mascota se llegan desde su ficha. Cuando además están en el menú
   —que no tiene contexto de mascota— hace falta un paso previo que pregunte de quién es:
   `visitas.elegir`. **Con una sola mascota redirige sin mostrarse**, porque preguntar cuál

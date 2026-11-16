@@ -1,14 +1,22 @@
 import {
+    Apple,
     BellRing,
-    BookMarked,
+    Building2,
     House,
     PawPrint,
+    Pill,
     PillBottle,
     Settings,
     Stethoscope,
+    Syringe,
+    UserRound,
 } from '@lucide/vue';
 import { dashboard } from '@/routes';
-import { index as catalogosIndex } from '@/routes/catalogos';
+import { index as alimentosIndex } from '@/routes/catalogos/alimentos';
+import { index as medicamentosIndex } from '@/routes/catalogos/medicamentos';
+import { index as vacunasIndex } from '@/routes/catalogos/vacunas';
+import { index as veterinariasIndex } from '@/routes/catalogos/veterinarias';
+import { index as veterinariosIndex } from '@/routes/catalogos/veterinarios';
 import { index as mascotasIndex } from '@/routes/mascotas';
 import { index as medicacionIndex } from '@/routes/medicacion';
 import { edit as editProfile } from '@/routes/profile';
@@ -55,10 +63,39 @@ export const destinosPrincipales: NavItem[] = [
         href: medicacionIndex(),
         icon: PillBottle,
     },
+];
+
+/**
+ * Los catálogos, cada uno con su entrada, bajo el subtítulo «Datos
+ * recurrentes»: es lo que se carga una vez y se elige después en cada visita,
+ * tratamiento o dieta. Antes era una sola entrada «Catálogos» que llevaba a un
+ * panel intermedio, un click de más para llegar a cualquiera de los cinco.
+ */
+export const datosRecurrentes: NavItem[] = [
     {
-        title: 'Catálogos',
-        href: catalogosIndex(),
-        icon: BookMarked,
+        title: 'Veterinarias',
+        href: veterinariasIndex(),
+        icon: Building2,
+    },
+    {
+        title: 'Veterinarios',
+        href: veterinariosIndex(),
+        icon: UserRound,
+    },
+    {
+        title: 'Medicamentos',
+        href: medicamentosIndex(),
+        icon: Pill,
+    },
+    {
+        title: 'Vacunas',
+        href: vacunasIndex(),
+        icon: Syringe,
+    },
+    {
+        title: 'Alimentos',
+        href: alimentosIndex(),
+        icon: Apple,
     },
 ];
 
@@ -67,18 +104,16 @@ export const destinosPrincipales: NavItem[] = [
  * más de cinco destinos no entran sin achicar el área táctil por debajo de 44px
  * ni cortar las etiquetas.
  *
- * Catálogos queda afuera y no es un olvido: se cargan una vez al principio y
- * después casi nunca. En el celular se llega por el menú de usuario, que es
- * donde uno busca la configuración; en escritorio está en la sidebar.
+ * Los datos recurrentes quedan afuera y no es un olvido: se cargan una vez al
+ * principio y después casi nunca. En el celular están en el menú lateral, que
+ * abre el botón del encabezado; en escritorio, en la sidebar.
  *
  * Visitas también queda afuera, por la misma cuenta de cinco: sumarla haría seis
  * y habría que achicar el área táctil o cortar las etiquetas. Está en el menú, y
  * el camino corto sigue siendo la ficha de la mascota que estás mirando.
  */
 export const destinosBarraInferior: NavItem[] = [
-    ...destinosPrincipales.filter(
-        (destino) => !['Catálogos', 'Visitas'].includes(destino.title),
-    ),
+    ...destinosPrincipales.filter((destino) => destino.title !== 'Visitas'),
     {
         title: 'Perfil',
         href: editProfile(),

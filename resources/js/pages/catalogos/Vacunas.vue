@@ -26,7 +26,7 @@ defineProps<{
 defineOptions({
     layout: {
         breadcrumbs: [
-            { title: 'Catálogos', href: catalogos() },
+            { title: 'Datos recurrentes', href: catalogos() },
             { title: 'Vacunas', href: index() },
         ],
     },

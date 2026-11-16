@@ -41,7 +41,7 @@ function abrirFoto(alimento: Alimento) {
 defineOptions({
     layout: {
         breadcrumbs: [
-            { title: 'Catálogos', href: catalogos() },
+            { title: 'Datos recurrentes', href: catalogos() },
             { title: 'Alimentos', href: index() },
         ],
     },

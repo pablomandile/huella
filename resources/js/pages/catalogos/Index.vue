@@ -28,7 +28,7 @@ const props = defineProps<{
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: 'Catálogos', href: catalogos() }],
+        breadcrumbs: [{ title: 'Datos recurrentes', href: catalogos() }],
     },
 });
 
@@ -72,11 +72,11 @@ const secciones = [
 </script>
 
 <template>
-    <Head title="Catálogos" />
+    <Head title="Datos recurrentes" />
 
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         <div>
-            <h1 class="text-xl font-semibold">Catálogos</h1>
+            <h1 class="text-xl font-semibold">Datos recurrentes</h1>
             <p class="mt-1 text-sm text-muted-foreground">
                 Lo que se carga una vez y después se elige de una lista. Ya
                 vienen precargados los que se consiguen en Argentina; podés
