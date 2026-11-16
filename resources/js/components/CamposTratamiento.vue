@@ -27,7 +27,8 @@ const props = withDefaults(
         vias: OpcionEnum[];
         /** Errores del <Form>, ya resueltos para este bloque. */
         errores?: Record<string, string>;
-        tratamiento?: Tratamiento;
+        /** Parcial: también llega lo retomado de un borrador. */
+        tratamiento?: Partial<Tratamiento>;
         /** Fecha por defecto del inicio; normalmente hoy. */
         hoy: string;
         /** Se muestra el botón de quitar solo cuando hay más de uno. */

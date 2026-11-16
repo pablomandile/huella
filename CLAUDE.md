@@ -323,6 +323,39 @@ datos sigue más abajo.
   vuelve con `back()` y remonta la página, y sin eso la sección se cerraría
   justo después de usarla.
 
+## Salir de un formulario a medio cargar
+
+El alta y la edición de una visita **preguntan antes de irse** con algo cargado:
+«Guardar borrador y salir», «Sí, salir sin guardar» o «No, seguir cargando». Lo
+arma `useSalidaProtegida` y lo dibuja `DialogoSalida`; el borrador vive en
+`lib/borradores.ts`.
+
+- **Dos puertas, dos mecanismos.** Los enlaces disparan `before` de Inertia, que se
+  cancela. El "atrás" del navegador no se puede cancelar: al primer toque en el
+  formulario se apila una entrada **guardia** con la misma URL, y el "atrás" la
+  consume sin cambiar de pantalla.
+- **El listener de `popstate` lo instala `app.ts` antes de `createInertiaApp`.** En
+  `window` los listeners corren en orden de registro —`capture` no los adelanta, se
+  probó— y el de Inertia se registra al arrancar: registrado después, Inertia
+  restaura la página encima de la pregunta. Hay uno solo, global, y el formulario
+  montado le presta su manejador.
+- La guardia se apila **con un toque**, no al montar: Chrome saltea en el "atrás"
+  las entradas apiladas sin interacción. Por la misma razón el clic en el botón de
+  enviar no la apila (el `<Form>` lee `replace` en ese mismo clic).
+- Con la guardia puesta, guardar y salir por un enlace **reemplazan** la entrada: si
+  no, el formulario quedaría dos veces en el historial.
+- Lo que sale sin pasar por la pregunta —un segundo "atrás", recargar, que el
+  sistema mate la app— **guarda un borrador solo**. Lo único que descarta es «Salir
+  sin guardar», y deja el borrador previo como estaba.
+- El borrador vuelve como **valores iniciales** de los mismos inputs, con un toast
+  que ofrece «Descartar». En `localStorage` (`huella:borrador:…`) porque tiene que
+  andar sin señal; dura 7 días y **se borra al salir de la cuenta** con lo demás de
+  `precalentar.ts`. Los archivos no entran: localStorage es solo texto.
+- «Más datos» va con `:unmount-on-hide="false"`: plegado, desmontaba los campos, y lo
+  escrito ahí se perdía —también sin borrador de por medio—.
+- Para usarlo en otro formulario: el contenedor del `<form>`, una clave por registro,
+  `:options="{ replace: guardia }"` y `@success="alGuardar"`.
+
 ## Mobile first
 
 La carga real ocurre en la veterinaria, con el celular en la mano.

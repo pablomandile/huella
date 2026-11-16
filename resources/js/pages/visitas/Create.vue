@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import FormularioVisita from '@/components/FormularioVisita.vue';
 import { index as mascotasIndex, show } from '@/routes/mascotas';
 import { store } from '@/routes/mascotas/visitas';
@@ -37,12 +37,16 @@ defineOptions({
             <h1 class="text-xl font-semibold">Nueva visita</h1>
             <p class="mt-1 text-sm text-muted-foreground">
                 {{ mascota.nombre }} ·
-                <a
-                    :href="show(mascota.id).url"
+                <!--
+                    Link y no <a>: una carga completa se saltearía la pregunta
+                    antes de salir del formulario a medio cargar.
+                -->
+                <Link
+                    :href="show(mascota.id)"
                     class="text-primary hover:underline"
                 >
                     ver la ficha
-                </a>
+                </Link>
             </p>
         </div>
 
@@ -56,6 +60,8 @@ defineOptions({
             :vias="vias"
             :tipos-adjunto="tiposAdjunto"
             texto-enviar="Guardar la visita"
+            :clave-borrador="`visita:${mascota.id}:nueva`"
+            :salida="show(mascota.id).url"
         />
     </div>
 </template>

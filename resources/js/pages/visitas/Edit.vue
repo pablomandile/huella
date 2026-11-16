@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import FormularioVisita from '@/components/FormularioVisita.vue';
 import { index as mascotasIndex } from '@/routes/mascotas';
-import { update } from '@/routes/mascotas/visitas';
+import { show, update } from '@/routes/mascotas/visitas';
 import type {
     Mascota,
     Medicamento,
@@ -52,6 +52,8 @@ defineOptions({
             :vias="vias"
             :con-tratamientos="false"
             texto-enviar="Guardar los cambios"
+            :clave-borrador="`visita:${mascota.id}:${visita.id}`"
+            :salida="show([mascota.id, visita.id]).url"
         />
     </div>
 </template>

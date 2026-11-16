@@ -74,6 +74,7 @@ it('la página de cookies declara todo lo que el código guarda en el navegador'
     expect(array_keys($claves))->toContain(
         'huella:aviso-cookies',
         'huella:seccion:',
+        'huella:borrador:',
         'sin-conexion:usuario',
         'appearance',
         'sidebar_state',

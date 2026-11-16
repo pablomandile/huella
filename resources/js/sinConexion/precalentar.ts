@@ -1,3 +1,4 @@
+import { borrarTodosLosBorradores } from '@/lib/borradores';
 import { sinConexion } from './conexion';
 
 /*
@@ -139,6 +140,9 @@ function borrarDatosGuardados(): Promise<void> {
     } catch {
         // nada
     }
+
+    // Una visita a medio cargar es tan clínica como lo demás.
+    borrarTodosLosBorradores();
 
     const sw = navigator.serviceWorker?.controller;
 

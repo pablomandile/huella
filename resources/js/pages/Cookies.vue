@@ -95,6 +95,11 @@ const GRUPOS: Grupo[] = [
                 dura: 'Hasta que salgas de la cuenta',
             },
             {
+                nombre: 'huella:borrador:…',
+                para: 'Una visita que dejaste a medio cargar, si elegiste guardarla como borrador o saliste sin terminarla. Los archivos adjuntos no se guardan.',
+                dura: 'Hasta que la guardes, la descartes o pasen 7 días; siempre se borra al salir de la cuenta',
+            },
+            {
                 nombre: 'huella-sin-conexion',
                 para: 'Las tomas, pesos, baños y notas que cargaste sin conexión, hasta que se envían.',
                 dura: 'Hasta que se sincronizan',

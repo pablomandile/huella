@@ -1,5 +1,6 @@
 import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
+import { instalarGuardiaDeSalida } from '@/composables/useSalidaProtegida';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import PublicoLayout from '@/layouts/PublicoLayout.vue';
@@ -10,6 +11,10 @@ import { iniciarSinConexion } from '@/sinConexion/iniciar';
 import type { Auth } from '@/types/auth';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Huella';
+
+// Antes que Inertia: el "atrás" en un formulario a medio cargar tiene que
+// llegar primero acá para poder preguntar (ver useSalidaProtegida).
+instalarGuardiaDeSalida();
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
