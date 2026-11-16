@@ -18,7 +18,7 @@ it('registra una vacuna con próxima dosis y deja el recordatorio listo', functi
     ]);
 
     $this->actingAs($usuario)
-        ->from(route('mascotas.preventivo.index', $mascota))
+        ->from(route('mascotas.seguimiento.index', $mascota))
         ->post(route('mascotas.vacunas.store', $mascota), [
             'vacuna_id' => $quintuple->id,
             'fecha' => now()->subDay()->toDateString(),
@@ -98,7 +98,7 @@ it('registra una desparasitación con el peso del día', function () {
         ->and(Recordatorio::sole()->tipo->value)->toBe('desparasitacion');
 });
 
-it('muestra el semáforo de vacunación en la pantalla de preventivo', function () {
+it('muestra el semáforo de vacunación en la pantalla de seguimiento', function () {
     $usuario = User::factory()->create();
     $mascota = Mascota::factory()->for($usuario, 'propietario')->create();
 
@@ -110,10 +110,10 @@ it('muestra el semáforo de vacunación en la pantalla de preventivo', function 
     ]);
 
     $this->actingAs($usuario)
-        ->get(route('mascotas.preventivo.index', $mascota))
+        ->get(route('mascotas.seguimiento.index', $mascota))
         ->assertOk()
         ->assertInertia(fn ($pagina) => $pagina
-            ->component('preventivo/Index')
+            ->component('seguimiento/Index')
             ->where('estadoVacunacion.estado', 'vencida')
             ->where('estadoVacunacion.detalle', fn ($d) => str_contains($d, 'Antirrábica')),
         );
@@ -125,7 +125,7 @@ it('el semáforo dice sin datos cuando no hay nada cargado', function () {
 
     // No decide qué vacunas le corresponden: eso sería aconsejar.
     $this->actingAs($usuario)
-        ->get(route('mascotas.preventivo.index', $mascota))
+        ->get(route('mascotas.seguimiento.index', $mascota))
         ->assertInertia(fn ($pagina) => $pagina
             ->where('estadoVacunacion.estado', 'sin_datos'),
         );
@@ -142,7 +142,7 @@ it('el semáforo avisa cuando falta poco', function () {
     ]);
 
     $this->actingAs($usuario)
-        ->get(route('mascotas.preventivo.index', $mascota))
+        ->get(route('mascotas.seguimiento.index', $mascota))
         ->assertInertia(fn ($pagina) => $pagina->where('estadoVacunacion.estado', 'proxima'));
 });
 
@@ -289,14 +289,14 @@ it('borra un recordatorio propio', function () {
     expect(Recordatorio::count())->toBe(0);
 });
 
-it('no deja tocar el preventivo ni los recordatorios de otra cuenta', function () {
+it('no deja tocar las vacunas ni los recordatorios de otra cuenta', function () {
     $intruso = User::factory()->create();
     $mascota = Mascota::factory()->create();
     $aplicacion = AplicacionVacuna::factory()->create(['mascota_id' => $mascota->id]);
     $recordatorio = Recordatorio::factory()->for($mascota)->create();
 
     $this->actingAs($intruso)
-        ->get(route('mascotas.preventivo.index', $mascota))
+        ->get(route('mascotas.seguimiento.index', $mascota))
         ->assertForbidden();
 
     $this->actingAs($intruso)

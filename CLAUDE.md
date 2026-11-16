@@ -302,8 +302,8 @@ la dosis y que el veterinario emita el certificado.
 ## El inicio es la ficha
 
 El inicio muestra la ficha **completa** de la mascota activa, la misma que su
-pantalla: alergias, documentación, vacunación, tratamientos, visitas, datos y
-galería. Arriba de todo, debajo del nombre, va la tarjeta de datos
+pantalla: alergias, documentación, vacunación, línea de tiempo, seguimiento,
+tratamientos, visitas, datos y galería. Arriba de todo, debajo del nombre, va la tarjeta de datos
 (`fichaArriba`); después las alergias, y lo de hoy —tomas, próximos 30 días, peso
 y dieta— en el hueco `tras-alergias`. En la pantalla de la mascota la tarjeta de
 datos sigue más abajo.
@@ -322,6 +322,30 @@ datos sigue más abajo.
   `SeccionPlegable` recuerda la elección en `sessionStorage`: subir una foto
   vuelve con `back()` y remonta la página, y sin eso la sección se cerraría
   justo después de usarla.
+- **Vacunación, línea de tiempo y seguimiento son tres tarjetas**, no una con
+  botones. La línea de tiempo trae los **tres últimos** eventos
+  (`TimelineService::para(..., porPagina: 3)`: el mismo orden y el mismo cursor
+  que el diario, solo cambia el corte) y «Ver todo» lleva al diario. Seguimiento
+  trae una fila por rubro con el último dato; un rubro vacío dice «Sin datos» en
+  vez de desaparecer, salvo el celo, que para un macho o una castrada no existe.
+
+## Seguimiento
+
+Peso, alimentación, vacunas, desparasitaciones, celo y baño, en ese orden y en
+una sola pantalla. Vacunas y desparasitaciones tenían la suya, «Preventivo»: se
+fundió acá, porque era una pantalla más a la que había que saber ir para dos
+listas que se consultan junto con el resto.
+
+- Las rutas de escritura de vacunas y desparasitaciones **conservan sus nombres**
+  (`mascotas.vacunas.*`, `mascotas.desparasitaciones.*`); solo cambió el
+  controlador. Las dos secciones viven en `components/seguimiento/`, porque la
+  página ya pasaba las mil líneas.
+- `/mascotas/{id}/preventivo` redirige con 301, para marcadores y copias viejas
+  del service worker. **Solo GET**: `Route::permanentRedirect` registra todos los
+  verbos, y el barrido de `PrivacidadMascotasTest` la contaba como una escritura
+  sin Policy.
+- Las secciones llevan `id` (`#vacunas`, `#desparasitaciones`…): los eventos de la
+  línea de tiempo apuntan ahí.
 
 ## Salir de un formulario a medio cargar
 
@@ -362,16 +386,18 @@ La carga real ocurre en la veterinaria, con el celular en la mano.
 
 - Bottom tab bar + FAB en `< md`; sidebar en `>= md`. **Mismo árbol de rutas**, no dos apps.
 - La barra inferior tiene **cinco destinos y no más**: con seis hay que achicar el área
-  táctil por debajo de 44px o cortar las etiquetas. Visitas y los catálogos quedan afuera
-  a propósito y están en el menú. `lib/navegacion.ts` es la definición única de las dos.
+  táctil por debajo de 44px o cortar las etiquetas. Visitas, Seguimiento y los catálogos
+  quedan afuera a propósito y están en el menú. `lib/navegacion.ts` es la definición
+  única de las dos.
 - En el menú los catálogos **no** van como una entrada «Catálogos»: cada uno tiene la
   suya bajo el subtítulo **«Datos recurrentes»** (`datosRecurrentes`). Así se los llama
   en todo texto visible; el código, las rutas y las carpetas siguen diciendo `catalogos`.
   El panel `catalogos.index` sigue existiendo, como destino de la miga de pan.
 - Las pantallas por mascota se llegan desde su ficha. Cuando además están en el menú
   —que no tiene contexto de mascota— hace falta un paso previo que pregunte de quién es:
-  `visitas.elegir`. **Con una sola mascota redirige sin mostrarse**, porque preguntar cuál
-  cuando hay una es un click de más en cada uso.
+  `visitas.elegir` y `seguimiento.elegir`, que comparten la lista (`ElegirMascota`).
+  **Con una sola mascota redirige sin mostrarse**, porque preguntar cuál cuando hay
+  una es un click de más en cada uso.
 - Sheets en vez de modales en pantallas chicas.
 - Teclado correcto: `inputmode="decimal"` para peso, `type="date"`, `type="tel"`.
 - Áreas táctiles de 44 px mínimo. `env(safe-area-inset-bottom)` en la barra inferior.

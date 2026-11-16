@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ChevronRight, PawPrint, Stethoscope } from '@lucide/vue';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Head } from '@inertiajs/vue3';
+import { Stethoscope } from '@lucide/vue';
+import { computed } from 'vue';
+import ElegirMascota from '@/components/ElegirMascota.vue';
 import { index as mascotasIndex } from '@/routes/mascotas';
 import { elegir } from '@/routes/visitas';
 import type { Mascota } from '@/types/huella';
@@ -21,7 +21,7 @@ type MascotaConVisitas = Mascota & {
     url: string;
 };
 
-defineProps<{
+const props = defineProps<{
     mascotas: MascotaConVisitas[];
     /** La que se estaba mirando, para señalarla sin obligar a nada. */
     mascotaActivaId: number | null;
@@ -35,6 +35,23 @@ defineOptions({
         ],
     },
 });
+
+/** "3 visitas · la última el 12/11/2026": ubica sin tener que entrar. */
+const conDetalle = computed(() =>
+    props.mascotas.map((mascota) => ({
+        ...mascota,
+        detalle: [
+            mascota.visitas_count
+                ? `${mascota.visitas_count} ${mascota.visitas_count === 1 ? 'visita' : 'visitas'}`
+                : 'sin visitas cargadas',
+            mascota.ultima_visita
+                ? `la última el ${mascota.ultima_visita}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(' · '),
+    })),
+);
 </script>
 
 <template>
@@ -51,84 +68,9 @@ defineOptions({
             </div>
         </div>
 
-        <ul class="flex flex-col gap-2">
-            <li v-for="mascota in mascotas" :key="mascota.id">
-                <Card class="py-0">
-                    <CardContent class="p-0">
-                        <Link
-                            :href="mascota.url"
-                            class="flex touch-target items-center gap-3 p-3"
-                        >
-                            <span
-                                class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted"
-                            >
-                                <img
-                                    v-if="mascota.foto_miniatura_url"
-                                    :src="mascota.foto_miniatura_url"
-                                    :alt="`Foto de ${mascota.nombre}`"
-                                    width="48"
-                                    height="48"
-                                    loading="lazy"
-                                    class="size-full object-cover"
-                                />
-                                <PawPrint
-                                    v-else
-                                    class="size-5 text-muted-foreground"
-                                    aria-hidden="true"
-                                />
-                            </span>
-
-                            <span class="min-w-0 flex-1">
-                                <span
-                                    class="flex flex-wrap items-center gap-2 font-medium"
-                                >
-                                    {{ mascota.nombre }}
-                                    <Badge
-                                        v-if="mascota.id === mascotaActivaId"
-                                        variant="secondary"
-                                        class="font-normal"
-                                    >
-                                        La que estabas viendo
-                                    </Badge>
-                                    <Badge
-                                        v-if="mascota.fallecida"
-                                        variant="outline"
-                                        class="font-normal"
-                                    >
-                                        En memoria
-                                    </Badge>
-                                </span>
-                                <span
-                                    class="block text-sm wrap-anywhere text-muted-foreground"
-                                >
-                                    {{ mascota.especie_etiqueta }}
-                                    <template v-if="mascota.visitas_count">
-                                        ·
-                                        {{ mascota.visitas_count }}
-                                        {{
-                                            mascota.visitas_count === 1
-                                                ? 'visita'
-                                                : 'visitas'
-                                        }}
-                                    </template>
-                                    <template v-else>
-                                        · sin visitas cargadas
-                                    </template>
-                                    <template v-if="mascota.ultima_visita">
-                                        · la última el
-                                        {{ mascota.ultima_visita }}
-                                    </template>
-                                </span>
-                            </span>
-
-                            <ChevronRight
-                                class="size-5 shrink-0 text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                        </Link>
-                    </CardContent>
-                </Card>
-            </li>
-        </ul>
+        <ElegirMascota
+            :mascotas="conDetalle"
+            :mascota-activa-id="mascotaActivaId"
+        />
     </div>
 </template>

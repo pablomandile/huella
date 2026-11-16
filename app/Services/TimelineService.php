@@ -60,16 +60,23 @@ class TimelineService
     ];
 
     /**
+     * `$porPagina` chico es para la ficha, que muestra los últimos tres: el
+     * orden y el cursor son los mismos que en el diario, solo cambia el corte.
+     *
      * @param  array{tipos?: list<string>, desde?: string|null, hasta?: string|null, busqueda?: string|null}  $filtros
      * @return array{eventos: list<array<string, mixed>>, cursor: string|null, hay_mas: bool}
      */
-    public function para(Mascota $mascota, array $filtros = [], ?string $cursor = null): array
-    {
+    public function para(
+        Mascota $mascota,
+        array $filtros = [],
+        ?string $cursor = null,
+        int $porPagina = self::POR_PAGINA,
+    ): array {
         $tipos = $this->tiposPedidos($filtros);
         $posicion = $this->decodificarCursor($cursor);
 
         // Se pide una fila más que el tamaño de página: si vuelve, hay siguiente.
-        $tope = self::POR_PAGINA + 1;
+        $tope = $porPagina + 1;
 
         $eventos = collect();
 
@@ -92,8 +99,8 @@ class TimelineService
             ])
             ->values();
 
-        $hayMas = $ordenados->count() > self::POR_PAGINA;
-        $pagina = $ordenados->take(self::POR_PAGINA);
+        $hayMas = $ordenados->count() > $porPagina;
+        $pagina = $ordenados->take($porPagina);
         $ultimo = $pagina->last();
 
         return [
@@ -322,7 +329,7 @@ class TimelineService
                 detalle: $registro->dosis_nro !== null
                     ? "{$registro->dosis_nro}ª dosis"
                     : null,
-                url: route('mascotas.preventivo.index', $mascota),
+                url: route('mascotas.seguimiento.index', $mascota).'#vacunas',
                 datos: ['proxima_dosis' => $registro->proxima_dosis?->toDateString()],
             ),
             'desparasitacion' => new EventoTimeline(
@@ -331,7 +338,7 @@ class TimelineService
                 fecha: $registro->fecha->toImmutable(),
                 titulo: $registro->nombre_medicamento,
                 detalle: $registro->tipo->etiqueta(),
-                url: route('mascotas.preventivo.index', $mascota),
+                url: route('mascotas.seguimiento.index', $mascota).'#desparasitaciones',
             ),
             'tratamiento' => new EventoTimeline(
                 tipo: 'tratamiento',

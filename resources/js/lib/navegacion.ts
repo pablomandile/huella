@@ -1,4 +1,5 @@
 import {
+    Activity,
     Apple,
     BellRing,
     Building2,
@@ -21,6 +22,7 @@ import { index as mascotasIndex } from '@/routes/mascotas';
 import { index as medicacionIndex } from '@/routes/medicacion';
 import { edit as editProfile } from '@/routes/profile';
 import { index as recordatoriosIndex } from '@/routes/recordatorios';
+import { elegir as elegirMascotaSeguimiento } from '@/routes/seguimiento';
 import { elegir as elegirMascotaVisitas } from '@/routes/visitas';
 import type { NavItem } from '@/types';
 
@@ -52,6 +54,15 @@ export const destinosPrincipales: NavItem[] = [
         title: 'Visitas',
         href: elegirMascotaVisitas(),
         icon: Stethoscope,
+    },
+    /*
+     * Peso, alimentación, vacunas, desparasitaciones, celo y baños. Igual que
+     * Visitas, pasa antes por la pregunta de qué mascota.
+     */
+    {
+        title: 'Seguimiento',
+        href: elegirMascotaSeguimiento(),
+        icon: Activity,
     },
     {
         title: 'Agenda',
@@ -108,12 +119,15 @@ export const datosRecurrentes: NavItem[] = [
  * principio y después casi nunca. En el celular están en el menú lateral, que
  * abre el botón del encabezado; en escritorio, en la sidebar.
  *
- * Visitas también queda afuera, por la misma cuenta de cinco: sumarla haría seis
- * y habría que achicar el área táctil o cortar las etiquetas. Está en el menú, y
- * el camino corto sigue siendo la ficha de la mascota que estás mirando.
+ * Visitas y Seguimiento también quedan afuera, por la misma cuenta de cinco:
+ * sumarlas haría siete y habría que achicar el área táctil o cortar las
+ * etiquetas. Están en el menú, y el camino corto sigue siendo la ficha de la
+ * mascota que estás mirando.
  */
 export const destinosBarraInferior: NavItem[] = [
-    ...destinosPrincipales.filter((destino) => destino.title !== 'Visitas'),
+    ...destinosPrincipales.filter(
+        (destino) => !['Visitas', 'Seguimiento'].includes(destino.title),
+    ),
     {
         title: 'Perfil',
         href: editProfile(),

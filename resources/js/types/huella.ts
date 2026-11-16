@@ -497,8 +497,19 @@ export type TomaDelDia = {
  * Todo lo que muestra la ficha de una mascota. Lo arma `FichaMascotaService` y
  * lo reciben igual la pantalla de la mascota y el inicio.
  */
+/** Una fila del resumen de Seguimiento en la ficha: el último dato del rubro. */
+export type FilaSeguimiento = {
+    clave: string;
+    titulo: string;
+    valor: string;
+    detalle: string | null;
+};
+
 export type DatosFichaMascota = {
     mascota: Mascota;
+    /** Los tres últimos eventos de la línea de tiempo. */
+    lineaDeTiempo: EventoTimeline[];
+    seguimiento: FilaSeguimiento[];
     fotos: FotoGaleria[];
     alergias: Alergia[];
     visitas: Visita[];

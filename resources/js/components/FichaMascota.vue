@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /*
  * La ficha completa de una mascota: alergias, documentación, vacunación,
- * tratamientos, visitas, datos, galería y compartir.
+ * línea de tiempo, seguimiento, tratamientos, visitas, datos, galería y
+ * compartir.
  *
  * Es la pantalla de la mascota entera, sacada a un componente porque el inicio
  * muestra lo mismo para la activa. Las dos reciben los datos de
@@ -12,7 +13,9 @@
  */
 import { Form, Link, router, usePage } from '@inertiajs/vue3';
 import {
+    Activity,
     CalendarClock,
+    ChevronRight,
     Flower2,
     ImagePlus,
     PawPrint,
@@ -28,6 +31,7 @@ import {
 import { computed, ref, shallowRef } from 'vue';
 import CampoFoto from '@/components/CampoFoto.vue';
 import DatosFicha from '@/components/DatosFicha.vue';
+import EventoDelDiario from '@/components/EventoDelDiario.vue';
 import SeccionPlegable from '@/components/SeccionPlegable.vue';
 import SheetCompartir from '@/components/SheetCompartir.vue';
 import InputError from '@/components/InputError.vue';
@@ -76,8 +80,7 @@ import {
     show as showVisita,
 } from '@/routes/mascotas/visitas';
 import { index as diario } from '@/routes/mascotas/diario';
-import { index as preventivo } from '@/routes/mascotas/preventivo';
-import { index as seguimiento } from '@/routes/mascotas/seguimiento';
+import { index as seguimientoIndex } from '@/routes/mascotas/seguimiento';
 import { index as medicacionIndex } from '@/routes/medicacion';
 import { destroy as quitarseElAcceso } from '@/routes/mascotas/accesos';
 import type {
@@ -536,13 +539,18 @@ function eliminarAlergia(alergia: Alergia) {
                     <p class="mt-2 text-xs text-muted-foreground">
                         Dejalo vacío para quitar el aviso. Este vencimiento es
                         del papel; la próxima dosis de la antirrábica se carga
-                        en Preventivo.
+                        en Seguimiento.
                     </p>
                 </div>
             </TarjetaDocumento>
         </SeccionPlegable>
 
-        <!-- Semáforo de vacunación y lo que hay que agendar -->
+        <!--
+            Semáforo de vacunación y lo que hay que agendar. Antes la misma
+            tarjeta llevaba los accesos al diario, a Preventivo y a Seguimiento;
+            ahora la línea de tiempo y el seguimiento tienen tarjeta propia, y
+            Preventivo vive adentro de Seguimiento.
+        -->
         <Card :class="colorSemaforo[estadoVacunacion.estado]">
             <CardContent class="flex flex-col gap-3">
                 <div class="flex items-start gap-3">
@@ -560,36 +568,6 @@ function eliminarAlergia(alergia: Alergia) {
                         >
                             {{ estadoVacunacion.detalle }}
                         </p>
-                    </div>
-                    <div class="flex shrink-0 flex-col gap-1">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            as-child
-                            class="touch-target"
-                        >
-                            <Link :href="diario(mascota.id)">Diario</Link>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            as-child
-                            class="touch-target"
-                        >
-                            <Link :href="preventivo(mascota.id)"
-                                >Preventivo</Link
-                            >
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            as-child
-                            class="touch-target"
-                        >
-                            <Link :href="seguimiento(mascota.id)"
-                                >Seguimiento</Link
-                            >
-                        </Button>
                     </div>
                 </div>
 
@@ -621,6 +599,88 @@ function eliminarAlergia(alergia: Alergia) {
                         </span>
                     </li>
                 </ul>
+            </CardContent>
+        </Card>
+
+        <!-- Línea de tiempo: lo último que pasó; el resto, en el diario -->
+        <Card>
+            <CardHeader
+                class="flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-1"
+            >
+                <CardTitle>Línea de tiempo</CardTitle>
+                <Button variant="ghost" size="sm" as-child class="touch-target">
+                    <Link :href="diario(mascota.id)">
+                        Ver todo
+                        <ChevronRight class="size-4" aria-hidden="true" />
+                    </Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <p
+                    v-if="!lineaDeTiempo.length"
+                    class="text-sm text-muted-foreground"
+                >
+                    Todavía no hay nada en la línea de tiempo.
+                </p>
+                <ul v-else class="flex flex-col">
+                    <EventoDelDiario
+                        v-for="(evento, indice) in lineaDeTiempo"
+                        :key="evento.clave"
+                        :evento="evento"
+                        :ultimo="indice === lineaDeTiempo.length - 1"
+                    />
+                </ul>
+            </CardContent>
+        </Card>
+
+        <!--
+            Seguimiento: el último dato de cada rubro. Un rubro sin cargar dice
+            «Sin datos» en vez de desaparecer, así se ve qué falta.
+        -->
+        <Card>
+            <CardHeader
+                class="flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-1"
+            >
+                <CardTitle class="flex items-center gap-2">
+                    <Activity class="size-4" aria-hidden="true" />
+                    Seguimiento
+                </CardTitle>
+                <Button variant="ghost" size="sm" as-child class="touch-target">
+                    <Link :href="seguimientoIndex(mascota.id)">
+                        Ver todo
+                        <ChevronRight class="size-4" aria-hidden="true" />
+                    </Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <dl class="flex flex-col divide-y divide-border">
+                    <div
+                        v-for="fila in props.seguimiento"
+                        :key="fila.clave"
+                        class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0 last:pb-0"
+                    >
+                        <dt class="text-sm text-muted-foreground">
+                            {{ fila.titulo }}
+                        </dt>
+                        <dd class="min-w-0 text-right text-sm wrap-anywhere">
+                            <span
+                                :class="
+                                    fila.valor === 'Sin datos'
+                                        ? 'text-muted-foreground'
+                                        : 'font-medium'
+                                "
+                            >
+                                {{ fila.valor }}
+                            </span>
+                            <span
+                                v-if="fila.detalle"
+                                class="block text-xs text-muted-foreground"
+                            >
+                                {{ fila.detalle }}
+                            </span>
+                        </dd>
+                    </div>
+                </dl>
             </CardContent>
         </Card>
 

@@ -18,12 +18,19 @@ defineProps<Props>();
 </script>
 
 <template>
-    <Breadcrumb>
+    <!--
+        `min-w-0` y `truncate`: en la barra fija, una miga de una sola palabra
+        larga («Seguimiento») no puede bajar de línea, y sin poder achicarse
+        empujaba al selector de mascota fuera de la pantalla.
+    -->
+    <Breadcrumb class="min-w-0">
         <BreadcrumbList>
             <template v-for="(item, index) in breadcrumbs" :key="index">
-                <BreadcrumbItem>
+                <BreadcrumbItem class="min-w-0">
                     <template v-if="index === breadcrumbs.length - 1">
-                        <BreadcrumbPage>{{ item.title }}</BreadcrumbPage>
+                        <BreadcrumbPage class="truncate">{{
+                            item.title
+                        }}</BreadcrumbPage>
                     </template>
                     <template v-else>
                         <BreadcrumbLink as-child>

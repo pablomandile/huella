@@ -5,25 +5,39 @@ namespace App\Http\Controllers;
 use App\Enums\IntensidadCelo;
 use App\Enums\LugarBano;
 use App\Enums\OrigenPeso;
+use App\Enums\TipoDesparasitacion;
+use App\Http\Requests\GuardarAplicacionVacunaRequest;
 use App\Http\Requests\GuardarBanoRequest;
 use App\Http\Requests\GuardarCicloCeloRequest;
+use App\Http\Requests\GuardarDesparasitacionRequest;
 use App\Http\Requests\GuardarDietaRequest;
 use App\Http\Requests\GuardarPesoRequest;
 use App\Http\Resources\AlimentoResource;
+use App\Http\Resources\AplicacionVacunaResource;
 use App\Http\Resources\BanoResource;
 use App\Http\Resources\CicloCeloResource;
+use App\Http\Resources\DesparasitacionResource;
 use App\Http\Resources\DietaResource;
 use App\Http\Resources\MascotaResource;
+use App\Http\Resources\MedicamentoResource;
 use App\Http\Resources\RegistroPesoResource;
+use App\Http\Resources\VacunaResource;
+use App\Http\Resources\VeterinariaResource;
 use App\Http\Resources\VeterinarioResource;
 use App\Models\Alimento;
+use App\Models\AplicacionVacuna;
 use App\Models\Bano;
 use App\Models\CicloCelo;
+use App\Models\Desparasitacion;
 use App\Models\Dieta;
 use App\Models\Mascota;
+use App\Models\Medicamento;
 use App\Models\RegistroPeso;
+use App\Models\Vacuna;
+use App\Models\Veterinaria;
 use App\Models\Veterinario;
 use App\Services\DietaService;
+use App\Services\EstadoVacunacionService;
 use App\Services\EstimadorCeloService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,18 +46,55 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Peso, dieta, baños y celo: lo que cambia con el tiempo.
+ * Peso, alimentación, vacunas, desparasitaciones, celo y baños: lo que se
+ * sigue en el tiempo.
  *
  * Van juntos porque se leen en tendencia y no en un momento: cuánto pesa
- * comparado con antes, qué viene comiendo, hace cuánto que no se baña, cada
- * cuánto le viene el celo.
+ * comparado con antes, qué viene comiendo, cuándo toca la próxima dosis, hace
+ * cuánto que no se baña, cada cuánto le viene el celo.
+ *
+ * Vacunas y desparasitaciones vivían en una pantalla aparte, «Preventivo»: una
+ * pantalla más a la que había que saber ir, para dos listas que se consultan
+ * junto con el resto. La URL vieja redirige acá.
  */
 class SeguimientoController extends Controller
 {
     public function __construct(
         private readonly DietaService $dietas,
         private readonly EstimadorCeloService $estimador,
+        private readonly EstadoVacunacionService $vacunacion,
     ) {}
+
+    /**
+     * El paso previo del menú, que no tiene contexto de mascota: pregunta de
+     * cuál. Con una sola no pregunta, porque sería un click de más en cada uso.
+     */
+    public function elegir(Request $request): Response|RedirectResponse
+    {
+        $usuario = $request->user();
+
+        // `mascotas()` y no `mascotasACargo()`: un lector también la mira.
+        $mascotas = $usuario->mascotas()->orderBy('nombre')->get();
+
+        if ($mascotas->isEmpty()) {
+            return redirect()
+                ->route('mascotas.create')
+                ->with('warning', 'Primero cargá una mascota para poder hacerle el seguimiento.');
+        }
+
+        if ($mascotas->count() === 1) {
+            return redirect()->route('mascotas.seguimiento.index', $mascotas->first());
+        }
+
+        return Inertia::render('seguimiento/Elegir', [
+            'mascotas' => $mascotas->map(fn (Mascota $mascota) => [
+                ...MascotaResource::make($mascota)->resolve(),
+                'url' => route('mascotas.seguimiento.index', $mascota),
+            ])->all(),
+            // Viene preseleccionada la que se estaba mirando, si hay alguna.
+            'mascotaActivaId' => session('mascota_activa_id'),
+        ]);
+    }
 
     public function index(Request $request, Mascota $mascota): Response
     {
@@ -67,8 +118,27 @@ class SeguimientoController extends Controller
             'estimacionCelo' => $mascota->celo_visible
                 ? $this->estimacionParaElFront($mascota)
                 : null,
+            // El semáforo mira solo las fechas cargadas: no decide qué vacunas
+            // le corresponden (regla de negocio 7).
+            'estadoVacunacion' => $this->vacunacion->para($mascota),
+            'aplicaciones' => AplicacionVacunaResource::collection(
+                $mascota->vacunasAplicadas()->with('vacuna')->get(),
+            )->resolve(),
+            'desparasitaciones' => DesparasitacionResource::collection(
+                $mascota->desparasitaciones()->with('medicamento')->get(),
+            )->resolve(),
             'puedeRegistrar' => $usuario->can('registrarEventos', $mascota),
 
+            // Catálogos para los combos, con alta al vuelo.
+            'vacunas' => VacunaResource::collection(
+                Vacuna::disponiblesPara($usuario)->orderBy('nombre')->get(),
+            )->resolve(),
+            'medicamentos' => MedicamentoResource::collection(
+                Medicamento::disponiblesPara($usuario)->orderBy('nombre_comercial')->get(),
+            )->resolve(),
+            'veterinarias' => VeterinariaResource::collection(
+                Veterinaria::disponiblesPara($usuario)->orderBy('nombre')->get(),
+            )->resolve(),
             'alimentos' => AlimentoResource::collection(
                 Alimento::disponiblesPara($usuario)->orderBy('marca')->orderBy('nombre')->get(),
             )->resolve(),
@@ -78,6 +148,7 @@ class SeguimientoController extends Controller
             'origenesPeso' => OrigenPeso::opciones(),
             'lugaresBano' => LugarBano::opciones(),
             'intensidades' => IntensidadCelo::opciones(),
+            'tiposDesparasitacion' => TipoDesparasitacion::opciones(),
             // La zona del **propietario**, no la de quien mira: si un lector en otro
             // país abre la ficha, "hoy" tiene que seguir siendo el día de la casa
             // donde vive la mascota. `Mascota::$with` ya trae al propietario.
@@ -168,6 +239,73 @@ class SeguimientoController extends Controller
         $dieta->delete();
 
         return back()->with('success', 'Dieta eliminada.');
+    }
+
+    /* ------------------------------------------- vacunas y desparasitaciones */
+
+    public function guardarVacuna(
+        GuardarAplicacionVacunaRequest $request,
+        Mascota $mascota,
+    ): RedirectResponse {
+        // El recordatorio de la próxima dosis lo crea el observer, no esto.
+        $mascota->vacunasAplicadas()->create($request->validated());
+
+        return back()->with('success', 'Vacuna registrada.');
+    }
+
+    public function actualizarVacuna(
+        GuardarAplicacionVacunaRequest $request,
+        Mascota $mascota,
+        AplicacionVacuna $aplicacion,
+    ): RedirectResponse {
+        abort_unless($aplicacion->mascota_id === $mascota->id, 404);
+
+        $aplicacion->update($request->validated());
+
+        return back()->with('success', 'Vacuna actualizada.');
+    }
+
+    public function eliminarVacuna(Mascota $mascota, AplicacionVacuna $aplicacion): RedirectResponse
+    {
+        Gate::authorize('delete', $aplicacion);
+        abort_unless($aplicacion->mascota_id === $mascota->id, 404);
+
+        $aplicacion->delete();
+
+        return back()->with('success', 'Vacuna eliminada.');
+    }
+
+    public function guardarDesparasitacion(
+        GuardarDesparasitacionRequest $request,
+        Mascota $mascota,
+    ): RedirectResponse {
+        $mascota->desparasitaciones()->create($request->validated());
+
+        return back()->with('success', 'Desparasitación registrada.');
+    }
+
+    public function actualizarDesparasitacion(
+        GuardarDesparasitacionRequest $request,
+        Mascota $mascota,
+        Desparasitacion $desparasitacion,
+    ): RedirectResponse {
+        abort_unless($desparasitacion->mascota_id === $mascota->id, 404);
+
+        $desparasitacion->update($request->validated());
+
+        return back()->with('success', 'Desparasitación actualizada.');
+    }
+
+    public function eliminarDesparasitacion(
+        Mascota $mascota,
+        Desparasitacion $desparasitacion,
+    ): RedirectResponse {
+        Gate::authorize('delete', $desparasitacion);
+        abort_unless($desparasitacion->mascota_id === $mascota->id, 404);
+
+        $desparasitacion->delete();
+
+        return back()->with('success', 'Desparasitación eliminada.');
     }
 
     /* ------------------------------------------------------------------ celo */

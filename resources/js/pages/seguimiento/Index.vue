@@ -16,6 +16,8 @@ import CampoCheck from '@/components/CampoCheck.vue';
 import ComboboxCatalogo from '@/components/ComboboxCatalogo.vue';
 import CurvaDePeso from '@/components/CurvaDePeso.vue';
 import PendientesSinSincronizar from '@/components/PendientesSinSincronizar.vue';
+import SeccionDesparasitaciones from '@/components/seguimiento/SeccionDesparasitaciones.vue';
+import SeccionVacunas from '@/components/seguimiento/SeccionVacunas.vue';
 import InputError from '@/components/InputError.vue';
 import SelectNativo from '@/components/SelectNativo.vue';
 import TextareaNativo from '@/components/TextareaNativo.vue';
@@ -51,14 +53,20 @@ import {
 } from '@/routes/mascotas/pesos';
 import type {
     Alimento,
+    AplicacionVacuna,
     Bano,
     CicloCelo,
+    Desparasitacion,
     Dieta,
+    EstadoVacunacion,
     EstimacionCelo,
     Mascota,
+    Medicamento,
     OpcionEnum,
     RegistroPeso,
+    Vacuna,
     VariacionPeso,
+    Veterinaria,
     Veterinario,
 } from '@/types/huella';
 import type { Operacion } from '@/sinConexion/cola';
@@ -74,12 +82,19 @@ const props = defineProps<{
     celoVisible: boolean;
     ciclos: CicloCelo[];
     estimacionCelo: EstimacionCelo | null;
+    estadoVacunacion: EstadoVacunacion;
+    aplicaciones: AplicacionVacuna[];
+    desparasitaciones: Desparasitacion[];
     puedeRegistrar: boolean;
     alimentos: Alimento[];
+    vacunas: Vacuna[];
+    medicamentos: Medicamento[];
+    veterinarias: Veterinaria[];
     veterinarios: Veterinario[];
     origenesPeso: OpcionEnum[];
     lugaresBano: OpcionEnum[];
     intensidades: OpcionEnum[];
+    tiposDesparasitacion: OpcionEnum[];
     hoy: string;
 }>();
 
@@ -216,7 +231,7 @@ function eliminarCiclo(ciclo: CicloCelo) {
         </div>
 
         <!-- Peso -->
-        <section class="flex flex-col gap-3">
+        <section id="peso" class="flex scroll-mt-20 flex-col gap-3">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                     <h2 class="font-medium">Peso</h2>
@@ -323,8 +338,8 @@ function eliminarCiclo(ciclo: CicloCelo) {
             </ul>
         </section>
 
-        <!-- Dieta -->
-        <section class="flex flex-col gap-3">
+        <!-- Alimentación -->
+        <section id="alimentacion" class="flex scroll-mt-20 flex-col gap-3">
             <div class="flex items-center justify-between gap-3">
                 <h2 class="font-medium">Alimentación</h2>
                 <Button
@@ -428,107 +443,36 @@ function eliminarCiclo(ciclo: CicloCelo) {
             </details>
         </section>
 
-        <!-- Baño -->
-        <section class="flex flex-col gap-3">
-            <div class="flex items-center justify-between gap-3">
-                <h2 class="font-medium">Baño</h2>
-                <Button
-                    v-if="puedeRegistrar"
-                    variant="outline"
-                    size="sm"
-                    class="touch-target shrink-0"
-                    @click="sheetBano = true"
-                >
-                    <Plus class="size-4" aria-hidden="true" />
-                    Registrar
-                </Button>
-            </div>
+        <!--
+            Vacunas y desparasitaciones tenían pantalla propia («Preventivo»).
+            Viven en componentes porque esta página ya era larga.
+        -->
+        <SeccionVacunas
+            :mascota="mascota"
+            :estado-vacunacion="estadoVacunacion"
+            :aplicaciones="aplicaciones"
+            :vacunas="vacunas"
+            :veterinarias="veterinarias"
+            :veterinarios="veterinarios"
+            :puede-registrar="puedeRegistrar"
+            :hoy="hoy"
+        />
 
-            <PendientesSinSincronizar
-                :ops="banosEnCola"
-                :describir="describirBano"
-            />
-
-            <Card v-if="ultimoBano" class="py-0">
-                <CardContent class="flex items-start gap-3 p-4">
-                    <div
-                        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent"
-                    >
-                        <Bath
-                            class="size-4 text-accent-foreground"
-                            aria-hidden="true"
-                        />
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="font-medium">
-                            Último baño: {{ haceCuantoDelBano }}
-                        </p>
-                        <p class="text-sm text-muted-foreground">
-                            {{ ultimoBano.fecha_legible }} ·
-                            {{ ultimoBano.lugar_etiqueta }}
-                        </p>
-                        <p
-                            v-if="ultimoBano.notas"
-                            class="mt-1 text-sm text-muted-foreground"
-                        >
-                            {{ ultimoBano.notas }}
-                        </p>
-                    </div>
-                    <button
-                        v-if="puedeRegistrar"
-                        type="button"
-                        class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
-                        :aria-label="`Eliminar el baño del ${ultimoBano.fecha_legible}`"
-                        @click="eliminarBano(ultimoBano)"
-                    >
-                        <Trash2 class="size-4" aria-hidden="true" />
-                    </button>
-                </CardContent>
-            </Card>
-
-            <p
-                v-else-if="!banosEnCola.length"
-                class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
-            >
-                Todavía no cargaste ningún baño.
-            </p>
-
-            <details v-if="banosAnteriores.length" class="text-sm">
-                <summary
-                    class="flex touch-target cursor-pointer items-center text-muted-foreground"
-                >
-                    Los anteriores ({{ banosAnteriores.length }})
-                </summary>
-                <ul class="mt-2 flex flex-col divide-y divide-border">
-                    <li
-                        v-for="bano in banosAnteriores"
-                        :key="bano.id"
-                        class="flex items-center gap-3 py-2"
-                    >
-                        <div class="min-w-0 flex-1">
-                            <p class="wrap-anywhere">
-                                {{ bano.fecha_legible }}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {{ bano.lugar_etiqueta }}
-                            </p>
-                        </div>
-                        <button
-                            v-if="puedeRegistrar"
-                            type="button"
-                            class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
-                            :aria-label="`Eliminar el baño del ${bano.fecha_legible}`"
-                            @click="eliminarBano(bano)"
-                        >
-                            <Trash2 class="size-4" aria-hidden="true" />
-                        </button>
-                    </li>
-                </ul>
-            </details>
-        </section>
+        <SeccionDesparasitaciones
+            :mascota="mascota"
+            :desparasitaciones="desparasitaciones"
+            :medicamentos="medicamentos"
+            :tipos-desparasitacion="tiposDesparasitacion"
+            :puede-registrar="puedeRegistrar"
+            :hoy="hoy"
+        />
 
         <!-- Celo: solo hembras no castradas y vivas (regla de negocio 2) -->
-        <section v-if="celoVisible" class="flex flex-col gap-3">
+        <section
+            v-if="celoVisible"
+            id="celo"
+            class="flex scroll-mt-20 flex-col gap-3"
+        >
             <div class="flex items-center justify-between gap-3">
                 <h2 class="font-medium">Celo</h2>
                 <Button
@@ -651,6 +595,105 @@ function eliminarCiclo(ciclo: CicloCelo) {
             >
                 Todavía no cargaste ningún ciclo.
             </p>
+        </section>
+
+        <!-- Baño -->
+        <section id="bano" class="flex scroll-mt-20 flex-col gap-3">
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="font-medium">Baño</h2>
+                <Button
+                    v-if="puedeRegistrar"
+                    variant="outline"
+                    size="sm"
+                    class="touch-target shrink-0"
+                    @click="sheetBano = true"
+                >
+                    <Plus class="size-4" aria-hidden="true" />
+                    Registrar
+                </Button>
+            </div>
+
+            <PendientesSinSincronizar
+                :ops="banosEnCola"
+                :describir="describirBano"
+            />
+
+            <Card v-if="ultimoBano" class="py-0">
+                <CardContent class="flex items-start gap-3 p-4">
+                    <div
+                        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent"
+                    >
+                        <Bath
+                            class="size-4 text-accent-foreground"
+                            aria-hidden="true"
+                        />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium">
+                            Último baño: {{ haceCuantoDelBano }}
+                        </p>
+                        <p class="text-sm text-muted-foreground">
+                            {{ ultimoBano.fecha_legible }} ·
+                            {{ ultimoBano.lugar_etiqueta }}
+                        </p>
+                        <p
+                            v-if="ultimoBano.notas"
+                            class="mt-1 text-sm text-muted-foreground"
+                        >
+                            {{ ultimoBano.notas }}
+                        </p>
+                    </div>
+                    <button
+                        v-if="puedeRegistrar"
+                        type="button"
+                        class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                        :aria-label="`Eliminar el baño del ${ultimoBano.fecha_legible}`"
+                        @click="eliminarBano(ultimoBano)"
+                    >
+                        <Trash2 class="size-4" aria-hidden="true" />
+                    </button>
+                </CardContent>
+            </Card>
+
+            <p
+                v-else-if="!banosEnCola.length"
+                class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
+            >
+                Todavía no cargaste ningún baño.
+            </p>
+
+            <details v-if="banosAnteriores.length" class="text-sm">
+                <summary
+                    class="flex touch-target cursor-pointer items-center text-muted-foreground"
+                >
+                    Los anteriores ({{ banosAnteriores.length }})
+                </summary>
+                <ul class="mt-2 flex flex-col divide-y divide-border">
+                    <li
+                        v-for="bano in banosAnteriores"
+                        :key="bano.id"
+                        class="flex items-center gap-3 py-2"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <p class="wrap-anywhere">
+                                {{ bano.fecha_legible }}
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ bano.lugar_etiqueta }}
+                            </p>
+                        </div>
+                        <button
+                            v-if="puedeRegistrar"
+                            type="button"
+                            class="flex touch-target shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                            :aria-label="`Eliminar el baño del ${bano.fecha_legible}`"
+                            @click="eliminarBano(bano)"
+                        >
+                            <Trash2 class="size-4" aria-hidden="true" />
+                        </button>
+                    </li>
+                </ul>
+            </details>
         </section>
 
         <!-- Alta de peso -->

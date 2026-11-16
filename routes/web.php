@@ -20,7 +20,6 @@ use App\Http\Controllers\Legales\LegalesController;
 use App\Http\Controllers\MascotaActivaController;
 use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\MedicacionController;
-use App\Http\Controllers\PreventivoController;
 use App\Http\Controllers\Publico\FichaCompartidaController;
 use App\Http\Controllers\RecordatorioController;
 use App\Http\Controllers\SeguimientoController;
@@ -28,6 +27,7 @@ use App\Http\Controllers\Settings\TamanoLetraController;
 use App\Http\Controllers\SincronizacionController;
 use App\Http\Controllers\TratamientoController;
 use App\Http\Controllers\VisitaController;
+use Illuminate\Routing\RedirectController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -227,33 +227,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('medicacion.update');
 
     /*
-     * Preventivo: vacunas y desparasitaciones van juntas porque para el usuario
-     * son lo mismo —cosas que se aplican cada tanto y hay que volver a dar—, y
-     * las dos generan su recordatorio por observer.
+     * Seguimiento: peso, alimentación, vacunas, desparasitaciones, celo y
+     * baños, en una sola pantalla. Se leen en tendencia y no en un momento.
+     *
+     * `seguimiento.elegir` es la puerta del menú, que no sabe de qué mascota:
+     * pregunta de cuál, o redirige si hay una sola.
+     *
+     * Vacunas y desparasitaciones tenían pantalla propia, «Preventivo»; su URL
+     * redirige acá para los marcadores y las copias viejas del service worker.
+     * Las dos generan su recordatorio por observer.
      */
-    Route::get('mascotas/{mascota}/preventivo', [PreventivoController::class, 'index'])
-        ->name('mascotas.preventivo.index');
+    Route::get('seguimiento', [SeguimientoController::class, 'elegir'])->name('seguimiento.elegir');
 
-    Route::post('mascotas/{mascota}/vacunas', [PreventivoController::class, 'guardarVacuna'])
-        ->name('mascotas.vacunas.store');
-    Route::put('mascotas/{mascota}/vacunas/{aplicacion}', [PreventivoController::class, 'actualizarVacuna'])
-        ->name('mascotas.vacunas.update');
-    Route::delete('mascotas/{mascota}/vacunas/{aplicacion}', [PreventivoController::class, 'eliminarVacuna'])
-        ->name('mascotas.vacunas.destroy');
-
-    Route::post('mascotas/{mascota}/desparasitaciones', [PreventivoController::class, 'guardarDesparasitacion'])
-        ->name('mascotas.desparasitaciones.store');
-    Route::put('mascotas/{mascota}/desparasitaciones/{desparasitacion}', [PreventivoController::class, 'actualizarDesparasitacion'])
-        ->name('mascotas.desparasitaciones.update');
-    Route::delete('mascotas/{mascota}/desparasitaciones/{desparasitacion}', [PreventivoController::class, 'eliminarDesparasitacion'])
-        ->name('mascotas.desparasitaciones.destroy');
-
-    /*
-     * Seguimiento: peso, dieta, baños y celo. Van juntos porque se leen en
-     * tendencia y no en un momento.
-     */
     Route::get('mascotas/{mascota}/seguimiento', [SeguimientoController::class, 'index'])
         ->name('mascotas.seguimiento.index');
+
+    // Solo GET: `Route::permanentRedirect` registra todos los verbos, y una
+    // redirección no tiene por qué aceptar un POST o un DELETE. El barrido de
+    // PrivacidadMascotasTest la contaba como una escritura sin Policy.
+    Route::get('mascotas/{mascota}/preventivo', RedirectController::class)
+        ->defaults('destination', '/mascotas/{mascota}/seguimiento')
+        ->defaults('status', 301);
+
+    Route::post('mascotas/{mascota}/vacunas', [SeguimientoController::class, 'guardarVacuna'])
+        ->name('mascotas.vacunas.store');
+    Route::put('mascotas/{mascota}/vacunas/{aplicacion}', [SeguimientoController::class, 'actualizarVacuna'])
+        ->name('mascotas.vacunas.update');
+    Route::delete('mascotas/{mascota}/vacunas/{aplicacion}', [SeguimientoController::class, 'eliminarVacuna'])
+        ->name('mascotas.vacunas.destroy');
+
+    Route::post('mascotas/{mascota}/desparasitaciones', [SeguimientoController::class, 'guardarDesparasitacion'])
+        ->name('mascotas.desparasitaciones.store');
+    Route::put('mascotas/{mascota}/desparasitaciones/{desparasitacion}', [SeguimientoController::class, 'actualizarDesparasitacion'])
+        ->name('mascotas.desparasitaciones.update');
+    Route::delete('mascotas/{mascota}/desparasitaciones/{desparasitacion}', [SeguimientoController::class, 'eliminarDesparasitacion'])
+        ->name('mascotas.desparasitaciones.destroy');
 
     Route::post('mascotas/{mascota}/pesos', [SeguimientoController::class, 'guardarPeso'])
         ->name('mascotas.pesos.store');

@@ -20,7 +20,6 @@ const DE_CADA_MASCOTA = (id: number) => [
     `/mascotas/${id}`,
     `/mascotas/${id}/diario`,
     `/mascotas/${id}/seguimiento`,
-    `/mascotas/${id}/preventivo`,
     `/mascotas/${id}/visitas`,
 ];
 

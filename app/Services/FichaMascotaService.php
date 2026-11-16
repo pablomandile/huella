@@ -8,8 +8,10 @@ use App\Enums\TipoAdjunto;
 use App\Enums\TipoAlergia;
 use App\Enums\VigenciaEnlace;
 use App\Http\Resources\AdjuntoResource;
+use App\Http\Resources\DietaResource;
 use App\Http\Resources\MascotaResource;
 use App\Http\Resources\RecordatorioResource;
+use App\Http\Resources\RegistroPesoResource;
 use App\Http\Resources\TratamientoResource;
 use App\Http\Resources\VisitaResource;
 use App\Models\Mascota;
@@ -30,7 +32,11 @@ use App\Models\User;
  */
 class FichaMascotaService
 {
-    public function __construct(private readonly EstadoVacunacionService $vacunacion) {}
+    public function __construct(
+        private readonly EstadoVacunacionService $vacunacion,
+        private readonly TimelineService $timeline,
+        private readonly EstimadorCeloService $estimadorCelo,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -60,13 +66,18 @@ class FichaMascotaService
             ->take(5)
             ->get();
 
+        $estadoVacunacion = $this->vacunacion->para($mascota);
+
         return [
             'mascota' => MascotaResource::make($mascota)->resolve(),
+            // Los tres últimos de la línea de tiempo: el resto vive en el diario.
+            'lineaDeTiempo' => $this->timeline->para($mascota, [], null, 3)['eventos'],
+            'seguimiento' => $this->resumenSeguimiento($mascota, $estadoVacunacion),
             'visitas' => VisitaResource::collection($visitas)->resolve(),
             'totalVisitas' => $mascota->visitas()->count(),
             'tratamientosEnCurso' => TratamientoResource::collection($enCurso)->resolve(),
             'recordatorios' => RecordatorioResource::collection($recordatorios)->resolve(),
-            'estadoVacunacion' => $this->vacunacion->para($mascota),
+            'estadoVacunacion' => $estadoVacunacion,
             'fotos' => $mascota->fotos->map(fn ($foto) => [
                 'id' => $foto->id,
                 'fecha' => $foto->fecha->toDateString(),
@@ -138,5 +149,83 @@ class FichaMascotaService
             'vigenciaPorDefecto' => VigenciaEnlace::porDefecto()->value,
             'tiposAlergia' => TipoAlergia::opciones(),
         ];
+    }
+
+    /**
+     * Una fila por rubro de Seguimiento, con el último dato: lo que se lee de
+     * un vistazo antes de entrar a la pantalla.
+     *
+     * Un rubro sin datos se muestra igual, diciendo «Sin datos»: si
+     * desapareciera, no se sabría si falta cargarlo o si la ficha no lo tiene.
+     * El celo es la excepción, porque para un macho, una castrada o una
+     * mascota fallecida el rubro no existe.
+     *
+     * @param  array{etiqueta: string, detalle: string|null}  $estadoVacunacion
+     * @return list<array{clave: string, titulo: string, valor: string, detalle: string|null}>
+     */
+    private function resumenSeguimiento(Mascota $mascota, array $estadoVacunacion): array
+    {
+        $mascota->load(['ultimoPeso', 'dietaVigente.alimento']);
+
+        $peso = $mascota->ultimoPeso;
+        $dieta = $mascota->dietaVigente;
+        $desparasitacion = $mascota->desparasitaciones()->with('medicamento')->first();
+        $bano = $mascota->banos()->first();
+        $fecha = fn ($dia) => $dia->translatedFormat('j \d\e F \d\e Y');
+
+        $filas = [
+            [
+                'clave' => 'peso',
+                'titulo' => 'Peso',
+                'valor' => $peso
+                    ? (string) RegistroPesoResource::make($peso)->resolve()['peso_legible']
+                    : 'Sin datos',
+                'detalle' => $peso ? $fecha($peso->fecha) : null,
+            ],
+            [
+                'clave' => 'alimento',
+                'titulo' => 'Alimento',
+                'valor' => $dieta
+                    ? (string) (DietaResource::make($dieta)->resolve()['alimento'] ?? 'Sin datos')
+                    : 'Sin datos',
+                'detalle' => $dieta ? 'Desde el '.$fecha($dieta->fecha_inicio) : null,
+            ],
+            [
+                'clave' => 'vacunas',
+                'titulo' => 'Vacunas',
+                'valor' => $estadoVacunacion['etiqueta'],
+                'detalle' => $estadoVacunacion['detalle'],
+            ],
+            [
+                'clave' => 'desparasitacion',
+                'titulo' => 'Desparasitación',
+                'valor' => $desparasitacion !== null ? $desparasitacion->nombre_medicamento : 'Sin datos',
+                'detalle' => $desparasitacion ? $fecha($desparasitacion->fecha) : null,
+            ],
+        ];
+
+        if ($mascota->celo_visible) {
+            // Una fecha sola se lee como un dato, y esto es un promedio: viaja
+            // con su nivel de confianza, y dice si ya quedó atrás.
+            $estimacion = $this->estimadorCelo->para($mascota);
+
+            $filas[] = [
+                'clave' => 'celo',
+                'titulo' => 'Próximo celo',
+                'valor' => $estimacion['fecha']
+                    ? ($estimacion['vencida'] ? 'Estimado para el ' : 'Hacia el ').$fecha($estimacion['fecha'])
+                    : 'Sin datos',
+                'detalle' => $estimacion['fecha'] ? $estimacion['confianza_etiqueta'] : null,
+            ];
+        }
+
+        $filas[] = [
+            'clave' => 'bano',
+            'titulo' => 'Último baño',
+            'valor' => $bano ? $fecha($bano->fecha) : 'Sin datos',
+            'detalle' => null,
+        ];
+
+        return $filas;
     }
 }
