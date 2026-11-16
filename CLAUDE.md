@@ -385,10 +385,15 @@ arma `useSalidaProtegida` y lo dibuja `DialogoSalida`; el borrador vive en
 La carga real ocurre en la veterinaria, con el celular en la mano.
 
 - Bottom tab bar + FAB en `< md`; sidebar en `>= md`. **Mismo árbol de rutas**, no dos apps.
-- La barra inferior tiene **cinco destinos y no más**: con seis hay que achicar el área
-  táctil por debajo de 44px o cortar las etiquetas. Visitas, Seguimiento y los catálogos
-  quedan afuera a propósito y están en el menú. `lib/navegacion.ts` es la definición
-  única de las dos.
+- La barra inferior tiene **cinco casilleros y no más**: con seis hay que achicar el área
+  táctil por debajo de 44px o cortar las etiquetas. Son cuatro destinos y el botón
+  **«Menú»**, que abre el menú lateral (`setOpenMobile`). Visitas, Seguimiento, los
+  catálogos y Perfil quedan afuera a propósito y están en el menú (Perfil: tu nombre,
+  abajo de todo → Configuración). `lib/navegacion.ts` es la definición única de las dos.
+- **En el celular el menú no se abre desde arriba**: la esquina superior izquierda es la
+  más lejana del pulgar. Ahí va el logo, que lleva al inicio, y el encabezado conserva la
+  miga y el selector de mascota. Desde `md` vuelve el `SidebarTrigger`, que pliega la
+  sidebar.
 - En el menú los catálogos **no** van como una entrada «Catálogos»: cada uno tiene la
   suya bajo el subtítulo **«Datos recurrentes»** (`datosRecurrentes`). Así se los llama
   en todo texto visible; el código, las rutas y las carpetas siguen diciendo `catalogos`.

@@ -7,7 +7,6 @@ import {
     PawPrint,
     Pill,
     PillBottle,
-    Settings,
     Stethoscope,
     Syringe,
     UserRound,
@@ -20,7 +19,6 @@ import { index as veterinariasIndex } from '@/routes/catalogos/veterinarias';
 import { index as veterinariosIndex } from '@/routes/catalogos/veterinarios';
 import { index as mascotasIndex } from '@/routes/mascotas';
 import { index as medicacionIndex } from '@/routes/medicacion';
-import { edit as editProfile } from '@/routes/profile';
 import { index as recordatoriosIndex } from '@/routes/recordatorios';
 import { elegir as elegirMascotaSeguimiento } from '@/routes/seguimiento';
 import { elegir as elegirMascotaVisitas } from '@/routes/visitas';
@@ -115,22 +113,20 @@ export const datosRecurrentes: NavItem[] = [
  * más de cinco destinos no entran sin achicar el área táctil por debajo de 44px
  * ni cortar las etiquetas.
  *
+ * El quinto casillero no es un destino: es el botón «Menú», que abre el menú
+ * lateral y lo agrega `BottomNav`. Antes era «Perfil», y el menú se abría con
+ * un ícono arriba a la izquierda, lejos del pulgar. Perfil sigue en el menú
+ * (tu nombre, abajo de todo → Configuración).
+ *
  * Los datos recurrentes quedan afuera y no es un olvido: se cargan una vez al
- * principio y después casi nunca. En el celular están en el menú lateral, que
- * abre el botón del encabezado; en escritorio, en la sidebar.
+ * principio y después casi nunca. Están en el menú; en escritorio, en la
+ * sidebar.
  *
  * Visitas y Seguimiento también quedan afuera, por la misma cuenta de cinco:
- * sumarlas haría siete y habría que achicar el área táctil o cortar las
+ * sumarlas haría seis y habría que achicar el área táctil o cortar las
  * etiquetas. Están en el menú, y el camino corto sigue siendo la ficha de la
  * mascota que estás mirando.
  */
-export const destinosBarraInferior: NavItem[] = [
-    ...destinosPrincipales.filter(
-        (destino) => !['Visitas', 'Seguimiento'].includes(destino.title),
-    ),
-    {
-        title: 'Perfil',
-        href: editProfile(),
-        icon: Settings,
-    },
-];
+export const destinosBarraInferior: NavItem[] = destinosPrincipales.filter(
+    (destino) => !['Visitas', 'Seguimiento'].includes(destino.title),
+);
